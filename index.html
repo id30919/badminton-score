@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V21 (多人制彩虹版)</title>
+    <title>羽球主審 V22 (視覺平衡版)</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -13,48 +13,57 @@
             --color-right: #00b0ff; /* 藍隊 */
             --bg-dark: #222; 
             --score-size: 250px; 
+            --header-height: 55px;
+            --ui-element-height: 32px; /* 統一元件高度 */
         }
 
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* === Header 優化 === */
+        /* === Header === */
         #header { 
-            height: 55px; background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; flex-shrink: 0; z-index: 100; 
+            height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; flex-shrink: 0; z-index: 100; 
             border-bottom: 1px solid #444;
-            /* 左側避讓區，防止被全螢幕 X 擋住 */
-            padding-left: 70px; 
+            padding-left: 70px; /* 左側避讓區 */
         }
         
         .header-left { 
-            display: flex; align-items: center; gap: 8px; 
-            /* 強制不換行 */
+            display: flex; align-items: center; gap: 10px; 
             white-space: nowrap; flex-wrap: nowrap;
         } 
 
-        /* 彩虹欄位樣式 */
+        /* === V22 優化：彩虹欄位 (比例一致) === */
         .rainbow-input-group {
-            display: flex; align-items: center; border-radius: 5px; overflow: hidden;
-            font-size: 14px; font-weight: bold; height: 32px;
+            display: flex; align-items: stretch; /* 確保高度拉伸 */
+            border-radius: 6px; overflow: hidden;
+            height: var(--ui-element-height);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        .rainbow-label { padding: 0 8px; display: flex; align-items: center; justify-content: center; height: 100%; }
+        
+        .rainbow-label { 
+            padding: 0 12px; /* 增加內距讓文字呼吸 */
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 15px; font-weight: bold; color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        
         .rainbow-input { 
-            border: none; color: white; padding: 0 5px; height: 100%; width: 50px; text-align: center; font-weight: bold; font-size: 15px; outline: none; cursor: pointer;
+            border: none; color: white; padding: 0; 
+            height: 100%; 
+            text-align: center; /* 關鍵：文字置中 */
+            font-weight: bold; font-size: 15px; outline: none; cursor: pointer;
+            font-family: 'Segoe UI', sans-serif;
         }
         
         /* 主審：紫色系 */
         .theme-umpire .rainbow-label { background: #7b1fa2; }
-        .theme-umpire .rainbow-input { background: #9c27b0; }
+        .theme-umpire .rainbow-input { background: #4a148c; width: 80px; } /* 寬度稍微加寬給「城隍爺」 */
+        .theme-umpire .rainbow-input::placeholder { color: rgba(255,255,255,0.6); }
         
         /* 場地：綠色系 */
         .theme-court .rainbow-label { background: #00796b; }
-        .theme-court .rainbow-input { background: #009688; }
+        .theme-court .rainbow-input { background: #004d40; width: 50px; } /* 數字寬度 */
 
-        /* 第二層：比賽操作列 */
-        #action-bar {
-            height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100;
-            border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        
+        /* === 其他 Header 元素 === */
         .btn-icon { 
             background: transparent; border: 1px solid #666; color: #ddd; 
             width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px;
@@ -62,6 +71,24 @@
         }
         .btn-icon:active { background: #555; }
 
+        .live-switch {
+            display: flex; align-items: center; gap: 6px; cursor: pointer;
+            padding: 0 12px; border-radius: 20px; border: 1px solid #555; background: #111;
+            height: var(--ui-element-height); /* 高度統一 */
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        .live-switch.active { background: rgba(0, 200, 0, 0.2); border-color: #00ff00; }
+        .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; transition: all 0.3s; }
+        .live-switch.active .live-dot { background: #00ff00; box-shadow: 0 0 5px #00ff00; }
+        .live-text { font-size: 13px; color: #aaa; font-weight: bold; } /* 字體微調 */
+        .live-switch.active .live-text { color: #fff; }
+
+        /* 第二層：比賽操作列 */
+        #action-bar {
+            height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100;
+            border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
         .btn-act {
             flex: 1; margin: 0 4px; height: 44px; border-radius: 8px; border: none;
             color: white; font-weight: bold; font-size: 16px; cursor: pointer;
@@ -73,21 +100,10 @@
         .btn-log  { background: #43a047; }
         .btn-end  { background: #d32f2f; border: 1px solid #ff8a80; }
 
-        .live-switch {
-            display: flex; align-items: center; gap: 5px; cursor: pointer;
-            padding: 4px 8px; border-radius: 20px; border: 1px solid #555; background: #111;
-            transition: all 0.3s;
-        }
-        .live-switch.active { background: rgba(0, 200, 0, 0.2); border-color: #00ff00; }
-        .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; transition: all 0.3s; }
-        .live-switch.active .live-dot { background: #00ff00; box-shadow: 0 0 5px #00ff00; }
-        .live-text { font-size: 12px; color: #aaa; }
-        .live-switch.active .live-text { color: #fff; font-weight: bold; }
-
         /* Modal */
         #universal-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 3000; /* 最高層級 */
+            background: rgba(0,0,0,0.85); z-index: 3000; 
             display: none; flex-direction: column; align-items: center; justify-content: center;
         }
         .u-modal-box { 
@@ -107,28 +123,20 @@
         .u-btn-confirm { background: #00c853; color: white; }
 
         /* Court Area */
-        #court { 
-            flex: 1; display: flex; position: relative; 
-            overflow-y: auto; /* 允許單指滑動 */
-            -webkit-overflow-scrolling: touch; /* iOS 滑動優化 */
-        }
+        #court { flex: 1; display: flex; position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         
         .side { 
             flex: 1; display: flex; flex-direction: column; 
             justify-content: space-between; align-items: center;
             position: relative; cursor: pointer; user-select: none; 
-            transition: background-color 0.2s;
-            padding: 10px 0; overflow: hidden;
-            min-height: 400px; /* 確保橫向時有足夠高度 */
+            transition: background-color 0.2s; padding: 10px 0; overflow: hidden; min-height: 400px;
         }
         .side.team-a { background-color: var(--color-left); } 
         .side.team-b { background-color: var(--color-right); }
         
         .score-bg-layer {
-            position: absolute; top: 50%; left: 50%; 
-            transform: translate(-50%, -50%);
-            z-index: 0; width: 100%; text-align: center;
-            opacity: 0.6;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 0; width: 100%; text-align: center; opacity: 0.6;
         }
         .score { 
             font-size: var(--score-size); font-weight: bold; line-height: 1; 
@@ -143,17 +151,14 @@
         }
         
         .server-indicator { 
-            font-size: 20px; background: rgba(0,0,0,0.6); 
-            padding: 5px 15px; border-radius: 20px; margin-bottom: 5px; 
+            font-size: 20px; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; margin-bottom: 5px; 
             display: none; pointer-events: none; z-index: 10; backdrop-filter: blur(2px);
         }
         .side.serving .server-indicator { display: block; }
         
         .position-box { 
-            width: 90%; height: 70px; display: flex; 
-            border: 2px solid rgba(255,255,255,0.8); 
-            background: rgba(0,0,0,0.4); pointer-events: auto; 
-            z-index: 10; margin-bottom: 10px; backdrop-filter: blur(2px);
+            width: 90%; height: 70px; display: flex; border: 2px solid rgba(255,255,255,0.8); 
+            background: rgba(0,0,0,0.4); pointer-events: auto; z-index: 10; margin-bottom: 10px; backdrop-filter: blur(2px);
         }
         .pos-l, .pos-r { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; pointer-events: none; font-weight: bold; }
         .pos-active { background: rgba(255,255,255,0.95); color: #000; font-weight: bold; font-size: 24px; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
@@ -161,12 +166,9 @@
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
 
-        /* 設定面板：完全不透明背景，Z-Index 高於一切 */
         #settings-panel, #history-panel { 
             position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); 
-            background: #222; /* V21: 改為實色，防止透視 */
-            z-index: 2000; 
-            padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; 
+            background: #222; z-index: 2000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; 
         }
         .panel-visible { display: block !important; }
         
@@ -205,7 +207,8 @@
             <!-- 主審欄位 (紫色系) -->
             <div class="rainbow-input-group theme-umpire">
                 <div class="rainbow-label">主審</div>
-                <input type="text" id="umpireName" class="rainbow-input" placeholder="姓名" readonly>
+                <!-- V22: placeholder 改為 "城隍爺" -->
+                <input type="text" id="umpireName" class="rainbow-input" placeholder="城隍爺" readonly>
             </div>
             
             <!-- 場地欄位 (綠色系) -->
@@ -428,7 +431,6 @@
         function getTeamName(k) { return getSegmentedData(`team${k}_name`, currentMatchIdx) || `隊${k}`; }
         function getPlayerName(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/); return arr.length ? arr[i % arr.length].trim() : ""; }
         
-        // V21: 多人制輪轉邏輯 (支援 3v3, 4v4...)
         function getNextIdx(k, i) { 
             let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/);
             let len = arr.length || 1;
@@ -496,7 +498,7 @@
                     getEl('courtNum').value = val;
                     setTimeout(() => {
                         safePrompt("請輸入主審姓名", getEl('umpireName').value, (uVal) => {
-                            getEl('umpireName').value = uVal || "";
+                            getEl('umpireName').value = uVal || "城隍爺"; // 預設值
                             isLive = true; updateLiveUI(); syncToFirebase();
                         });
                     }, 200);
