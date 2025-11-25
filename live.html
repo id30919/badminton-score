@@ -11,7 +11,7 @@
         body { background: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
         h1 { text-align: center; color: #ffeb3b; margin-top: 0; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
         
-        /* 網格佈局：自動適應螢幕大小 (手機單欄，電腦多欄) */
+        /* 網格佈局 */
         #grid-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -52,8 +52,9 @@
         }
         .t-score { font-size: 60px; font-weight: bold; line-height: 1; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
         
-        .color-a { color: #ff5252; } /* 紅 */
-        .color-b { color: #448aff; } /* 藍 */
+        /* === 修改處：配色改為橘/藍 === */
+        .color-a { color: #ff9800; } /* 鮮豔橘 */
+        .color-b { color: #00b0ff; } /* 天藍色 */
         
         .vs { font-size: 14px; color: #666; margin: 0 10px; font-weight: bold; }
 
@@ -72,7 +73,6 @@
         
         @keyframes blink { 50% { opacity: 0.3; } }
         
-        /* 若沒有比賽時的提示 */
         .no-data { text-align:center; grid-column: 1/-1; color:#666; margin-top: 50px; font-size: 18px; }
     </style>
 </head>
@@ -127,8 +127,11 @@
 
         function createCard(m) {
             // 處理發球者顯示
+            // 注意：這裡也要對應橘色/藍色的邏輯
+            const serverColor = m.serverTeam === 'A' ? '#ffb74d' : '#80d8ff'; // 發球者名字顏色稍微亮一點，比較好讀
+            
             const serverHTML = m.server 
-                ? `<span style="color:${m.serverTeam === 'A' ? '#ff8a80' : '#82b1ff'}">🎾 ${m.server}</span>` 
+                ? `<span style="color:${serverColor}">🎾 ${m.server}</span>` 
                 : '<span>-</span>';
             
             const div = document.createElement('div');
