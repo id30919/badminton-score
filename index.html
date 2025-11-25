@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V23 (手機適配版)</title>
+    <title>羽球主審 V25 (全裝置完美適配版)</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -17,20 +17,23 @@
             --ui-element-height: 32px;
         }
 
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { 
+            margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; 
+            /* V25 關鍵修正：改用 dvh (動態高度)，自動扣除瀏覽器網址列高度 */
+            height: 100dvh; 
+            display: flex; flex-direction: column; overflow: hidden; 
+        }
         
-        /* === Header 佈局 === */
+        /* === Header === */
         #header { 
             height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
             border-bottom: 1px solid #444;
-            /* 預設給電腦/橫向較寬的內距 */
             padding-left: 60px; 
         }
         
         .header-left { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
         .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 
-        /* 彩虹欄位 */
         .rainbow-input-group {
             display: flex; align-items: stretch; border-radius: 6px; overflow: hidden;
             height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2);
@@ -50,7 +53,6 @@
         .theme-court .rainbow-label { background: #00796b; }
         .theme-court .rainbow-input { background: #004d40; width: 40px; }
 
-        /* Header Icons */
         .btn-icon { 
             background: transparent; border: 1px solid #666; color: #ddd; 
             width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px;
@@ -58,7 +60,6 @@
         }
         .btn-icon:active { background: #555; }
 
-        /* 直播開關 */
         .live-switch {
             display: flex; align-items: center; gap: 6px; cursor: pointer;
             padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111;
@@ -70,23 +71,14 @@
         .live-text { font-size: 12px; color: #aaa; font-weight: bold; white-space: nowrap; }
         .live-switch.active .live-text { color: #fff; }
 
-        /* === V23 關鍵：手機直式 (寬度小於 480px) 的特別樣式 === */
         @media (max-width: 480px) {
-            #header { padding-left: 5px; padding-right: 5px; } /* 減少左右留白 */
-            
-            /* 縮小左側間距 */
+            #header { padding-left: 5px; padding-right: 5px; }
             .header-left { gap: 4px; }
-            
-            /* 縮小欄位文字與寬度 */
             .rainbow-label { padding: 0 5px; font-size: 12px; }
             .theme-umpire .rainbow-input { width: 50px; font-size: 13px; }
             .theme-court .rainbow-input { width: 30px; font-size: 13px; }
-            
-            /* 隱藏直播文字，只留燈號 */
             .live-text { display: none; }
-            .live-switch { padding: 0 8px; } /* 縮小開關寬度 */
-            
-            /* 縮小右側按鈕 */
+            .live-switch { padding: 0 8px; }
             .header-right { gap: 4px; }
             .btn-icon { width: 30px; height: 30px; font-size: 14px; }
             #match-counter { font-size: 14px !important; margin-right: 0; }
@@ -108,7 +100,6 @@
         .btn-log  { background: #43a047; }
         .btn-end  { background: #d32f2f; border: 1px solid #ff8a80; }
 
-        /* Modal & Toast */
         #universal-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .u-modal-box { background: #333; padding: 25px; border-radius: 12px; border: 1px solid #555; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .u-modal-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #ffeb3b; }
@@ -127,22 +118,53 @@
         }
         #toast-msg.show { opacity: 1; }
 
-        /* Court Area */
-        #court { flex: 1; display: flex; position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        /* === Court Area V25 優化 === */
+        #court { 
+            flex: 1; display: flex; position: relative; 
+            /* 允許滾動 */
+            overflow-y: auto; -webkit-overflow-scrolling: touch; 
+        }
         .side { 
-            flex: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+            flex: 1; display: flex; flex-direction: column; 
+            /* 使用 space-around 讓內容在小螢幕時更緊湊 */
+            justify-content: space-around; align-items: center;
             position: relative; cursor: pointer; user-select: none; 
-            transition: background-color 0.2s; padding: 10px 0; overflow: hidden; min-height: 350px;
+            transition: background-color 0.2s; 
+            padding: 5px 0; /* 減少內距 */
+            overflow: hidden; 
+            min-height: 300px; /* 降低最小高度，適應被鍵盤或導航列吃掉的情況 */
         }
         .side.team-a { background-color: var(--color-left); } 
         .side.team-b { background-color: var(--color-right); }
         
-        .score-bg-layer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; width: 100%; text-align: center; opacity: 0.6; }
-        .score { font-size: var(--score-size); font-weight: bold; line-height: 1; pointer-events: none; transition: font-size 0.2s; text-shadow: 0 0 20px rgba(0,0,0,0.3); }
-        .team-name { font-size: 32px; font-weight: bold; text-align: center; pointer-events: auto; z-index: 10; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-top: 5px; }
-        .server-indicator { font-size: 18px; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 20px; margin-bottom: 5px; display: none; pointer-events: none; z-index: 10; backdrop-filter: blur(2px); }
+        .score-bg-layer { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            z-index: 0; width: 100%; text-align: center; opacity: 0.6; 
+        }
+        .score { 
+            font-size: var(--score-size); font-weight: bold; line-height: 1; 
+            pointer-events: none; transition: font-size 0.2s; text-shadow: 0 0 20px rgba(0,0,0,0.3); 
+        }
+
+        .team-name { 
+            font-size: 32px; font-weight: bold; text-align: center; pointer-events: auto; z-index: 10; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-top: 5px; 
+        }
+        
+        .server-indicator { 
+            font-size: 18px; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 20px; margin-bottom: 5px; 
+            display: none; pointer-events: none; z-index: 10; backdrop-filter: blur(2px); 
+        }
         .side.serving .server-indicator { display: block; }
-        .position-box { width: 92%; height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); background: rgba(0,0,0,0.4); pointer-events: auto; z-index: 10; margin-bottom: 5px; backdrop-filter: blur(2px); }
+        
+        /* 發球框：底部增加 margin 確保不會貼底 */
+        .position-box { 
+            width: 92%; height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); 
+            background: rgba(0,0,0,0.4); pointer-events: auto; z-index: 10; 
+            margin-bottom: 20px; /* V25: 增加底部距離 */
+            backdrop-filter: blur(2px); 
+            flex-shrink: 0; /* 禁止縮小 */
+        }
         .pos-l, .pos-r { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; pointer-events: none; font-weight: bold; }
         .pos-active { background: rgba(255,255,255,0.95); color: #000; font-weight: bold; font-size: 22px; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
         
@@ -195,7 +217,7 @@
             </div>
         </div>
         
-        <div class="header-right">
+        <div class="header-right" style="display:flex; align-items:center; gap:8px;">
             <div class="live-switch" id="liveToggle" onclick="handleLiveClick()">
                 <div class="live-dot"></div>
                 <div class="live-text" id="liveText">離線</div>
@@ -240,9 +262,11 @@
     <!-- Settings -->
     <div id="settings-panel">
         <h3>比賽設定</h3>
+        
         <div class="row">
             <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
         </div>
+
         <div class="switch-row">
             <label style="color:white; font-weight:bold; margin:0;">📳 震動回饋</label>
             <div style="display:flex; align-items:center; gap:10px;">
@@ -250,10 +274,12 @@
                 <input type="checkbox" id="vibrationToggle" class="toggle-checkbox" checked onchange="toggleVibration(this.checked)">
             </div>
         </div>
+
         <div class="row" style="background:#333; padding:10px; border-radius:5px; border:1px solid #555;">
             <label style="color:#ffeb3b; font-weight:bold;">🔠 分數大小: <span id="size-val">250</span>px</label>
             <input type="range" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
+        
         <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
         <div class="row"><label>A隊名單 (;分場次)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊" onchange="render()"></div>
         <div class="row"><label>A隊員 (例如: 王,李)</label><input id="teamA_players" class="full-width" value="王,李"></div>
@@ -452,11 +478,31 @@
         }
         
         function swapSidesManual() { safeConfirm("確認手動交換場地？", () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); }); }
-        function resetGame() { state = { leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: getEl('initServer').value, serverIdxA: 0, serverIdxB: 0, swappedPoints: [] }; historyStack = []; render(); }
+        
+        // V24: 強化重置
+        function resetGame() { 
+            state = { 
+                leftTeam: 'A', 
+                scoreA: 0, 
+                scoreB: 0, 
+                serverTeam: getEl('initServer').value, 
+                serverIdxA: 0, 
+                serverIdxB: 0, 
+                swappedPoints: [] 
+            }; 
+            historyStack = []; 
+            render(); 
+            saveToLocal();
+        }
         
         function logGameOnly() { logGame(); showToast("✅ 已紀錄比分"); }
         function endMatchAndNext() {
-            safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => { logGame(); currentMatchIdx++; resetGame(); showToast("✅ 進入下一場"); });
+            safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => { 
+                logGame(); 
+                currentMatchIdx++; 
+                resetGame(); 
+                showToast("✅ 進入下一場"); 
+            });
         }
 
         function render() {
