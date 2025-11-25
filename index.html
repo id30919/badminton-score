@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V22 (視覺平衡版)</title>
+    <title>羽球主審 V23 (永續紀錄版)</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -14,7 +14,7 @@
             --bg-dark: #222; 
             --score-size: 250px; 
             --header-height: 55px;
-            --ui-element-height: 32px; /* 統一元件高度 */
+            --ui-element-height: 32px;
         }
 
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -23,47 +23,32 @@
         #header { 
             height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; flex-shrink: 0; z-index: 100; 
             border-bottom: 1px solid #444;
-            padding-left: 70px; /* 左側避讓區 */
+            padding-left: 70px; 
         }
         
-        .header-left { 
-            display: flex; align-items: center; gap: 10px; 
-            white-space: nowrap; flex-wrap: nowrap;
-        } 
+        .header-left { display: flex; align-items: center; gap: 10px; white-space: nowrap; flex-wrap: nowrap; } 
 
-        /* === V22 優化：彩虹欄位 (比例一致) === */
+        /* 彩虹欄位 */
         .rainbow-input-group {
-            display: flex; align-items: stretch; /* 確保高度拉伸 */
-            border-radius: 6px; overflow: hidden;
-            height: var(--ui-element-height);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex; align-items: stretch; border-radius: 6px; overflow: hidden;
+            height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        
         .rainbow-label { 
-            padding: 0 12px; /* 增加內距讓文字呼吸 */
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 15px; font-weight: bold; color: white;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            padding: 0 12px; display: flex; align-items: center; justify-content: center; 
+            font-size: 15px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
-        
         .rainbow-input { 
-            border: none; color: white; padding: 0; 
-            height: 100%; 
-            text-align: center; /* 關鍵：文字置中 */
+            border: none; color: white; padding: 0; height: 100%; text-align: center;
             font-weight: bold; font-size: 15px; outline: none; cursor: pointer;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', sans-serif; user-select: none; /* 防止選取 */
         }
         
-        /* 主審：紫色系 */
         .theme-umpire .rainbow-label { background: #7b1fa2; }
-        .theme-umpire .rainbow-input { background: #4a148c; width: 80px; } /* 寬度稍微加寬給「城隍爺」 */
-        .theme-umpire .rainbow-input::placeholder { color: rgba(255,255,255,0.6); }
-        
-        /* 場地：綠色系 */
+        .theme-umpire .rainbow-input { background: #4a148c; width: 80px; }
         .theme-court .rainbow-label { background: #00796b; }
-        .theme-court .rainbow-input { background: #004d40; width: 50px; } /* 數字寬度 */
+        .theme-court .rainbow-input { background: #004d40; width: 50px; }
 
-        /* === 其他 Header 元素 === */
+        /* Header Icons */
         .btn-icon { 
             background: transparent; border: 1px solid #666; color: #ddd; 
             width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px;
@@ -74,14 +59,12 @@
         .live-switch {
             display: flex; align-items: center; gap: 6px; cursor: pointer;
             padding: 0 12px; border-radius: 20px; border: 1px solid #555; background: #111;
-            height: var(--ui-element-height); /* 高度統一 */
-            box-sizing: border-box;
-            transition: all 0.3s;
+            height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s;
         }
         .live-switch.active { background: rgba(0, 200, 0, 0.2); border-color: #00ff00; }
         .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; transition: all 0.3s; }
         .live-switch.active .live-dot { background: #00ff00; box-shadow: 0 0 5px #00ff00; }
-        .live-text { font-size: 13px; color: #aaa; font-weight: bold; } /* 字體微調 */
+        .live-text { font-size: 13px; color: #aaa; font-weight: bold; }
         .live-switch.active .live-text { color: #fff; }
 
         /* 第二層：比賽操作列 */
@@ -100,7 +83,7 @@
         .btn-log  { background: #43a047; }
         .btn-end  { background: #d32f2f; border: 1px solid #ff8a80; }
 
-        /* Modal */
+        /* V23: 通用彈窗 (取代原生 prompt) */
         #universal-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); z-index: 3000; 
@@ -122,8 +105,21 @@
         .u-btn-cancel { background: #555; color: white; }
         .u-btn-confirm { background: #00c853; color: white; }
 
+        /* V23: Toast 通知 (取代 Alert) */
+        #toast-msg {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 50px;
+            font-size: 16px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px;
+        }
+        #toast-msg.show { opacity: 1; }
+
         /* Court Area */
-        #court { flex: 1; display: flex; position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        #court { 
+            flex: 1; display: flex; position: relative; 
+            overflow-y: auto; /* 確保可以滑動 */
+            -webkit-overflow-scrolling: touch; 
+        }
         
         .side { 
             flex: 1; display: flex; flex-direction: column; 
@@ -166,6 +162,7 @@
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
 
+        /* 設定面板 */
         #settings-panel, #history-panel { 
             position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); 
             background: #222; z-index: 2000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; 
@@ -189,6 +186,9 @@
 </head>
 <body>
 
+    <!-- V23: Toast 通知 -->
+    <div id="toast-msg">✅ 操作成功</div>
+
     <div id="universal-modal">
         <div class="u-modal-box">
             <div id="u-modal-title" class="u-modal-title">提示</div>
@@ -204,15 +204,11 @@
     <!-- 第一層：系統資訊列 -->
     <div id="header">
         <div class="header-left">
-            <!-- 主審欄位 (紫色系) -->
-            <div class="rainbow-input-group theme-umpire">
+            <div class="rainbow-input-group theme-umpire" onclick="editUmpireName()">
                 <div class="rainbow-label">主審</div>
-                <!-- V22: placeholder 改為 "城隍爺" -->
                 <input type="text" id="umpireName" class="rainbow-input" placeholder="城隍爺" readonly>
             </div>
-            
-            <!-- 場地欄位 (綠色系) -->
-            <div class="rainbow-input-group theme-court">
+            <div class="rainbow-input-group theme-court" onclick="editCourtNum()">
                 <div class="rainbow-label">場地</div>
                 <input type="number" id="courtNum" class="rainbow-input" value="1" readonly>
             </div>
@@ -319,6 +315,9 @@
         try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } 
         catch (e) { console.error("Firebase Error:", e); }
 
+        // V23: Auto-Save Keys
+        const STORAGE_KEY = 'badminton_v23_state';
+
         let currentMatchIdx = 0;
         let state = { leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: 'A', serverIdxA: 0, serverIdxB: 0, swappedPoints: [] };
         let historyStack = []; let pendingRecords = []; 
@@ -326,13 +325,18 @@
 
         const getEl = (id) => document.getElementById(id);
 
+        // Init
         window.addEventListener('load', () => {
+            // V23: Load saved data
+            loadFromLocal();
+
             setupLongPress(getEl('name-box-left'), () => editTeamName('left'));
             setupLongPress(getEl('name-box-right'), () => editTeamName('right'));
             setupLongPress(getEl('pos-box-left'), () => editPlayerName('left'));
             setupLongPress(getEl('pos-box-right'), () => editPlayerName('right'));
-            setupLongPress(getEl('umpireName'), editUmpireName);
-            setupLongPress(getEl('courtNum'), editCourtNum);
+            
+            // Header inputs click edit (no need long press anymore since they are buttons now)
+            // Handled by onclick in HTML
 
             bindClickPoint('area-left', 'left');
             bindClickPoint('area-right', 'right');
@@ -340,11 +344,72 @@
             render();
         });
 
+        // ================= V23: Persistence Logic =================
+        function saveToLocal() {
+            const data = {
+                state, currentMatchIdx, historyStack, pendingRecords,
+                inputs: {
+                    umpireName: getEl('umpireName').value,
+                    courtNum: getEl('courtNum').value,
+                    teamA_name: getEl('teamA_name').value,
+                    teamA_players: getEl('teamA_players').value,
+                    teamB_name: getEl('teamB_name').value,
+                    teamB_players: getEl('teamB_players').value,
+                    gform_link: getEl('gform_link').value,
+                    swapPoints: getEl('swapPoints').value
+                }
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function loadFromLocal() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return;
+            try {
+                const data = JSON.parse(raw);
+                state = data.state || state;
+                currentMatchIdx = data.currentMatchIdx || 0;
+                historyStack = data.historyStack || [];
+                pendingRecords = data.pendingRecords || [];
+                
+                if(data.inputs) {
+                    getEl('umpireName').value = data.inputs.umpireName || "";
+                    getEl('courtNum').value = data.inputs.courtNum || "1";
+                    getEl('teamA_name').value = data.inputs.teamA_name || "橘隊;橘二隊";
+                    getEl('teamA_players').value = data.inputs.teamA_players || "王,李";
+                    getEl('teamB_name').value = data.inputs.teamB_name || "藍隊;藍二隊";
+                    getEl('teamB_players').value = data.inputs.teamB_players || "張,林";
+                    getEl('gform_link').value = data.inputs.gform_link || "";
+                    getEl('swapPoints').value = data.inputs.swapPoints || "11";
+                }
+                
+                // Re-render history log
+                getEl('log-container').innerHTML = '';
+                pendingRecords.forEach(r => renderLogItem(r));
+
+            } catch(e) { console.error("Load Error", e); }
+        }
+
+        // ================= V23: Toast Notification =================
+        let toastTimer;
+        function showToast(msg) {
+            const el = getEl('toast-msg');
+            el.innerHTML = msg;
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+        }
+
+        // ================= Modal System (Fix Keyboard) =================
         let onModalConfirm = null;
         function showModal(title, msg, inputMode, callback, defaultValue = "") {
             getEl('u-modal-title').innerText = title; getEl('u-modal-msg').innerText = msg;
             const input = getEl('u-modal-input');
-            if (inputMode) { input.style.display = 'block'; input.value = defaultValue; input.focus(); } else { input.style.display = 'none'; }
+            if (inputMode) { 
+                input.style.display = 'block'; input.value = defaultValue; 
+                // V23: Delay focus for keyboard
+                setTimeout(() => input.focus(), 300);
+            } else { input.style.display = 'none'; }
             onModalConfirm = () => {
                 if (inputMode) callback(input.value); else callback();
                 closeUniversalModal();
@@ -357,7 +422,7 @@
         function safePrompt(title, defaultValue, callback) { showModal("編輯", title, true, callback, defaultValue); }
 
         function toggleFullScreen() {
-            if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => { alert(`無法進入全螢幕: ${err.message}`); }); } 
+            if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => showToast("無法全螢幕")); } 
             else { if (document.exitFullscreen) document.exitFullscreen(); }
         }
 
@@ -390,8 +455,20 @@
             element.addEventListener('touchcancel', cancel); element.addEventListener('mouseleave', cancel);
         }
 
-        function editUmpireName() { safePrompt("修改主審姓名", getEl('umpireName').value, (val) => { if(val) { getEl('umpireName').value = val; syncToFirebase(); } }); }
-        function editCourtNum() { safePrompt("修改場地編號", getEl('courtNum').value, (val) => { if(val) { getEl('courtNum').value = val; syncToFirebase(); } }); }
+        function editUmpireName() { 
+            safePrompt("修改主審姓名", getEl('umpireName').value, (val) => { 
+                if(val !== null) { 
+                    getEl('umpireName').value = val; saveToLocal(); syncToFirebase(); 
+                } 
+            }); 
+        }
+        function editCourtNum() { 
+            safePrompt("修改場地編號", getEl('courtNum').value, (val) => { 
+                if(val) { 
+                    getEl('courtNum').value = val; saveToLocal(); syncToFirebase(); 
+                } 
+            }); 
+        }
         function editTeamName(side) {
             let key = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
             safePrompt(`修改 ${key} 隊名稱`, getTeamName(key), (val) => { if(val) { updateInputSegment(`team${key}_name`, val); render(); } });
@@ -408,7 +485,6 @@
             if (team === 'A') state.scoreA++; else state.scoreB++;
             if (team !== state.serverTeam) {
                 state.serverTeam = team;
-                // Sideout: change to next player in the roster
                 if (team === 'A') state.serverIdxA = getNextIdx('A', state.serverIdxA); else state.serverIdxB = getNextIdx('B', state.serverIdxB);
             }
             checkSwap(); render();
@@ -418,6 +494,7 @@
             let input = getEl(id); let parts = input.value.split(/[;；]/);
             let safeIdx = Math.min(currentMatchIdx, parts.length - 1);
             parts[safeIdx] = newVal; input.value = parts.join(' ; ');
+            saveToLocal();
         }
         function updatePlayerInput(id, pIdx, newVal) {
             let input = getEl(id); let mParts = input.value.split(/[;；]/);
@@ -425,17 +502,13 @@
             let players = mParts[mIdx].split(/[,，]/);
             players[pIdx % players.length] = newVal;
             mParts[mIdx] = players.join(','); input.value = mParts.join(' ; ');
+            saveToLocal();
         }
 
         function getSegmentedData(id, idx) { let val = getEl(id).value.split(/[;；]/); return val[Math.min(idx, val.length-1)]?.trim() || ""; }
         function getTeamName(k) { return getSegmentedData(`team${k}_name`, currentMatchIdx) || `隊${k}`; }
         function getPlayerName(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/); return arr.length ? arr[i % arr.length].trim() : ""; }
-        
-        function getNextIdx(k, i) { 
-            let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/);
-            let len = arr.length || 1;
-            return (i + 1) % len; 
-        }
+        function getNextIdx(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/); let len = arr.length || 1; return (i + 1) % len; }
 
         function undoPoint() { if (historyStack.length) { state = historyStack.pop(); render(); } }
         function saveState() { let copy = JSON.parse(JSON.stringify(state)); historyStack.push(copy); if(historyStack.length>50) historyStack.shift(); }
@@ -454,11 +527,16 @@
         
         function logGameOnly() {
             logGame();
-            alert("✅ 已紀錄當前比分");
+            showToast("✅ 已紀錄比分");
         }
 
         function endMatchAndNext() {
-            safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => { logGame(); currentMatchIdx++; resetGame(); });
+            safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => { 
+                logGame(); 
+                currentMatchIdx++; 
+                resetGame(); 
+                showToast("✅ 進入下一場");
+            });
         }
 
         function render() {
@@ -486,6 +564,7 @@
             if(targetDiv) { targetDiv.classList.add('pos-active'); targetDiv.innerText = sName; }
 
             syncToFirebase();
+            saveToLocal(); // Auto-save on every render
         }
 
         function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
@@ -494,11 +573,11 @@
             if (isLive) { isLive = false; updateLiveUI(); } 
             else {
                 safePrompt("請輸入場地編號", getEl('courtNum').value, (val) => {
-                    if(!val) { alert('請輸入場地'); return; }
+                    if(!val) { showToast('請輸入場地'); return; }
                     getEl('courtNum').value = val;
                     setTimeout(() => {
                         safePrompt("請輸入主審姓名", getEl('umpireName').value, (uVal) => {
-                            getEl('umpireName').value = uVal || "城隍爺"; // 預設值
+                            getEl('umpireName').value = uVal || "城隍爺";
                             isLive = true; updateLiveUI(); syncToFirebase();
                         });
                     }, 200);
@@ -529,6 +608,7 @@
                 matchStr: `G${currentMatchIdx+1}`, status: 'pending'
             };
             pendingRecords.push(record); renderLogItem(record);
+            saveToLocal();
         }
         function renderLogItem(r) {
             let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
@@ -546,11 +626,11 @@
         }
         async function uploadAllPending() {
             const link = getEl('gform_link').value;
-            if (!link) { alert("請先貼上 Google Form 連結！"); return; }
+            if (!link) { showToast("請先貼上 Google Form 連結！"); return; }
             const config = parseLinkAndGetIDs(link);
-            if (!config || Object.keys(config.mapping).length < 7) { alert("連結格式錯誤！"); return; }
+            if (!config || Object.keys(config.mapping).length < 7) { showToast("連結格式錯誤！"); return; }
             const targets = pendingRecords.filter(r => r.status === 'pending');
-            if (targets.length === 0) { alert("沒有待傳送的紀錄。"); return; }
+            if (targets.length === 0) { showToast("沒有待傳送的紀錄"); return; }
             
             safeConfirm(`上傳 ${targets.length} 筆資料？`, async () => {
                 for (let r of targets) {
@@ -566,9 +646,10 @@
                     } catch (e) {
                         r.status = 'error'; updateStatus(r.id, 'error', '❌ 失敗');
                     }
+                    saveToLocal(); // Update status in storage
                     await new Promise(res => setTimeout(res, 500));
                 }
-                alert("上傳作業結束。");
+                showToast("上傳作業結束");
             });
         }
         function updateStatus(id, type, text) { const el = getEl(`status-${id}`); if (el) { el.className = `log-status status-${type}`; el.innerText = text; } }
