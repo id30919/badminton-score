@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V18 (震動測試版)</title>
+    <title>羽球主審 V18 (平板優化版)</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -12,7 +12,7 @@
             --color-left: #ff5252; 
             --color-right: #448aff; 
             --bg-dark: #222; 
-            --score-size: 150px; 
+            --score-size: 250px; /* 預設加大 */
         }
 
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -40,16 +40,10 @@
         .header-input:active { background: #555; }
         
         input[type=text], input[type=number] { background: #444; border: 1px solid #666; color: white; padding: 5px; border-radius: 4px; }
-        
         .switch-row { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; border-radius: 5px; border: 1px solid #555; margin-bottom: 15px; }
         .toggle-checkbox { width: 20px; height: 20px; cursor: pointer; }
 
-        /* V18: 測試震動按鈕 */
-        .btn-test-vib {
-            background: #ff9800; border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;
-        }
-
-        /* 通用彈窗 */
+        /* Modal */
         #universal-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); z-index: 2000;
@@ -71,11 +65,19 @@
         .u-btn-cancel { background: #555; color: white; }
         .u-btn-confirm { background: #00c853; color: white; }
 
-        #court { flex: 1; display: flex; position: relative; overflow-y: auto; overflow-x: hidden; }
+        /* === V18 佈局大改：使用 Flexbox 解決平板遮擋問題 === */
+        #court { 
+            flex: 1; display: flex; position: relative; 
+            overflow: hidden; /* 平板通常不需滾動，用 Flex 自動縮放 */
+        }
         .side { 
-            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            flex: 1; display: flex; flex-direction: column; align-items: center; 
+            /* 關鍵：讓內容分散對齊，確保發球框在最下面但不出界 */
+            justify-content: space-between; 
             position: relative; cursor: pointer; user-select: none; 
-            transition: background-color 0.2s; min-height: 400px;
+            transition: background-color 0.2s;
+            padding: 20px 0; /* 上下留白 */
+            box-sizing: border-box;
         }
         .side.team-a { background-color: var(--color-left); } 
         .side.team-b { background-color: var(--color-right); }
@@ -83,17 +85,49 @@
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
 
-        .score { font-size: var(--score-size); font-weight: bold; line-height: 1; pointer-events: none; transition: font-size 0.2s; }
-        .team-name { font-size: 32px; font-weight: bold; margin-bottom: 5px; text-align: center; pointer-events: auto; z-index: 5; }
-        .server-indicator { font-size: 20px; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px; margin-top: 5px; display: none; pointer-events: none; }
-        .side.serving .server-indicator { display: block; }
-        .position-box { position: absolute; bottom: 10px; width: 90%; height: 50px; display: flex; border: 2px solid rgba(255,255,255,0.5); pointer-events: auto; opacity: 0.9; z-index: 5; }
-        .pos-l, .pos-r { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; background: rgba(0,0,0,0.1); pointer-events: none; }
-        .pos-active { background: rgba(255,255,255,0.95); color: #000; font-weight: bold; font-size: 18px; box-shadow: 0 0 15px rgba(255,255,255,0.8); }
+        /* 分數區塊：佔據剩餘空間，垂直置中 */
+        .score-container {
+            flex: 1; display: flex; align-items: center; justify-content: center; width: 100%;
+        }
+        .score { 
+            font-size: var(--score-size); font-weight: bold; line-height: 1; 
+            pointer-events: none; transition: font-size 0.2s;
+        }
         
-        #controls-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; display: flex; flex-direction: column; gap: 10px; align-items: center; }
-        .btn-ctrl { background: rgba(0,0,0,0.6); color: white; border: 1px solid white; padding: 8px 18px; border-radius: 50px; cursor: pointer; backdrop-filter: blur(5px); font-size: 14px; white-space: nowrap; }
-        .btn-end-match { background: rgba(200, 0, 0, 0.8); border: 1px solid #ffaaaa; font-size: 14px; font-weight: normal; padding: 8px 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); margin-top: 5px; }
+        .team-name { font-size: 32px; font-weight: bold; text-align: center; pointer-events: auto; z-index: 5; margin-top: 10px; }
+        
+        .server-indicator { font-size: 20px; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px; margin-bottom: 10px; display: none; pointer-events: none; }
+        .side.serving .server-indicator { display: block; }
+        
+        /* V18 優化：發球框不再用 absolute，而是自然排列在底部 */
+        .position-box { 
+            width: 90%; height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.5); 
+            pointer-events: auto; opacity: 0.9; z-index: 5; margin-bottom: 10px;
+            flex-shrink: 0; /* 防止被壓扁 */
+        }
+        .pos-l, .pos-r { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; background: rgba(0,0,0,0.1); pointer-events: none; }
+        .pos-active { background: rgba(255,255,255,0.95); color: #000; font-weight: bold; font-size: 20px; box-shadow: 0 0 15px rgba(255,255,255,0.8); }
+        
+        /* 控制層置中優化 */
+        #controls-overlay { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            z-index: 10; display: flex; flex-direction: column; gap: 12px; align-items: center; 
+            width: 160px; /* 固定寬度確保對齊 */
+        }
+        .btn-ctrl { 
+            background: rgba(0,0,0,0.6); color: white; border: 1px solid white; 
+            padding: 10px 0; width: 100%; border-radius: 50px; 
+            cursor: pointer; backdrop-filter: blur(5px); font-size: 16px; text-align: center;
+        }
+        /* 分段紀錄按鈕 */
+        .btn-log { background: rgba(0, 150, 0, 0.7); border-color: #aaffaa; }
+        
+        /* 比賽結束按鈕 */
+        .btn-end-match { 
+            background: rgba(200, 0, 0, 0.8); border: 1px solid #ffaaaa; font-size: 16px; 
+            font-weight: bold; padding: 12px 0; width: 100%; margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
         
         #settings-panel, #history-panel { position: absolute; top: 60px; left: 0; width: 100%; height: calc(100% - 60px); background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .panel-visible { display: block !important; }
@@ -127,7 +161,7 @@
 
     <div id="header">
         <div class="header-left">
-            <button class="btn-ctrl" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="font-size:12px;">↺ 重置</button>
+            <button class="btn-ctrl" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="font-size:12px; width:auto; padding:5px 10px;">↺ 重置</button>
             <input type="text" id="umpireName" class="header-input" placeholder="主審" style="width:50px;" readonly> 
             <input type="number" id="courtNum" class="header-input" value="1" placeholder="場" style="width:30px;" readonly>
         </div>
@@ -137,16 +171,18 @@
                 <div class="live-text" id="liveText">離線</div>
             </div>
             <span id="match-counter" style="color:yellow; font-weight:bold;">G1</span>
-            <button class="btn-ctrl" onclick="toggleFullScreen()" title="全螢幕">⛶</button>
-            <button class="btn-ctrl" onclick="toggleSettings()">⚙</button>
-            <button class="btn-ctrl" onclick="toggleHistory()">📝</button>
+            <button class="btn-ctrl" onclick="toggleFullScreen()" title="全螢幕" style="width:auto; padding:5px 10px;">⛶</button>
+            <button class="btn-ctrl" onclick="toggleSettings()" style="width:auto; padding:5px 10px;">⚙</button>
+            <button class="btn-ctrl" onclick="toggleHistory()" style="width:auto; padding:5px 10px;">📝</button>
         </div>
     </div>
 
     <div id="court">
         <div id="area-left" class="side team-a">
             <div class="team-name" id="name-box-left">Team A</div>
-            <div class="score" id="disp-score-left">0</div>
+            <div class="score-container">
+                <div class="score" id="disp-score-left">0</div>
+            </div>
             <div class="server-indicator">發球</div>
             <div class="position-box" id="pos-box-left">
                 <div class="pos-l" id="pos-l-left">奇(左)</div>
@@ -155,16 +191,24 @@
         </div>
         <div id="area-right" class="side team-b">
             <div class="team-name" id="name-box-right">Team B</div>
-            <div class="score" id="disp-score-right">0</div>
+            <div class="score-container">
+                <div class="score" id="disp-score-right">0</div>
+            </div>
             <div class="server-indicator">發球</div>
             <div class="position-box" id="pos-box-right">
                 <div class="pos-l" id="pos-l-right">奇(左)</div>
                 <div class="pos-r" id="pos-r-right">偶(右)</div>
             </div>
         </div>
+        
+        <!-- 中間控制區 -->
         <div id="controls-overlay">
             <button class="btn-ctrl" onclick="event.stopPropagation(); undoPoint()">↩ 復原</button>
             <button class="btn-ctrl" onclick="event.stopPropagation(); swapSidesManual()">⇄ 換邊</button>
+            <!-- V18: 加回分段紀錄按鈕 -->
+            <button class="btn-ctrl btn-log" onclick="event.stopPropagation(); logGameOnly()">💾 紀錄比分</button>
+            <!-- 區隔線效果 -->
+            <div style="height:5px;"></div>
             <button class="btn-ctrl btn-end-match" onclick="event.stopPropagation(); endMatchAndNext()">🏁 比賽結束</button>
         </div>
     </div>
@@ -172,19 +216,15 @@
     <!-- 設定面板 -->
     <div id="settings-panel">
         <h3>比賽設定</h3>
-        
-        <!-- V18 修改：加入測試按鈕 -->
         <div class="switch-row">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <label style="color:white; font-weight:bold; margin:0;">📳 震動回饋</label>
-                <button class="btn-test-vib" onclick="doVibrate(500)">測試震動</button>
-            </div>
+            <label style="color:white; font-weight:bold; margin:0;">📳 震動回饋</label>
             <input type="checkbox" id="vibrationToggle" class="toggle-checkbox" checked onchange="toggleVibration(this.checked)">
         </div>
 
         <div class="row" style="background:#333; padding:10px; border-radius:5px; border:1px solid #555;">
-            <label style="color:#ffeb3b; font-weight:bold;">🔠 分數大小: <span id="size-val">150</span>px</label>
-            <input type="range" min="100" max="300" value="150" oninput="changeScoreSize(this.value)">
+            <!-- V18: 上限調整到 600 -->
+            <label style="color:#ffeb3b; font-weight:bold;">🔠 分數大小: <span id="size-val">250</span>px</label>
+            <input type="range" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
         
         <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
@@ -202,7 +242,7 @@
     <div id="history-panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3>歷史紀錄</h3>
-            <button class="btn-ctrl" style="background:#009688;" onclick="uploadAllPending()">☁ 一鍵全部上傳</button>
+            <button class="btn-ctrl" style="background:#009688; width:auto; padding:8px 15px;" onclick="uploadAllPending()">☁ 一鍵全部上傳</button>
         </div>
         <div id="log-container"></div>
         <button class="btn-ctrl" onclick="toggleHistory()" style="margin-top:20px;">關閉</button>
@@ -266,7 +306,7 @@
             else { if (document.exitFullscreen) document.exitFullscreen(); }
         }
 
-        function toggleVibration(checked) { isVibrationEnabled = checked; if(checked) doVibrate(100); }
+        function toggleVibration(checked) { isVibrationEnabled = checked; if(checked) doVibrate(50); }
         function doVibrate(ms) { if(isVibrationEnabled && navigator.vibrate) navigator.vibrate(ms); }
 
         function bindClickPoint(elemId, side) {
@@ -352,6 +392,13 @@
         function resetGame() { state = { leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: getEl('initServer').value, serverIdxA: 0, serverIdxB: 0, swappedPoints: [] }; historyStack = []; render(); }
         function confirmReset() { safeConfirm("⚠️ 確定歸零？", resetGame); }
         
+        // V18: 紀錄本局 (不結束)
+        function logGameOnly() {
+            logGame();
+            alert("✅ 已紀錄當前比分");
+        }
+
+        // 結束比賽
         function endMatchAndNext() {
             safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => { logGame(); currentMatchIdx++; resetGame(); });
         }
