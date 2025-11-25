@@ -3,41 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V20 (色盲友善版)</title>
+    <title>羽球主審 V21 (多人制彩虹版)</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { 
-            /* === V20: 色盲友善配色 (橘 vs 藍) === */
-            --color-left: #ff9800;  /* 鮮豔橘 (高對比) */
-            --color-right: #00b0ff; /* 天藍色 (高對比) */
+            --color-left: #ff9800;  /* 橘隊 */
+            --color-right: #00b0ff; /* 藍隊 */
             --bg-dark: #222; 
             --score-size: 250px; 
         }
 
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* 第一層：系統資訊列 */
+        /* === Header 優化 === */
         #header { 
-            height: 50px; background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; flex-shrink: 0; z-index: 100; 
+            height: 55px; background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; flex-shrink: 0; z-index: 100; 
             border-bottom: 1px solid #444;
-            /* V20: 左側增加內距，避開全螢幕的 X */
-            padding-left: 60px; 
+            /* 左側避讓區，防止被全螢幕 X 擋住 */
+            padding-left: 70px; 
         }
         
+        .header-left { 
+            display: flex; align-items: center; gap: 8px; 
+            /* 強制不換行 */
+            white-space: nowrap; flex-wrap: nowrap;
+        } 
+
+        /* 彩虹欄位樣式 */
+        .rainbow-input-group {
+            display: flex; align-items: center; border-radius: 5px; overflow: hidden;
+            font-size: 14px; font-weight: bold; height: 32px;
+        }
+        .rainbow-label { padding: 0 8px; display: flex; align-items: center; justify-content: center; height: 100%; }
+        .rainbow-input { 
+            border: none; color: white; padding: 0 5px; height: 100%; width: 50px; text-align: center; font-weight: bold; font-size: 15px; outline: none; cursor: pointer;
+        }
+        
+        /* 主審：紫色系 */
+        .theme-umpire .rainbow-label { background: #7b1fa2; }
+        .theme-umpire .rainbow-input { background: #9c27b0; }
+        
+        /* 場地：綠色系 */
+        .theme-court .rainbow-label { background: #00796b; }
+        .theme-court .rainbow-input { background: #009688; }
+
         /* 第二層：比賽操作列 */
         #action-bar {
             height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100;
             border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-
-        .header-left { display: flex; align-items: center; gap: 5px; } 
         
         .btn-icon { 
             background: transparent; border: 1px solid #666; color: #ddd; 
             width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px;
-            display: flex; align-items: center; justify-content: center;
+            display: flex; align-items: center; justify-content: center; margin-left: 5px;
         }
         .btn-icon:active { background: #555; }
 
@@ -48,7 +69,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         .btn-undo { background: #546e7a; }
-        .btn-swap { background: #f57c00; } /* 這裡維持深橘色作為換邊提示 */
+        .btn-swap { background: #f57c00; } 
         .btn-log  { background: #43a047; }
         .btn-end  { background: #d32f2f; border: 1px solid #ff8a80; }
 
@@ -63,15 +84,10 @@
         .live-text { font-size: 12px; color: #aaa; }
         .live-switch.active .live-text { color: #fff; font-weight: bold; }
 
-        .header-input {
-            background: #444; border: 1px solid #666; color: white; padding: 4px; border-radius: 4px; text-align: center; font-size: 14px;
-            user-select: none; cursor: pointer; width: 40px;
-        }
-        .header-input:active { background: #555; }
-        
+        /* Modal */
         #universal-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 2000;
+            background: rgba(0,0,0,0.85); z-index: 3000; /* 最高層級 */
             display: none; flex-direction: column; align-items: center; justify-content: center;
         }
         .u-modal-box { 
@@ -90,7 +106,12 @@
         .u-btn-cancel { background: #555; color: white; }
         .u-btn-confirm { background: #00c853; color: white; }
 
-        #court { flex: 1; display: flex; position: relative; overflow: hidden; }
+        /* Court Area */
+        #court { 
+            flex: 1; display: flex; position: relative; 
+            overflow-y: auto; /* 允許單指滑動 */
+            -webkit-overflow-scrolling: touch; /* iOS 滑動優化 */
+        }
         
         .side { 
             flex: 1; display: flex; flex-direction: column; 
@@ -98,6 +119,7 @@
             position: relative; cursor: pointer; user-select: none; 
             transition: background-color 0.2s;
             padding: 10px 0; overflow: hidden;
+            min-height: 400px; /* 確保橫向時有足夠高度 */
         }
         .side.team-a { background-color: var(--color-left); } 
         .side.team-b { background-color: var(--color-right); }
@@ -130,16 +152,22 @@
         .position-box { 
             width: 90%; height: 70px; display: flex; 
             border: 2px solid rgba(255,255,255,0.8); 
-            background: rgba(0,0,0,0.3); pointer-events: auto; 
+            background: rgba(0,0,0,0.4); pointer-events: auto; 
             z-index: 10; margin-bottom: 10px; backdrop-filter: blur(2px);
         }
-        .pos-l, .pos-r { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; pointer-events: none; }
-        .pos-active { background: rgba(255,255,255,0.95); color: #000; font-weight: bold; font-size: 22px; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
+        .pos-l, .pos-r { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; pointer-events: none; font-weight: bold; }
+        .pos-active { background: rgba(255,255,255,0.95); color: #000; font-weight: bold; font-size: 24px; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
         
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
 
-        #settings-panel, #history-panel { position: absolute; top: 110px; left: 0; width: 100%; height: calc(100% - 110px); background: rgba(0,0,0,0.95); z-index: 200; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
+        /* 設定面板：完全不透明背景，Z-Index 高於一切 */
+        #settings-panel, #history-panel { 
+            position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); 
+            background: #222; /* V21: 改為實色，防止透視 */
+            z-index: 2000; 
+            padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; 
+        }
         .panel-visible { display: block !important; }
         
         .full-width { width: 100%; box-sizing: border-box; font-size: 16px; padding: 10px; margin-bottom: 10px; background: #444; border: 1px solid #666; color: white; }
@@ -174,10 +202,16 @@
     <!-- 第一層：系統資訊列 -->
     <div id="header">
         <div class="header-left">
-            <!-- V20: 重置按鈕已移除，改到設定內，避免被擋住 -->
-            <div style="display:flex; flex-direction:column; align-items:center;">
-                <input type="text" id="umpireName" class="header-input" placeholder="主審" style="width:60px; margin-bottom:2px;" readonly> 
-                <input type="number" id="courtNum" class="header-input" value="1" placeholder="場" style="width:40px;" readonly>
+            <!-- 主審欄位 (紫色系) -->
+            <div class="rainbow-input-group theme-umpire">
+                <div class="rainbow-label">主審</div>
+                <input type="text" id="umpireName" class="rainbow-input" placeholder="姓名" readonly>
+            </div>
+            
+            <!-- 場地欄位 (綠色系) -->
+            <div class="rainbow-input-group theme-court">
+                <div class="rainbow-label">場地</div>
+                <input type="number" id="courtNum" class="rainbow-input" value="1" readonly>
             </div>
         </div>
         
@@ -203,22 +237,22 @@
 
     <div id="court">
         <div id="area-left" class="side team-a">
-            <div class="team-name" id="name-box-left">Team A</div>
+            <div class="team-name" id="name-box-left">橘隊</div>
             <div class="score-bg-layer"><div class="score" id="disp-score-left">0</div></div>
             <div class="server-indicator">發球</div>
             <div class="position-box" id="pos-box-left">
-                <div class="pos-l" id="pos-l-left">奇(左)</div>
-                <div class="pos-r" id="pos-r-left">偶(右)</div>
+                <div class="pos-l" id="pos-l-left">左區</div>
+                <div class="pos-r" id="pos-r-left">右區</div>
             </div>
         </div>
 
         <div id="area-right" class="side team-b">
-            <div class="team-name" id="name-box-right">Team B</div>
+            <div class="team-name" id="name-box-right">藍隊</div>
             <div class="score-bg-layer"><div class="score" id="disp-score-right">0</div></div>
             <div class="server-indicator">發球</div>
             <div class="position-box" id="pos-box-right">
-                <div class="pos-l" id="pos-l-right">奇(左)</div>
-                <div class="pos-r" id="pos-r-right">偶(右)</div>
+                <div class="pos-l" id="pos-l-right">左區</div>
+                <div class="pos-r" id="pos-r-right">右區</div>
             </div>
         </div>
     </div>
@@ -227,9 +261,8 @@
     <div id="settings-panel">
         <h3>比賽設定</h3>
         
-        <!-- V20: 重置按鈕移到這裡 -->
         <div class="row">
-            <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置 (Reset Game)</button>
+            <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
         </div>
 
         <div class="switch-row">
@@ -246,10 +279,10 @@
         </div>
         
         <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
-        <div class="row"><label>A隊名單 (;分場次)</label><input id="teamA_name" class="full-width" value="紅隊;紅二隊" onchange="render()"></div>
-        <div class="row"><label>A隊員 (,分隔)</label><input id="teamA_players" class="full-width" value="王,李;陳,林"></div>
+        <div class="row"><label>A隊名單 (;分場次)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊" onchange="render()"></div>
+        <div class="row"><label>A隊員 (例如: 王,李,陳,林)</label><input id="teamA_players" class="full-width" value="王,李"></div>
         <div class="row"><label>B隊名單 (;分場次)</label><input id="teamB_name" class="full-width" value="藍隊;藍二隊" onchange="render()"></div>
-        <div class="row"><label>B隊員 (,分隔)</label><input id="teamB_players" class="full-width" value="張,林;趙,錢"></div>
+        <div class="row"><label>B隊員 (例如: 張,趙,錢)</label><input id="teamB_players" class="full-width" value="張,林"></div>
         <div class="row"><label>換邊分數</label><input id="swapPoints" class="full-width" value="11"></div>
         <div class="row"><label>發球方</label><select id="initServer" class="full-width" onchange="resetGame()"><option value="A">A隊先發</option><option value="B">B隊先發</option></select></div>
         <div style="display:flex; gap:10px;">
@@ -372,6 +405,7 @@
             if (team === 'A') state.scoreA++; else state.scoreB++;
             if (team !== state.serverTeam) {
                 state.serverTeam = team;
+                // Sideout: change to next player in the roster
                 if (team === 'A') state.serverIdxA = getNextIdx('A', state.serverIdxA); else state.serverIdxB = getNextIdx('B', state.serverIdxB);
             }
             checkSwap(); render();
@@ -393,7 +427,13 @@
         function getSegmentedData(id, idx) { let val = getEl(id).value.split(/[;；]/); return val[Math.min(idx, val.length-1)]?.trim() || ""; }
         function getTeamName(k) { return getSegmentedData(`team${k}_name`, currentMatchIdx) || `隊${k}`; }
         function getPlayerName(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/); return arr.length ? arr[i % arr.length].trim() : ""; }
-        function getNextIdx(k, i) { let len = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/).length || 1; return (i + 1) % len; }
+        
+        // V21: 多人制輪轉邏輯 (支援 3v3, 4v4...)
+        function getNextIdx(k, i) { 
+            let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/);
+            let len = arr.length || 1;
+            return (i + 1) % len; 
+        }
 
         function undoPoint() { if (historyStack.length) { state = historyStack.pop(); render(); } }
         function saveState() { let copy = JSON.parse(JSON.stringify(state)); historyStack.push(copy); if(historyStack.length>50) historyStack.shift(); }
