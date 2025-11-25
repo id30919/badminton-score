@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V17 (全螢幕穩定版)</title>
+    <title>羽球主審 V18 (震動測試版)</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -40,10 +40,16 @@
         .header-input:active { background: #555; }
         
         input[type=text], input[type=number] { background: #444; border: 1px solid #666; color: white; padding: 5px; border-radius: 4px; }
+        
         .switch-row { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; border-radius: 5px; border: 1px solid #555; margin-bottom: 15px; }
         .toggle-checkbox { width: 20px; height: 20px; cursor: pointer; }
 
-        /* === V17 新增：通用彈窗 (取代原生的 confirm/prompt) === */
+        /* V18: 測試震動按鈕 */
+        .btn-test-vib {
+            background: #ff9800; border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;
+        }
+
+        /* 通用彈窗 */
         #universal-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); z-index: 2000;
@@ -58,25 +64,18 @@
         .u-modal-input { 
             width: 100%; padding: 10px; margin-bottom: 20px; font-size: 18px; 
             background: #222; color: white; border: 1px solid #666; border-radius: 5px; 
-            text-align: center; box-sizing: border-box; display: none; /* 預設隱藏 */
+            text-align: center; box-sizing: border-box; display: none; 
         }
         .u-btn-group { display: flex; gap: 10px; justify-content: center; }
         .u-btn { flex: 1; padding: 12px; border-radius: 6px; border: none; font-size: 16px; cursor: pointer; font-weight: bold; }
         .u-btn-cancel { background: #555; color: white; }
         .u-btn-confirm { background: #00c853; color: white; }
 
-        /* Court Area */
-        #court { 
-            flex: 1; display: flex; position: relative; 
-            /* V17 修復：允許垂直滾動，解決橫向時被切掉的問題 */
-            overflow-y: auto; 
-            overflow-x: hidden;
-        }
+        #court { flex: 1; display: flex; position: relative; overflow-y: auto; overflow-x: hidden; }
         .side { 
             flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; 
             position: relative; cursor: pointer; user-select: none; 
-            transition: background-color 0.2s;
-            min-height: 400px; /* V17: 確保在滾動模式下有最小高度 */
+            transition: background-color 0.2s; min-height: 400px;
         }
         .side.team-a { background-color: var(--color-left); } 
         .side.team-b { background-color: var(--color-right); }
@@ -84,33 +83,17 @@
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
 
-        .score { 
-            font-size: var(--score-size); font-weight: bold; line-height: 1; 
-            pointer-events: none; transition: font-size 0.2s;
-        }
-        
+        .score { font-size: var(--score-size); font-weight: bold; line-height: 1; pointer-events: none; transition: font-size 0.2s; }
         .team-name { font-size: 32px; font-weight: bold; margin-bottom: 5px; text-align: center; pointer-events: auto; z-index: 5; }
-        
         .server-indicator { font-size: 20px; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px; margin-top: 5px; display: none; pointer-events: none; }
         .side.serving .server-indicator { display: block; }
-        
-        .position-box { 
-            position: absolute; bottom: 10px; width: 90%; height: 50px; display: flex; border: 2px solid rgba(255,255,255,0.5); 
-            pointer-events: auto; opacity: 0.9; z-index: 5;
-        }
+        .position-box { position: absolute; bottom: 10px; width: 90%; height: 50px; display: flex; border: 2px solid rgba(255,255,255,0.5); pointer-events: auto; opacity: 0.9; z-index: 5; }
         .pos-l, .pos-r { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; background: rgba(0,0,0,0.1); pointer-events: none; }
         .pos-active { background: rgba(255,255,255,0.95); color: #000; font-weight: bold; font-size: 18px; box-shadow: 0 0 15px rgba(255,255,255,0.8); }
         
-        #controls-overlay { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            z-index: 10; display: flex; flex-direction: column; gap: 10px; align-items: center; 
-            /* V17: 確保控制按鈕在滾動時也會浮動在中間 (fixed 或是 absolute container 的高度要夠) */
-        }
+        #controls-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; display: flex; flex-direction: column; gap: 10px; align-items: center; }
         .btn-ctrl { background: rgba(0,0,0,0.6); color: white; border: 1px solid white; padding: 8px 18px; border-radius: 50px; cursor: pointer; backdrop-filter: blur(5px); font-size: 14px; white-space: nowrap; }
-        .btn-end-match { 
-            background: rgba(200, 0, 0, 0.8); border: 1px solid #ffaaaa; font-size: 14px; 
-            font-weight: normal; padding: 8px 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); margin-top: 5px;
-        }
+        .btn-end-match { background: rgba(200, 0, 0, 0.8); border: 1px solid #ffaaaa; font-size: 14px; font-weight: normal; padding: 8px 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); margin-top: 5px; }
         
         #settings-panel, #history-panel { position: absolute; top: 60px; left: 0; width: 100%; height: calc(100% - 60px); background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .panel-visible { display: block !important; }
@@ -130,7 +113,6 @@
 </head>
 <body>
 
-    <!-- V17: 通用互動彈窗 (取代 confirm/prompt) -->
     <div id="universal-modal">
         <div class="u-modal-box">
             <div id="u-modal-title" class="u-modal-title">提示</div>
@@ -190,8 +172,13 @@
     <!-- 設定面板 -->
     <div id="settings-panel">
         <h3>比賽設定</h3>
+        
+        <!-- V18 修改：加入測試按鈕 -->
         <div class="switch-row">
-            <label style="color:white; font-weight:bold; margin:0;">📳 震動回饋</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <label style="color:white; font-weight:bold; margin:0;">📳 震動回饋</label>
+                <button class="btn-test-vib" onclick="doVibrate(500)">測試震動</button>
+            </div>
             <input type="checkbox" id="vibrationToggle" class="toggle-checkbox" checked onchange="toggleVibration(this.checked)">
         </div>
 
@@ -212,7 +199,6 @@
         </div>
     </div>
     
-    <!-- 歷史紀錄 -->
     <div id="history-panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3>歷史紀錄</h3>
@@ -259,59 +245,28 @@
             render();
         });
 
-        // ================= V17 關鍵：自訂 Modal 系統 (防止全螢幕跳出) =================
         let onModalConfirm = null;
-
         function showModal(title, msg, inputMode, callback, defaultValue = "") {
-            getEl('u-modal-title').innerText = title;
-            getEl('u-modal-msg').innerText = msg;
+            getEl('u-modal-title').innerText = title; getEl('u-modal-msg').innerText = msg;
             const input = getEl('u-modal-input');
-            
-            if (inputMode) {
-                input.style.display = 'block';
-                input.value = defaultValue;
-                input.focus();
-            } else {
-                input.style.display = 'none';
-            }
-
+            if (inputMode) { input.style.display = 'block'; input.value = defaultValue; input.focus(); } else { input.style.display = 'none'; }
             onModalConfirm = () => {
-                if (inputMode) callback(input.value);
-                else callback();
+                if (inputMode) callback(input.value); else callback();
                 closeUniversalModal();
             };
-
-            // 綁定確認按鈕
             getEl('u-modal-confirm-btn').onclick = onModalConfirm;
             getEl('universal-modal').style.display = 'flex';
         }
-
-        function closeUniversalModal() {
-            getEl('universal-modal').style.display = 'none';
-            onModalConfirm = null;
-        }
-
-        // 替代原生的 confirm
-        function safeConfirm(msg, yesCallback) {
-            showModal("確認", msg, false, yesCallback);
-        }
-
-        // 替代原生的 prompt
-        function safePrompt(title, defaultValue, callback) {
-            showModal("編輯", title, true, callback, defaultValue);
-        }
-
-        // ======================================================================
+        function closeUniversalModal() { getEl('universal-modal').style.display = 'none'; onModalConfirm = null; }
+        function safeConfirm(msg, yesCallback) { showModal("確認", msg, false, yesCallback); }
+        function safePrompt(title, defaultValue, callback) { showModal("編輯", title, true, callback, defaultValue); }
 
         function toggleFullScreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => { alert(`無法進入全螢幕: ${err.message}`); });
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen();
-            }
+            if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => { alert(`無法進入全螢幕: ${err.message}`); }); } 
+            else { if (document.exitFullscreen) document.exitFullscreen(); }
         }
 
-        function toggleVibration(checked) { isVibrationEnabled = checked; if(checked) doVibrate(50); }
+        function toggleVibration(checked) { isVibrationEnabled = checked; if(checked) doVibrate(100); }
         function doVibrate(ms) { if(isVibrationEnabled && navigator.vibrate) navigator.vibrate(ms); }
 
         function bindClickPoint(elemId, side) {
@@ -340,29 +295,16 @@
             element.addEventListener('touchcancel', cancel); element.addEventListener('mouseleave', cancel);
         }
 
-        // Edit Functions (Converted to use safePrompt)
-        function editUmpireName() {
-            safePrompt("修改主審姓名", getEl('umpireName').value, (val) => {
-                if(val) { getEl('umpireName').value = val; syncToFirebase(); }
-            });
-        }
-        function editCourtNum() {
-            safePrompt("修改場地編號", getEl('courtNum').value, (val) => {
-                if(val) { getEl('courtNum').value = val; syncToFirebase(); }
-            });
-        }
+        function editUmpireName() { safePrompt("修改主審姓名", getEl('umpireName').value, (val) => { if(val) { getEl('umpireName').value = val; syncToFirebase(); } }); }
+        function editCourtNum() { safePrompt("修改場地編號", getEl('courtNum').value, (val) => { if(val) { getEl('courtNum').value = val; syncToFirebase(); } }); }
         function editTeamName(side) {
             let key = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
-            safePrompt(`修改 ${key} 隊名稱`, getTeamName(key), (val) => {
-                if(val) { updateInputSegment(`team${key}_name`, val); render(); }
-            });
+            safePrompt(`修改 ${key} 隊名稱`, getTeamName(key), (val) => { if(val) { updateInputSegment(`team${key}_name`, val); render(); } });
         }
         function editPlayerName(side) {
             let key = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
             let idx = (key === 'A') ? state.serverIdxA : state.serverIdxB;
-            safePrompt("修改球員", getPlayerName(key, idx), (val) => {
-                if(val) { updatePlayerInput(`team${key}_players`, idx, val); render(); }
-            });
+            safePrompt("修改球員", getPlayerName(key, idx), (val) => { if(val) { updatePlayerInput(`team${key}_players`, idx, val); render(); } });
         }
 
         function addPoint(side) {
@@ -402,10 +344,7 @@
             let pts = getEl('swapPoints').value.split(',').map(Number);
             if (pts.includes(max) && !state.swappedPoints.includes(max)) {
                 state.swappedPoints.push(max); 
-                // V17: 使用 safeConfirm
-                safeConfirm(`分數 ${state.scoreA}:${state.scoreB} 換邊？`, () => {
-                    state.leftTeam = (state.leftTeam==='A')?'B':'A'; render();
-                });
+                safeConfirm(`分數 ${state.scoreA}:${state.scoreB} 換邊？`, () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); });
             }
         }
         
@@ -414,9 +353,7 @@
         function confirmReset() { safeConfirm("⚠️ 確定歸零？", resetGame); }
         
         function endMatchAndNext() {
-            safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => {
-                logGame(); currentMatchIdx++; resetGame();
-            });
+            safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => { logGame(); currentMatchIdx++; resetGame(); });
         }
 
         function render() {
@@ -451,11 +388,9 @@
         function handleLiveClick() {
             if (isLive) { isLive = false; updateLiveUI(); } 
             else {
-                // V17: 使用 safePrompt 來模擬直播開啟流程
                 safePrompt("請輸入場地編號", getEl('courtNum').value, (val) => {
                     if(!val) { alert('請輸入場地'); return; }
                     getEl('courtNum').value = val;
-                    // 再問主審
                     setTimeout(() => {
                         safePrompt("請輸入主審姓名", getEl('umpireName').value, (uVal) => {
                             getEl('umpireName').value = uVal || "";
@@ -467,7 +402,6 @@
         }
         
         function confirmGoLive() {
-            // (Deprecated in V17 logic, replaced by prompt flow above, but kept for legacy modal logic if needed)
             const cVal = getEl('modal-court-input').value;
             if (!cVal) { alert("⚠️ 必須輸入場地編號！"); return; }
             getEl('courtNum').value = cVal;
@@ -524,7 +458,6 @@
             const targets = pendingRecords.filter(r => r.status === 'pending');
             if (targets.length === 0) { alert("沒有待傳送的紀錄。"); return; }
             
-            // 使用 safeConfirm
             safeConfirm(`上傳 ${targets.length} 筆資料？`, async () => {
                 for (let r of targets) {
                     updateStatus(r.id, 'sending', '傳送中...');
