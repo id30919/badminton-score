@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V25 (全裝置完美適配版)</title>
+    <title>羽球主審 V26 (絕對穩固版)</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -19,52 +19,32 @@
 
         body { 
             margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; 
-            /* V25 關鍵修正：改用 dvh (動態高度)，自動扣除瀏覽器網址列高度 */
-            height: 100dvh; 
+            height: 100dvh; /* 鎖定視窗高度 */
             display: flex; flex-direction: column; overflow: hidden; 
         }
         
         /* === Header === */
         #header { 
             height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
-            border-bottom: 1px solid #444;
-            padding-left: 60px; 
+            border-bottom: 1px solid #444; padding-left: 60px; 
         }
         
         .header-left { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
         .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 
-        .rainbow-input-group {
-            display: flex; align-items: stretch; border-radius: 6px; overflow: hidden;
-            height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .rainbow-label { 
-            padding: 0 10px; display: flex; align-items: center; justify-content: center; 
-            font-size: 14px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        }
-        .rainbow-input { 
-            border: none; color: white; padding: 0; height: 100%; text-align: center;
-            font-weight: bold; font-size: 14px; outline: none; cursor: pointer;
-            font-family: 'Segoe UI', sans-serif; user-select: none;
-        }
+        .rainbow-input-group { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .rainbow-label { padding: 0 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .rainbow-input { border: none; color: white; padding: 0; height: 100%; text-align: center; font-weight: bold; font-size: 14px; outline: none; cursor: pointer; font-family: 'Segoe UI', sans-serif; user-select: none; }
         
         .theme-umpire .rainbow-label { background: #7b1fa2; }
         .theme-umpire .rainbow-input { background: #4a148c; width: 70px; }
         .theme-court .rainbow-label { background: #00796b; }
         .theme-court .rainbow-input { background: #004d40; width: 40px; }
 
-        .btn-icon { 
-            background: transparent; border: 1px solid #666; color: #ddd; 
-            width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .btn-icon { background: transparent; border: 1px solid #666; color: #ddd; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
         .btn-icon:active { background: #555; }
 
-        .live-switch {
-            display: flex; align-items: center; gap: 6px; cursor: pointer;
-            padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111;
-            height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s;
-        }
+        .live-switch { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111; height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s; }
         .live-switch.active { background: rgba(0, 200, 0, 0.2); border-color: #00ff00; }
         .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; transition: all 0.3s; }
         .live-switch.active .live-dot { background: #00ff00; box-shadow: 0 0 5px #00ff00; }
@@ -85,21 +65,14 @@
         }
 
         /* Action Bar */
-        #action-bar {
-            height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100;
-            border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        .btn-act {
-            flex: 1; margin: 0 3px; height: 44px; border-radius: 8px; border: none;
-            color: white; font-weight: bold; font-size: 15px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 3px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
+        #action-bar { height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .btn-act { flex: 1; margin: 0 3px; height: 44px; border-radius: 8px; border: none; color: white; font-weight: bold; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .btn-undo { background: #546e7a; }
         .btn-swap { background: #f57c00; } 
         .btn-log  { background: #43a047; }
         .btn-end  { background: #d32f2f; border: 1px solid #ff8a80; }
 
+        /* Modal & Toast */
         #universal-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .u-modal-box { background: #333; padding: 25px; border-radius: 12px; border: 1px solid #555; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .u-modal-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #ffeb3b; }
@@ -110,33 +83,29 @@
         .u-btn-cancel { background: #555; color: white; }
         .u-btn-confirm { background: #00c853; color: white; }
 
-        #toast-msg {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px;
-            font-size: 14px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
-            border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
+        #toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px; font-size: 14px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s; border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         #toast-msg.show { opacity: 1; }
 
-        /* === Court Area V25 優化 === */
+        /* === Court Area V26 穩固版 === */
         #court { 
             flex: 1; display: flex; position: relative; 
-            /* 允許滾動 */
             overflow-y: auto; -webkit-overflow-scrolling: touch; 
         }
+        
         .side { 
             flex: 1; display: flex; flex-direction: column; 
-            /* 使用 space-around 讓內容在小螢幕時更緊湊 */
-            justify-content: space-around; align-items: center;
+            /* V26 關鍵：使用 space-between 強制將隊名頂上去，發球框頂下來 */
+            justify-content: space-between; align-items: center;
             position: relative; cursor: pointer; user-select: none; 
             transition: background-color 0.2s; 
-            padding: 5px 0; /* 減少內距 */
+            padding: 15px 0; /* 增加上下內距 */
             overflow: hidden; 
-            min-height: 300px; /* 降低最小高度，適應被鍵盤或導航列吃掉的情況 */
+            min-height: 300px;
         }
         .side.team-a { background-color: var(--color-left); } 
         .side.team-b { background-color: var(--color-right); }
         
+        /* 分數背景層 */
         .score-bg-layer { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             z-index: 0; width: 100%; text-align: center; opacity: 0.6; 
@@ -146,24 +115,38 @@
             pointer-events: none; transition: font-size 0.2s; text-shadow: 0 0 20px rgba(0,0,0,0.3); 
         }
 
+        /* V26: 頂部隊名區 (固定高度) */
+        .team-name-wrapper {
+            width: 100%; text-align: center; z-index: 10; min-height: 50px;
+        }
         .team-name { 
-            font-size: 32px; font-weight: bold; text-align: center; pointer-events: auto; z-index: 10; 
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-top: 5px; 
+            font-size: 32px; font-weight: bold; pointer-events: auto; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8); 
         }
         
+        /* V26: 底部資訊區 (包含發球指示 + 名單框) */
+        /* 將這兩者包在一起，確保結構穩固 */
+        .bottom-info-wrapper {
+            width: 100%; display: flex; flex-direction: column; align-items: center;
+            z-index: 10; 
+            min-height: 100px; /* 預留足夠高度 */
+            justify-content: flex-end;
+        }
+
+        /* 發球指示：不再 display: none，而是 opacity: 0 */
         .server-indicator { 
-            font-size: 18px; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 20px; margin-bottom: 5px; 
-            display: none; pointer-events: none; z-index: 10; backdrop-filter: blur(2px); 
+            font-size: 18px; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 20px; margin-bottom: 8px; 
+            pointer-events: none; backdrop-filter: blur(2px); 
+            opacity: 0; transition: opacity 0.2s; /* 關鍵：隱形但不消失 */
         }
-        .side.serving .server-indicator { display: block; }
+        .side.serving .server-indicator { opacity: 1; }
         
-        /* 發球框：底部增加 margin 確保不會貼底 */
+        /* 發球框 */
         .position-box { 
             width: 92%; height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); 
-            background: rgba(0,0,0,0.4); pointer-events: auto; z-index: 10; 
-            margin-bottom: 20px; /* V25: 增加底部距離 */
+            background: rgba(0,0,0,0.4); pointer-events: auto; 
             backdrop-filter: blur(2px); 
-            flex-shrink: 0; /* 禁止縮小 */
+            flex-shrink: 0;
         }
         .pos-l, .pos-r { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; pointer-events: none; font-weight: bold; }
         .pos-active { background: rgba(255,255,255,0.95); color: #000; font-weight: bold; font-size: 22px; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
@@ -171,8 +154,15 @@
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
 
-        #settings-panel, #history-panel { position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); background: #222; z-index: 2000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
+        /* 設定面板：完全不透明背景，Z-Index 高於一切 */
+        #settings-panel, #history-panel { 
+            position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); 
+            background: #222; /* V21: 改為實色，防止透視 */
+            z-index: 2000; 
+            padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; 
+        }
         .panel-visible { display: block !important; }
+        
         .full-width { width: 100%; box-sizing: border-box; font-size: 16px; padding: 10px; margin-bottom: 10px; background: #444; border: 1px solid #666; color: white; }
         .row { margin-bottom: 15px; } label { display: block; color: #aaa; margin-bottom: 5px; }
         .switch-row { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; border-radius: 5px; border: 1px solid #555; margin-bottom: 15px; }
@@ -239,22 +229,37 @@
 
     <div id="court">
         <div id="area-left" class="side team-a">
-            <div class="team-name" id="name-box-left">橘隊</div>
+            <!-- V26: 頂部 Wrapper -->
+            <div class="team-name-wrapper">
+                <div class="team-name" id="name-box-left">橘隊</div>
+            </div>
+            
+            <!-- 分數背景 -->
             <div class="score-bg-layer"><div class="score" id="disp-score-left">0</div></div>
-            <div class="server-indicator">發球</div>
-            <div class="position-box" id="pos-box-left">
-                <div class="pos-l" id="pos-l-left">左區</div>
-                <div class="pos-r" id="pos-r-left">右區</div>
+            
+            <!-- V26: 底部 Wrapper -->
+            <div class="bottom-info-wrapper">
+                <div class="server-indicator">發球</div>
+                <div class="position-box" id="pos-box-left">
+                    <div class="pos-l" id="pos-l-left">左區</div>
+                    <div class="pos-r" id="pos-r-left">右區</div>
+                </div>
             </div>
         </div>
 
         <div id="area-right" class="side team-b">
-            <div class="team-name" id="name-box-right">藍隊</div>
+            <div class="team-name-wrapper">
+                <div class="team-name" id="name-box-right">藍隊</div>
+            </div>
+            
             <div class="score-bg-layer"><div class="score" id="disp-score-right">0</div></div>
-            <div class="server-indicator">發球</div>
-            <div class="position-box" id="pos-box-right">
-                <div class="pos-l" id="pos-l-right">左區</div>
-                <div class="pos-r" id="pos-r-right">右區</div>
+            
+            <div class="bottom-info-wrapper">
+                <div class="server-indicator">發球</div>
+                <div class="position-box" id="pos-box-right">
+                    <div class="pos-l" id="pos-l-right">左區</div>
+                    <div class="pos-r" id="pos-r-right">右區</div>
+                </div>
             </div>
         </div>
     </div>
