@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V26 (絕對穩固版)</title>
+    <title>羽球主審 V27 (完美重置版)</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -19,32 +19,51 @@
 
         body { 
             margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; 
-            height: 100dvh; /* 鎖定視窗高度 */
+            height: 100dvh; /* V25: 動態高度適配 */
             display: flex; flex-direction: column; overflow: hidden; 
         }
         
         /* === Header === */
         #header { 
             height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
-            border-bottom: 1px solid #444; padding-left: 60px; 
+            border-bottom: 1px solid #444;
+            padding-left: 60px; /* 手機適配 */
         }
         
         .header-left { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
         .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 
-        .rainbow-input-group { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .rainbow-label { padding: 0 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-        .rainbow-input { border: none; color: white; padding: 0; height: 100%; text-align: center; font-weight: bold; font-size: 14px; outline: none; cursor: pointer; font-family: 'Segoe UI', sans-serif; user-select: none; }
+        .rainbow-input-group {
+            display: flex; align-items: stretch; border-radius: 6px; overflow: hidden;
+            height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .rainbow-label { 
+            padding: 0 10px; display: flex; align-items: center; justify-content: center; 
+            font-size: 14px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .rainbow-input { 
+            border: none; color: white; padding: 0; height: 100%; text-align: center;
+            font-weight: bold; font-size: 14px; outline: none; cursor: pointer;
+            font-family: 'Segoe UI', sans-serif; user-select: none;
+        }
         
         .theme-umpire .rainbow-label { background: #7b1fa2; }
         .theme-umpire .rainbow-input { background: #4a148c; width: 70px; }
         .theme-court .rainbow-label { background: #00796b; }
         .theme-court .rainbow-input { background: #004d40; width: 40px; }
 
-        .btn-icon { background: transparent; border: 1px solid #666; color: #ddd; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        .btn-icon { 
+            background: transparent; border: 1px solid #666; color: #ddd; 
+            width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px;
+            display: flex; align-items: center; justify-content: center;
+        }
         .btn-icon:active { background: #555; }
 
-        .live-switch { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111; height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s; }
+        .live-switch {
+            display: flex; align-items: center; gap: 6px; cursor: pointer;
+            padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111;
+            height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s;
+        }
         .live-switch.active { background: rgba(0, 200, 0, 0.2); border-color: #00ff00; }
         .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; transition: all 0.3s; }
         .live-switch.active .live-dot { background: #00ff00; box-shadow: 0 0 5px #00ff00; }
@@ -65,8 +84,16 @@
         }
 
         /* Action Bar */
-        #action-bar { height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .btn-act { flex: 1; margin: 0 3px; height: 44px; border-radius: 8px; border: none; color: white; font-weight: bold; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        #action-bar {
+            height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100;
+            border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .btn-act {
+            flex: 1; margin: 0 3px; height: 44px; border-radius: 8px; border: none;
+            color: white; font-weight: bold; font-size: 15px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 3px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
         .btn-undo { background: #546e7a; }
         .btn-swap { background: #f57c00; } 
         .btn-log  { background: #43a047; }
@@ -83,70 +110,42 @@
         .u-btn-cancel { background: #555; color: white; }
         .u-btn-confirm { background: #00c853; color: white; }
 
-        #toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px; font-size: 14px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s; border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        #toast-msg {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px;
+            font-size: 14px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
         #toast-msg.show { opacity: 1; }
 
-        /* === Court Area V26 穩固版 === */
-        #court { 
-            flex: 1; display: flex; position: relative; 
-            overflow-y: auto; -webkit-overflow-scrolling: touch; 
-        }
-        
+        /* Court Area */
+        #court { flex: 1; display: flex; position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .side { 
-            flex: 1; display: flex; flex-direction: column; 
-            /* V26 關鍵：使用 space-between 強制將隊名頂上去，發球框頂下來 */
-            justify-content: space-between; align-items: center;
+            flex: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center;
             position: relative; cursor: pointer; user-select: none; 
-            transition: background-color 0.2s; 
-            padding: 15px 0; /* 增加上下內距 */
-            overflow: hidden; 
-            min-height: 300px;
+            transition: background-color 0.2s; padding: 15px 0; overflow: hidden; min-height: 300px;
         }
         .side.team-a { background-color: var(--color-left); } 
         .side.team-b { background-color: var(--color-right); }
         
-        /* 分數背景層 */
-        .score-bg-layer { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            z-index: 0; width: 100%; text-align: center; opacity: 0.6; 
-        }
-        .score { 
-            font-size: var(--score-size); font-weight: bold; line-height: 1; 
-            pointer-events: none; transition: font-size 0.2s; text-shadow: 0 0 20px rgba(0,0,0,0.3); 
-        }
-
-        /* V26: 頂部隊名區 (固定高度) */
-        .team-name-wrapper {
-            width: 100%; text-align: center; z-index: 10; min-height: 50px;
-        }
-        .team-name { 
-            font-size: 32px; font-weight: bold; pointer-events: auto; 
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8); 
-        }
+        .score-bg-layer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; width: 100%; text-align: center; opacity: 0.6; }
+        .score { font-size: var(--score-size); font-weight: bold; line-height: 1; pointer-events: none; transition: font-size 0.2s; text-shadow: 0 0 20px rgba(0,0,0,0.3); }
         
-        /* V26: 底部資訊區 (包含發球指示 + 名單框) */
-        /* 將這兩者包在一起，確保結構穩固 */
-        .bottom-info-wrapper {
-            width: 100%; display: flex; flex-direction: column; align-items: center;
-            z-index: 10; 
-            min-height: 100px; /* 預留足夠高度 */
-            justify-content: flex-end;
-        }
-
-        /* 發球指示：不再 display: none，而是 opacity: 0 */
+        .team-name-wrapper { width: 100%; text-align: center; z-index: 10; min-height: 50px; }
+        .team-name { font-size: 32px; font-weight: bold; pointer-events: auto; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        
+        .bottom-info-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; z-index: 10; min-height: 100px; justify-content: flex-end; }
+        
         .server-indicator { 
             font-size: 18px; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 20px; margin-bottom: 8px; 
-            pointer-events: none; backdrop-filter: blur(2px); 
-            opacity: 0; transition: opacity 0.2s; /* 關鍵：隱形但不消失 */
+            pointer-events: none; backdrop-filter: blur(2px); opacity: 0; transition: opacity 0.2s;
         }
         .side.serving .server-indicator { opacity: 1; }
         
-        /* 發球框 */
         .position-box { 
             width: 92%; height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); 
-            background: rgba(0,0,0,0.4); pointer-events: auto; 
-            backdrop-filter: blur(2px); 
-            flex-shrink: 0;
+            background: rgba(0,0,0,0.4); pointer-events: auto; flex-shrink: 0;
+            backdrop-filter: blur(2px); margin-bottom: 20px; /* V25: 底部安全距離 */
         }
         .pos-l, .pos-r { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; pointer-events: none; font-weight: bold; }
         .pos-active { background: rgba(255,255,255,0.95); color: #000; font-weight: bold; font-size: 22px; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
@@ -154,15 +153,8 @@
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
 
-        /* 設定面板：完全不透明背景，Z-Index 高於一切 */
-        #settings-panel, #history-panel { 
-            position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); 
-            background: #222; /* V21: 改為實色，防止透視 */
-            z-index: 2000; 
-            padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; 
-        }
+        #settings-panel, #history-panel { position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); background: #222; z-index: 2000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .panel-visible { display: block !important; }
-        
         .full-width { width: 100%; box-sizing: border-box; font-size: 16px; padding: 10px; margin-bottom: 10px; background: #444; border: 1px solid #666; color: white; }
         .row { margin-bottom: 15px; } label { display: block; color: #aaa; margin-bottom: 5px; }
         .switch-row { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; border-radius: 5px; border: 1px solid #555; margin-bottom: 15px; }
@@ -207,7 +199,7 @@
             </div>
         </div>
         
-        <div class="header-right" style="display:flex; align-items:center; gap:8px;">
+        <div class="header-right">
             <div class="live-switch" id="liveToggle" onclick="handleLiveClick()">
                 <div class="live-dot"></div>
                 <div class="live-text" id="liveText">離線</div>
@@ -229,15 +221,10 @@
 
     <div id="court">
         <div id="area-left" class="side team-a">
-            <!-- V26: 頂部 Wrapper -->
             <div class="team-name-wrapper">
                 <div class="team-name" id="name-box-left">橘隊</div>
             </div>
-            
-            <!-- 分數背景 -->
             <div class="score-bg-layer"><div class="score" id="disp-score-left">0</div></div>
-            
-            <!-- V26: 底部 Wrapper -->
             <div class="bottom-info-wrapper">
                 <div class="server-indicator">發球</div>
                 <div class="position-box" id="pos-box-left">
@@ -251,9 +238,7 @@
             <div class="team-name-wrapper">
                 <div class="team-name" id="name-box-right">藍隊</div>
             </div>
-            
             <div class="score-bg-layer"><div class="score" id="disp-score-right">0</div></div>
-            
             <div class="bottom-info-wrapper">
                 <div class="server-indicator">發球</div>
                 <div class="position-box" id="pos-box-right">
@@ -267,11 +252,9 @@
     <!-- Settings -->
     <div id="settings-panel">
         <h3>比賽設定</h3>
-        
         <div class="row">
             <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
         </div>
-
         <div class="switch-row">
             <label style="color:white; font-weight:bold; margin:0;">📳 震動回饋</label>
             <div style="display:flex; align-items:center; gap:10px;">
@@ -279,12 +262,10 @@
                 <input type="checkbox" id="vibrationToggle" class="toggle-checkbox" checked onchange="toggleVibration(this.checked)">
             </div>
         </div>
-
         <div class="row" style="background:#333; padding:10px; border-radius:5px; border:1px solid #555;">
             <label style="color:#ffeb3b; font-weight:bold;">🔠 分數大小: <span id="size-val">250</span>px</label>
             <input type="range" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
-        
         <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
         <div class="row"><label>A隊名單 (;分場次)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊" onchange="render()"></div>
         <div class="row"><label>A隊員 (例如: 王,李)</label><input id="teamA_players" class="full-width" value="王,李"></div>
@@ -484,15 +465,15 @@
         
         function swapSidesManual() { safeConfirm("確認手動交換場地？", () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); }); }
         
-        // V24: 強化重置
+        // V27: 絕對重置邏輯
         function resetGame() { 
             state = { 
                 leftTeam: 'A', 
                 scoreA: 0, 
                 scoreB: 0, 
-                serverTeam: getEl('initServer').value, 
-                serverIdxA: 0, 
-                serverIdxB: 0, 
+                serverTeam: getEl('initServer').value, // 讀取設定的發球方
+                serverIdxA: 0, // 強制歸零
+                serverIdxB: 0, // 強制歸零
                 swappedPoints: [] 
             }; 
             historyStack = []; 
