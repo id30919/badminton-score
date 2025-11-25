@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V23 (永續紀錄版)</title>
+    <title>羽球主審 V23 (手機適配版)</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { 
-            --color-left: #ff9800;  /* 橘隊 */
-            --color-right: #00b0ff; /* 藍隊 */
+            --color-left: #ff9800; 
+            --color-right: #00b0ff; 
             --bg-dark: #222; 
             --score-size: 250px; 
             --header-height: 55px;
@@ -19,14 +19,16 @@
 
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* === Header === */
+        /* === Header 佈局 === */
         #header { 
-            height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; flex-shrink: 0; z-index: 100; 
+            height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
             border-bottom: 1px solid #444;
-            padding-left: 70px; 
+            /* 預設給電腦/橫向較寬的內距 */
+            padding-left: 60px; 
         }
         
-        .header-left { display: flex; align-items: center; gap: 10px; white-space: nowrap; flex-wrap: nowrap; } 
+        .header-left { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 
         /* 彩虹欄位 */
         .rainbow-input-group {
@@ -34,48 +36,71 @@
             height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         .rainbow-label { 
-            padding: 0 12px; display: flex; align-items: center; justify-content: center; 
-            font-size: 15px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            padding: 0 10px; display: flex; align-items: center; justify-content: center; 
+            font-size: 14px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
         .rainbow-input { 
             border: none; color: white; padding: 0; height: 100%; text-align: center;
-            font-weight: bold; font-size: 15px; outline: none; cursor: pointer;
-            font-family: 'Segoe UI', sans-serif; user-select: none; /* 防止選取 */
+            font-weight: bold; font-size: 14px; outline: none; cursor: pointer;
+            font-family: 'Segoe UI', sans-serif; user-select: none;
         }
         
         .theme-umpire .rainbow-label { background: #7b1fa2; }
-        .theme-umpire .rainbow-input { background: #4a148c; width: 80px; }
+        .theme-umpire .rainbow-input { background: #4a148c; width: 70px; }
         .theme-court .rainbow-label { background: #00796b; }
-        .theme-court .rainbow-input { background: #004d40; width: 50px; }
+        .theme-court .rainbow-input { background: #004d40; width: 40px; }
 
         /* Header Icons */
         .btn-icon { 
             background: transparent; border: 1px solid #666; color: #ddd; 
             width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px;
-            display: flex; align-items: center; justify-content: center; margin-left: 5px;
+            display: flex; align-items: center; justify-content: center;
         }
         .btn-icon:active { background: #555; }
 
+        /* 直播開關 */
         .live-switch {
             display: flex; align-items: center; gap: 6px; cursor: pointer;
-            padding: 0 12px; border-radius: 20px; border: 1px solid #555; background: #111;
+            padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111;
             height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s;
         }
         .live-switch.active { background: rgba(0, 200, 0, 0.2); border-color: #00ff00; }
         .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; transition: all 0.3s; }
         .live-switch.active .live-dot { background: #00ff00; box-shadow: 0 0 5px #00ff00; }
-        .live-text { font-size: 13px; color: #aaa; font-weight: bold; }
+        .live-text { font-size: 12px; color: #aaa; font-weight: bold; white-space: nowrap; }
         .live-switch.active .live-text { color: #fff; }
 
-        /* 第二層：比賽操作列 */
+        /* === V23 關鍵：手機直式 (寬度小於 480px) 的特別樣式 === */
+        @media (max-width: 480px) {
+            #header { padding-left: 5px; padding-right: 5px; } /* 減少左右留白 */
+            
+            /* 縮小左側間距 */
+            .header-left { gap: 4px; }
+            
+            /* 縮小欄位文字與寬度 */
+            .rainbow-label { padding: 0 5px; font-size: 12px; }
+            .theme-umpire .rainbow-input { width: 50px; font-size: 13px; }
+            .theme-court .rainbow-input { width: 30px; font-size: 13px; }
+            
+            /* 隱藏直播文字，只留燈號 */
+            .live-text { display: none; }
+            .live-switch { padding: 0 8px; } /* 縮小開關寬度 */
+            
+            /* 縮小右側按鈕 */
+            .header-right { gap: 4px; }
+            .btn-icon { width: 30px; height: 30px; font-size: 14px; }
+            #match-counter { font-size: 14px !important; margin-right: 0; }
+        }
+
+        /* Action Bar */
         #action-bar {
             height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100;
             border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
         .btn-act {
-            flex: 1; margin: 0 4px; height: 44px; border-radius: 8px; border: none;
-            color: white; font-weight: bold; font-size: 16px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 5px;
+            flex: 1; margin: 0 3px; height: 44px; border-radius: 8px; border: none;
+            color: white; font-weight: bold; font-size: 15px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 3px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         .btn-undo { background: #546e7a; }
@@ -83,92 +108,49 @@
         .btn-log  { background: #43a047; }
         .btn-end  { background: #d32f2f; border: 1px solid #ff8a80; }
 
-        /* V23: 通用彈窗 (取代原生 prompt) */
-        #universal-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 3000; 
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .u-modal-box { 
-            background: #333; padding: 25px; border-radius: 12px; border: 1px solid #555; 
-            width: 85%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+        /* Modal & Toast */
+        #universal-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .u-modal-box { background: #333; padding: 25px; border-radius: 12px; border: 1px solid #555; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .u-modal-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #ffeb3b; }
         .u-modal-msg { font-size: 16px; color: #ddd; margin-bottom: 20px; line-height: 1.5; white-space: pre-wrap; }
-        .u-modal-input { 
-            width: 100%; padding: 10px; margin-bottom: 20px; font-size: 18px; 
-            background: #222; color: white; border: 1px solid #666; border-radius: 5px; 
-            text-align: center; box-sizing: border-box; display: none; 
-        }
+        .u-modal-input { width: 100%; padding: 10px; margin-bottom: 20px; font-size: 18px; background: #222; color: white; border: 1px solid #666; border-radius: 5px; text-align: center; box-sizing: border-box; display: none; }
         .u-btn-group { display: flex; gap: 10px; justify-content: center; }
         .u-btn { flex: 1; padding: 12px; border-radius: 6px; border: none; font-size: 16px; cursor: pointer; font-weight: bold; }
         .u-btn-cancel { background: #555; color: white; }
         .u-btn-confirm { background: #00c853; color: white; }
 
-        /* V23: Toast 通知 (取代 Alert) */
         #toast-msg {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 50px;
-            font-size: 16px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
-            border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px;
+            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px;
+            font-size: 14px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
         #toast-msg.show { opacity: 1; }
 
         /* Court Area */
-        #court { 
-            flex: 1; display: flex; position: relative; 
-            overflow-y: auto; /* 確保可以滑動 */
-            -webkit-overflow-scrolling: touch; 
-        }
-        
+        #court { flex: 1; display: flex; position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .side { 
-            flex: 1; display: flex; flex-direction: column; 
-            justify-content: space-between; align-items: center;
+            flex: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center;
             position: relative; cursor: pointer; user-select: none; 
-            transition: background-color 0.2s; padding: 10px 0; overflow: hidden; min-height: 400px;
+            transition: background-color 0.2s; padding: 10px 0; overflow: hidden; min-height: 350px;
         }
         .side.team-a { background-color: var(--color-left); } 
         .side.team-b { background-color: var(--color-right); }
         
-        .score-bg-layer {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 0; width: 100%; text-align: center; opacity: 0.6;
-        }
-        .score { 
-            font-size: var(--score-size); font-weight: bold; line-height: 1; 
-            pointer-events: none; transition: font-size 0.2s;
-            text-shadow: 0 0 20px rgba(0,0,0,0.3);
-        }
-
-        .team-name { 
-            font-size: 32px; font-weight: bold; text-align: center; 
-            pointer-events: auto; z-index: 10; 
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-top: 10px;
-        }
-        
-        .server-indicator { 
-            font-size: 20px; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; margin-bottom: 5px; 
-            display: none; pointer-events: none; z-index: 10; backdrop-filter: blur(2px);
-        }
+        .score-bg-layer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; width: 100%; text-align: center; opacity: 0.6; }
+        .score { font-size: var(--score-size); font-weight: bold; line-height: 1; pointer-events: none; transition: font-size 0.2s; text-shadow: 0 0 20px rgba(0,0,0,0.3); }
+        .team-name { font-size: 32px; font-weight: bold; text-align: center; pointer-events: auto; z-index: 10; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-top: 5px; }
+        .server-indicator { font-size: 18px; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 20px; margin-bottom: 5px; display: none; pointer-events: none; z-index: 10; backdrop-filter: blur(2px); }
         .side.serving .server-indicator { display: block; }
-        
-        .position-box { 
-            width: 90%; height: 70px; display: flex; border: 2px solid rgba(255,255,255,0.8); 
-            background: rgba(0,0,0,0.4); pointer-events: auto; z-index: 10; margin-bottom: 10px; backdrop-filter: blur(2px);
-        }
-        .pos-l, .pos-r { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; pointer-events: none; font-weight: bold; }
-        .pos-active { background: rgba(255,255,255,0.95); color: #000; font-weight: bold; font-size: 24px; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
+        .position-box { width: 92%; height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); background: rgba(0,0,0,0.4); pointer-events: auto; z-index: 10; margin-bottom: 5px; backdrop-filter: blur(2px); }
+        .pos-l, .pos-r { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; pointer-events: none; font-weight: bold; }
+        .pos-active { background: rgba(255,255,255,0.95); color: #000; font-weight: bold; font-size: 22px; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
         
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
 
-        /* 設定面板 */
-        #settings-panel, #history-panel { 
-            position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); 
-            background: #222; z-index: 2000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; 
-        }
+        #settings-panel, #history-panel { position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); background: #222; z-index: 2000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .panel-visible { display: block !important; }
-        
         .full-width { width: 100%; box-sizing: border-box; font-size: 16px; padding: 10px; margin-bottom: 10px; background: #444; border: 1px solid #666; color: white; }
         .row { margin-bottom: 15px; } label { display: block; color: #aaa; margin-bottom: 5px; }
         .switch-row { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; border-radius: 5px; border: 1px solid #555; margin-bottom: 15px; }
@@ -186,7 +168,6 @@
 </head>
 <body>
 
-    <!-- V23: Toast 通知 -->
     <div id="toast-msg">✅ 操作成功</div>
 
     <div id="universal-modal">
@@ -201,7 +182,7 @@
         </div>
     </div>
 
-    <!-- 第一層：系統資訊列 -->
+    <!-- Header -->
     <div id="header">
         <div class="header-left">
             <div class="rainbow-input-group theme-umpire" onclick="editUmpireName()">
@@ -214,7 +195,7 @@
             </div>
         </div>
         
-        <div style="display:flex; align-items:center; gap: 10px;">
+        <div class="header-right">
             <div class="live-switch" id="liveToggle" onclick="handleLiveClick()">
                 <div class="live-dot"></div>
                 <div class="live-text" id="liveText">離線</div>
@@ -226,7 +207,7 @@
         </div>
     </div>
 
-    <!-- 第二層：比賽操作列 -->
+    <!-- Action Bar -->
     <div id="action-bar">
         <button class="btn-act btn-undo" onclick="undoPoint()">↩ 復原</button>
         <button class="btn-act btn-swap" onclick="swapSidesManual()">⇄ 換邊</button>
@@ -256,14 +237,12 @@
         </div>
     </div>
 
-    <!-- 設定面板 -->
+    <!-- Settings -->
     <div id="settings-panel">
         <h3>比賽設定</h3>
-        
         <div class="row">
             <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
         </div>
-
         <div class="switch-row">
             <label style="color:white; font-weight:bold; margin:0;">📳 震動回饋</label>
             <div style="display:flex; align-items:center; gap:10px;">
@@ -271,17 +250,15 @@
                 <input type="checkbox" id="vibrationToggle" class="toggle-checkbox" checked onchange="toggleVibration(this.checked)">
             </div>
         </div>
-
         <div class="row" style="background:#333; padding:10px; border-radius:5px; border:1px solid #555;">
             <label style="color:#ffeb3b; font-weight:bold;">🔠 分數大小: <span id="size-val">250</span>px</label>
             <input type="range" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
-        
         <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
         <div class="row"><label>A隊名單 (;分場次)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊" onchange="render()"></div>
-        <div class="row"><label>A隊員 (例如: 王,李,陳,林)</label><input id="teamA_players" class="full-width" value="王,李"></div>
+        <div class="row"><label>A隊員 (例如: 王,李)</label><input id="teamA_players" class="full-width" value="王,李"></div>
         <div class="row"><label>B隊名單 (;分場次)</label><input id="teamB_name" class="full-width" value="藍隊;藍二隊" onchange="render()"></div>
-        <div class="row"><label>B隊員 (例如: 張,趙,錢)</label><input id="teamB_players" class="full-width" value="張,林"></div>
+        <div class="row"><label>B隊員 (例如: 張,林)</label><input id="teamB_players" class="full-width" value="張,林"></div>
         <div class="row"><label>換邊分數</label><input id="swapPoints" class="full-width" value="11"></div>
         <div class="row"><label>發球方</label><select id="initServer" class="full-width" onchange="resetGame()"><option value="A">A隊先發</option><option value="B">B隊先發</option></select></div>
         <div style="display:flex; gap:10px;">
@@ -289,7 +266,7 @@
         </div>
     </div>
     
-    <!-- 歷史紀錄 -->
+    <!-- History -->
     <div id="history-panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3>歷史紀錄</h3>
@@ -315,9 +292,7 @@
         try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } 
         catch (e) { console.error("Firebase Error:", e); }
 
-        // V23: Auto-Save Keys
         const STORAGE_KEY = 'badminton_v23_state';
-
         let currentMatchIdx = 0;
         let state = { leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: 'A', serverIdxA: 0, serverIdxB: 0, swappedPoints: [] };
         let historyStack = []; let pendingRecords = []; 
@@ -325,26 +300,17 @@
 
         const getEl = (id) => document.getElementById(id);
 
-        // Init
         window.addEventListener('load', () => {
-            // V23: Load saved data
             loadFromLocal();
-
             setupLongPress(getEl('name-box-left'), () => editTeamName('left'));
             setupLongPress(getEl('name-box-right'), () => editTeamName('right'));
             setupLongPress(getEl('pos-box-left'), () => editPlayerName('left'));
             setupLongPress(getEl('pos-box-right'), () => editPlayerName('right'));
-            
-            // Header inputs click edit (no need long press anymore since they are buttons now)
-            // Handled by onclick in HTML
-
             bindClickPoint('area-left', 'left');
             bindClickPoint('area-right', 'right');
-            
             render();
         });
 
-        // ================= V23: Persistence Logic =================
         function saveToLocal() {
             const data = {
                 state, currentMatchIdx, historyStack, pendingRecords,
@@ -371,7 +337,6 @@
                 currentMatchIdx = data.currentMatchIdx || 0;
                 historyStack = data.historyStack || [];
                 pendingRecords = data.pendingRecords || [];
-                
                 if(data.inputs) {
                     getEl('umpireName').value = data.inputs.umpireName || "";
                     getEl('courtNum').value = data.inputs.courtNum || "1";
@@ -382,38 +347,23 @@
                     getEl('gform_link').value = data.inputs.gform_link || "";
                     getEl('swapPoints').value = data.inputs.swapPoints || "11";
                 }
-                
-                // Re-render history log
                 getEl('log-container').innerHTML = '';
                 pendingRecords.forEach(r => renderLogItem(r));
-
             } catch(e) { console.error("Load Error", e); }
         }
 
-        // ================= V23: Toast Notification =================
         let toastTimer;
         function showToast(msg) {
-            const el = getEl('toast-msg');
-            el.innerHTML = msg;
-            el.classList.add('show');
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+            const el = getEl('toast-msg'); el.innerHTML = msg; el.classList.add('show');
+            clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
         }
 
-        // ================= Modal System (Fix Keyboard) =================
         let onModalConfirm = null;
         function showModal(title, msg, inputMode, callback, defaultValue = "") {
             getEl('u-modal-title').innerText = title; getEl('u-modal-msg').innerText = msg;
             const input = getEl('u-modal-input');
-            if (inputMode) { 
-                input.style.display = 'block'; input.value = defaultValue; 
-                // V23: Delay focus for keyboard
-                setTimeout(() => input.focus(), 300);
-            } else { input.style.display = 'none'; }
-            onModalConfirm = () => {
-                if (inputMode) callback(input.value); else callback();
-                closeUniversalModal();
-            };
+            if (inputMode) { input.style.display = 'block'; input.value = defaultValue; setTimeout(() => input.focus(), 300); } else { input.style.display = 'none'; }
+            onModalConfirm = () => { if (inputMode) callback(input.value); else callback(); closeUniversalModal(); };
             getEl('u-modal-confirm-btn').onclick = onModalConfirm;
             getEl('universal-modal').style.display = 'flex';
         }
@@ -441,34 +391,15 @@
 
         function setupLongPress(element, callback) {
             let timer; const duration = 600;
-            const start = () => {
-                timer = setTimeout(() => {
-                    doVibrate(50);
-                    const parentArea = element.closest('.side');
-                    if(parentArea) parentArea.dataset.longPressHandled = "true";
-                    callback();
-                }, duration);
-            };
+            const start = () => { timer = setTimeout(() => { doVibrate(50); const parentArea = element.closest('.side'); if(parentArea) parentArea.dataset.longPressHandled = "true"; callback(); }, duration); };
             const cancel = () => { clearTimeout(timer); };
             element.addEventListener('mousedown', start); element.addEventListener('touchstart', start, {passive: true});
             element.addEventListener('mouseup', cancel); element.addEventListener('touchend', cancel);
             element.addEventListener('touchcancel', cancel); element.addEventListener('mouseleave', cancel);
         }
 
-        function editUmpireName() { 
-            safePrompt("修改主審姓名", getEl('umpireName').value, (val) => { 
-                if(val !== null) { 
-                    getEl('umpireName').value = val; saveToLocal(); syncToFirebase(); 
-                } 
-            }); 
-        }
-        function editCourtNum() { 
-            safePrompt("修改場地編號", getEl('courtNum').value, (val) => { 
-                if(val) { 
-                    getEl('courtNum').value = val; saveToLocal(); syncToFirebase(); 
-                } 
-            }); 
-        }
+        function editUmpireName() { safePrompt("修改主審姓名", getEl('umpireName').value, (val) => { if(val !== null) { getEl('umpireName').value = val; saveToLocal(); syncToFirebase(); } }); }
+        function editCourtNum() { safePrompt("修改場地編號", getEl('courtNum').value, (val) => { if(val) { getEl('courtNum').value = val; saveToLocal(); syncToFirebase(); } }); }
         function editTeamName(side) {
             let key = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
             safePrompt(`修改 ${key} 隊名稱`, getTeamName(key), (val) => { if(val) { updateInputSegment(`team${key}_name`, val); render(); } });
@@ -493,16 +424,14 @@
         function updateInputSegment(id, newVal) {
             let input = getEl(id); let parts = input.value.split(/[;；]/);
             let safeIdx = Math.min(currentMatchIdx, parts.length - 1);
-            parts[safeIdx] = newVal; input.value = parts.join(' ; ');
-            saveToLocal();
+            parts[safeIdx] = newVal; input.value = parts.join(' ; '); saveToLocal();
         }
         function updatePlayerInput(id, pIdx, newVal) {
             let input = getEl(id); let mParts = input.value.split(/[;；]/);
             let mIdx = Math.min(currentMatchIdx, mParts.length - 1);
             let players = mParts[mIdx].split(/[,，]/);
             players[pIdx % players.length] = newVal;
-            mParts[mIdx] = players.join(','); input.value = mParts.join(' ; ');
-            saveToLocal();
+            mParts[mIdx] = players.join(','); input.value = mParts.join(' ; '); saveToLocal();
         }
 
         function getSegmentedData(id, idx) { let val = getEl(id).value.split(/[;；]/); return val[Math.min(idx, val.length-1)]?.trim() || ""; }
@@ -525,18 +454,9 @@
         function swapSidesManual() { safeConfirm("確認手動交換場地？", () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); }); }
         function resetGame() { state = { leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: getEl('initServer').value, serverIdxA: 0, serverIdxB: 0, swappedPoints: [] }; historyStack = []; render(); }
         
-        function logGameOnly() {
-            logGame();
-            showToast("✅ 已紀錄比分");
-        }
-
+        function logGameOnly() { logGame(); showToast("✅ 已紀錄比分"); }
         function endMatchAndNext() {
-            safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => { 
-                logGame(); 
-                currentMatchIdx++; 
-                resetGame(); 
-                showToast("✅ 進入下一場");
-            });
+            safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => { logGame(); currentMatchIdx++; resetGame(); showToast("✅ 進入下一場"); });
         }
 
         function render() {
@@ -564,7 +484,7 @@
             if(targetDiv) { targetDiv.classList.add('pos-active'); targetDiv.innerText = sName; }
 
             syncToFirebase();
-            saveToLocal(); // Auto-save on every render
+            saveToLocal(); 
         }
 
         function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
