@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V27 (完美重置版)</title>
+    <title>羽球主審 V30 (設定優化版)</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -19,7 +19,7 @@
 
         body { 
             margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; 
-            height: 100dvh; /* V25: 動態高度適配 */
+            height: 100dvh; 
             display: flex; flex-direction: column; overflow: hidden; 
         }
         
@@ -27,7 +27,7 @@
         #header { 
             height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
             border-bottom: 1px solid #444;
-            padding-left: 60px; /* 手機適配 */
+            padding-left: 60px; 
         }
         
         .header-left { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
@@ -119,18 +119,28 @@
         #toast-msg.show { opacity: 1; }
 
         /* Court Area */
-        #court { flex: 1; display: flex; position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        #court { 
+            flex: 1; display: flex; position: relative; 
+            overflow-y: auto; -webkit-overflow-scrolling: touch; 
+        }
         .side { 
-            flex: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+            flex: 1; display: flex; flex-direction: column; 
+            justify-content: space-between; align-items: center;
             position: relative; cursor: pointer; user-select: none; 
             transition: background-color 0.2s; padding: 15px 0; overflow: hidden; min-height: 300px;
         }
         .side.team-a { background-color: var(--color-left); } 
         .side.team-b { background-color: var(--color-right); }
         
-        .score-bg-layer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; width: 100%; text-align: center; opacity: 0.6; }
-        .score { font-size: var(--score-size); font-weight: bold; line-height: 1; pointer-events: none; transition: font-size 0.2s; text-shadow: 0 0 20px rgba(0,0,0,0.3); }
-        
+        .score-bg-layer { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            z-index: 0; width: 100%; text-align: center; opacity: 0.6; 
+        }
+        .score { 
+            font-size: var(--score-size); font-weight: bold; line-height: 1; 
+            pointer-events: none; transition: font-size 0.2s; text-shadow: 0 0 20px rgba(0,0,0,0.3); 
+        }
+
         .team-name-wrapper { width: 100%; text-align: center; z-index: 10; min-height: 50px; }
         .team-name { font-size: 32px; font-weight: bold; pointer-events: auto; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
         
@@ -145,7 +155,7 @@
         .position-box { 
             width: 92%; height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); 
             background: rgba(0,0,0,0.4); pointer-events: auto; flex-shrink: 0;
-            backdrop-filter: blur(2px); margin-bottom: 20px; /* V25: 底部安全距離 */
+            backdrop-filter: blur(2px); margin-bottom: 20px; 
         }
         .pos-l, .pos-r { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; pointer-events: none; font-weight: bold; }
         .pos-active { background: rgba(255,255,255,0.95); color: #000; font-weight: bold; font-size: 22px; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
@@ -199,14 +209,15 @@
             </div>
         </div>
         
-        <div class="header-right">
+        <div class="header-right" style="display:flex; align-items:center; gap:8px;">
             <div class="live-switch" id="liveToggle" onclick="handleLiveClick()">
                 <div class="live-dot"></div>
                 <div class="live-text" id="liveText">離線</div>
             </div>
             <span id="match-counter" style="color:yellow; font-weight:bold; font-size:18px;">G1</span>
             <button class="btn-icon" onclick="toggleFullScreen()" title="全螢幕">⛶</button>
-            <button class="btn-icon" onclick="toggleSettings()">⚙</button>
+            <!-- 注意：這裡改成呼叫 openSettings() -->
+            <button class="btn-icon" onclick="openSettings()">⚙</button>
             <button class="btn-icon" onclick="toggleHistory()">📝</button>
         </div>
     </div>
@@ -252,9 +263,11 @@
     <!-- Settings -->
     <div id="settings-panel">
         <h3>比賽設定</h3>
+        
         <div class="row">
             <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
         </div>
+
         <div class="switch-row">
             <label style="color:white; font-weight:bold; margin:0;">📳 震動回饋</label>
             <div style="display:flex; align-items:center; gap:10px;">
@@ -262,19 +275,24 @@
                 <input type="checkbox" id="vibrationToggle" class="toggle-checkbox" checked onchange="toggleVibration(this.checked)">
             </div>
         </div>
+
         <div class="row" style="background:#333; padding:10px; border-radius:5px; border:1px solid #555;">
             <label style="color:#ffeb3b; font-weight:bold;">🔠 分數大小: <span id="size-val">250</span>px</label>
             <input type="range" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
+        
         <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
-        <div class="row"><label>A隊名單 (;分場次)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊" onchange="render()"></div>
+        <div class="row"><label>A隊名單 (;分場次)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊"></div>
         <div class="row"><label>A隊員 (例如: 王,李)</label><input id="teamA_players" class="full-width" value="王,李"></div>
-        <div class="row"><label>B隊名單 (;分場次)</label><input id="teamB_name" class="full-width" value="藍隊;藍二隊" onchange="render()"></div>
+        <div class="row"><label>B隊名單 (;分場次)</label><input id="teamB_name" class="full-width" value="藍隊;藍二隊"></div>
         <div class="row"><label>B隊員 (例如: 張,林)</label><input id="teamB_players" class="full-width" value="張,林"></div>
         <div class="row"><label>換邊分數</label><input id="swapPoints" class="full-width" value="11"></div>
         <div class="row"><label>發球方</label><select id="initServer" class="full-width" onchange="resetGame()"><option value="A">A隊先發</option><option value="B">B隊先發</option></select></div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-act" style="background:green;" onclick="toggleSettings()">關閉</button>
+        
+        <!-- V30: 雙按鈕區域 -->
+        <div style="display:flex; gap:10px; margin-top:20px; padding-bottom:20px;">
+            <button class="btn-act" style="background:#555;" onclick="cancelSettings()">✖ 取消</button>
+            <button class="btn-act" style="background:green;" onclick="saveSettings()">✔ 儲存並關閉</button>
         </div>
     </div>
     
@@ -364,6 +382,45 @@
             } catch(e) { console.error("Load Error", e); }
         }
 
+        // ================= V30: Settings Logic =================
+        let settingsSnapshot = {};
+
+        function openSettings() {
+            // Take a snapshot of current values
+            settingsSnapshot = {
+                gform_link: getEl('gform_link').value,
+                teamA_name: getEl('teamA_name').value,
+                teamA_players: getEl('teamA_players').value,
+                teamB_name: getEl('teamB_name').value,
+                teamB_players: getEl('teamB_players').value,
+                swapPoints: getEl('swapPoints').value
+            };
+            getEl('settings-panel').classList.add('panel-visible');
+        }
+
+        function cancelSettings() {
+            // Restore values from snapshot
+            if (settingsSnapshot) {
+                getEl('gform_link').value = settingsSnapshot.gform_link || "";
+                getEl('teamA_name').value = settingsSnapshot.teamA_name || "";
+                getEl('teamA_players').value = settingsSnapshot.teamA_players || "";
+                getEl('teamB_name').value = settingsSnapshot.teamB_name || "";
+                getEl('teamB_players').value = settingsSnapshot.teamB_players || "";
+                getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
+            }
+            getEl('settings-panel').classList.remove('panel-visible');
+            render(); // Re-render to revert any potential visual changes
+        }
+
+        function saveSettings() {
+            // Apply changes
+            render(); // Update UI with new names
+            saveToLocal(); // Persist to storage
+            syncToFirebase(); // Update live view
+            getEl('settings-panel').classList.remove('panel-visible');
+            showToast("✅ 設定已儲存");
+        }
+
         let toastTimer;
         function showToast(msg) {
             const el = getEl('toast-msg'); el.innerHTML = msg; el.classList.add('show');
@@ -446,6 +503,13 @@
             mParts[mIdx] = players.join(','); input.value = mParts.join(' ; '); saveToLocal();
         }
 
+        function getCurrentPlayersString(teamKey) {
+            let raw = getEl(`team${teamKey}_players`).value;
+            let parts = raw.split(/[;；]/);
+            let idx = Math.min(currentMatchIdx, parts.length - 1);
+            return parts[idx] ? parts[idx].trim() : "";
+        }
+
         function getSegmentedData(id, idx) { let val = getEl(id).value.split(/[;；]/); return val[Math.min(idx, val.length-1)]?.trim() || ""; }
         function getTeamName(k) { return getSegmentedData(`team${k}_name`, currentMatchIdx) || `隊${k}`; }
         function getPlayerName(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/); return arr.length ? arr[i % arr.length].trim() : ""; }
@@ -464,22 +528,7 @@
         }
         
         function swapSidesManual() { safeConfirm("確認手動交換場地？", () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); }); }
-        
-        // V27: 絕對重置邏輯
-        function resetGame() { 
-            state = { 
-                leftTeam: 'A', 
-                scoreA: 0, 
-                scoreB: 0, 
-                serverTeam: getEl('initServer').value, // 讀取設定的發球方
-                serverIdxA: 0, // 強制歸零
-                serverIdxB: 0, // 強制歸零
-                swappedPoints: [] 
-            }; 
-            historyStack = []; 
-            render(); 
-            saveToLocal();
-        }
+        function resetGame() { state = { leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: getEl('initServer').value, serverIdxA: 0, serverIdxB: 0, swappedPoints: [] }; historyStack = []; render(); saveToLocal(); }
         
         function logGameOnly() { logGame(); showToast("✅ 已紀錄比分"); }
         function endMatchAndNext() {
@@ -547,7 +596,9 @@
             const courtNum = getEl('courtNum').value; if(!courtNum) return;
             db.ref('courts/court_' + courtNum).set({
                 court: courtNum, match: `G${currentMatchIdx+1}`, umpire: getEl('umpireName').value,
-                teamA: getTeamName('A'), teamB: getTeamName('B'), scoreA: state.scoreA, scoreB: state.scoreB,
+                teamA: getTeamName('A'), teamB: getTeamName('B'), 
+                playersA: getCurrentPlayersString('A'), playersB: getCurrentPlayersString('B'),
+                scoreA: state.scoreA, scoreB: state.scoreB,
                 server: getPlayerName(state.serverTeam, state.serverTeam==='A'?state.serverIdxA:state.serverIdxB),
                 serverTeam: state.serverTeam, timestamp: Date.now()
             });
@@ -605,7 +656,8 @@
             });
         }
         function updateStatus(id, type, text) { const el = getEl(`status-${id}`); if (el) { el.className = `log-status status-${type}`; el.innerText = text; } }
-        function toggleSettings() { getEl('settings-panel').classList.toggle('panel-visible'); }
+        // V30: Updated toggleSettings to openSettings
+        function toggleSettings() { openSettings(); } 
         function toggleHistory() { getEl('history-panel').classList.toggle('panel-visible'); }
     </script>
 </body>
