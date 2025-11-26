@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V31 (智慧防重覆版)</title>
+    <title>羽球主審 V32 (隊友修正版)</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -23,11 +23,10 @@
             display: flex; flex-direction: column; overflow: hidden; 
         }
         
-        /* === Header === */
+        /* Header */
         #header { 
             height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
-            border-bottom: 1px solid #444;
-            padding-left: 60px; 
+            border-bottom: 1px solid #444; padding-left: 60px; 
         }
         
         .header-left { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
@@ -114,7 +113,7 @@
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px;
             font-size: 14px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
-            border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5); white-space: nowrap;
+            border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
         #toast-msg.show { opacity: 1; }
 
@@ -196,7 +195,6 @@
         </div>
     </div>
 
-    <!-- Header -->
     <div id="header">
         <div class="header-left">
             <div class="rainbow-input-group theme-umpire" onclick="editUmpireName()">
@@ -221,7 +219,6 @@
         </div>
     </div>
 
-    <!-- Action Bar -->
     <div id="action-bar">
         <button class="btn-act btn-undo" onclick="undoPoint()">↩ 復原</button>
         <button class="btn-act btn-swap" onclick="swapSidesManual()">⇄ 換邊</button>
@@ -231,9 +228,7 @@
 
     <div id="court">
         <div id="area-left" class="side team-a">
-            <div class="team-name-wrapper">
-                <div class="team-name" id="name-box-left">橘隊</div>
-            </div>
+            <div class="team-name-wrapper"><div class="team-name" id="name-box-left">橘隊</div></div>
             <div class="score-bg-layer"><div class="score" id="disp-score-left">0</div></div>
             <div class="bottom-info-wrapper">
                 <div class="server-indicator">發球</div>
@@ -245,9 +240,7 @@
         </div>
 
         <div id="area-right" class="side team-b">
-            <div class="team-name-wrapper">
-                <div class="team-name" id="name-box-right">藍隊</div>
-            </div>
+            <div class="team-name-wrapper"><div class="team-name" id="name-box-right">藍隊</div></div>
             <div class="score-bg-layer"><div class="score" id="disp-score-right">0</div></div>
             <div class="bottom-info-wrapper">
                 <div class="server-indicator">發球</div>
@@ -262,11 +255,7 @@
     <!-- Settings -->
     <div id="settings-panel">
         <h3>比賽設定</h3>
-        
-        <div class="row">
-            <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
-        </div>
-
+        <div class="row"><button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button></div>
         <div class="switch-row">
             <label style="color:white; font-weight:bold; margin:0;">📳 震動回饋</label>
             <div style="display:flex; align-items:center; gap:10px;">
@@ -274,12 +263,10 @@
                 <input type="checkbox" id="vibrationToggle" class="toggle-checkbox" checked onchange="toggleVibration(this.checked)">
             </div>
         </div>
-
         <div class="row" style="background:#333; padding:10px; border-radius:5px; border:1px solid #555;">
             <label style="color:#ffeb3b; font-weight:bold;">🔠 分數大小: <span id="size-val">250</span>px</label>
             <input type="range" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
-        
         <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
         <div class="row"><label>A隊名單 (;分場次)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊"></div>
         <div class="row"><label>A隊員 (例如: 王,李)</label><input id="teamA_players" class="full-width" value="王,李"></div>
@@ -287,14 +274,12 @@
         <div class="row"><label>B隊員 (例如: 張,林)</label><input id="teamB_players" class="full-width" value="張,林"></div>
         <div class="row"><label>換邊分數</label><input id="swapPoints" class="full-width" value="11"></div>
         <div class="row"><label>發球方</label><select id="initServer" class="full-width" onchange="resetGame()"><option value="A">A隊先發</option><option value="B">B隊先發</option></select></div>
-        
         <div style="display:flex; gap:10px; margin-top:20px; padding-bottom:20px;">
             <button class="btn-act" style="background:#555;" onclick="cancelSettings()">✖ 取消</button>
             <button class="btn-act" style="background:green;" onclick="saveSettings()">✔ 儲存並關閉</button>
         </div>
     </div>
     
-    <!-- History -->
     <div id="history-panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3>歷史紀錄</h3>
@@ -380,7 +365,94 @@
             } catch(e) { console.error("Load Error", e); }
         }
 
-        // ================= Settings Logic =================
+        // ================= V32 邏輯修正 =================
+        function render() {
+            let isA_Left = (state.leftTeam === 'A');
+            getEl('name-box-left').innerText = getTeamName(isA_Left?'A':'B');
+            getEl('name-box-right').innerText = getTeamName(isA_Left?'B':'A');
+            getEl('disp-score-left').innerText = isA_Left ? state.scoreA : state.scoreB;
+            getEl('disp-score-right').innerText = isA_Left ? state.scoreB : state.scoreA;
+            getEl('match-counter').innerText = `G${currentMatchIdx+1}`;
+            
+            getEl('area-left').className = isA_Left ? "side team-a" : "side team-b"; 
+            getEl('area-right').className = isA_Left ? "side team-b" : "side team-a";
+            
+            getEl('area-left').classList.remove('serving'); getEl('area-right').classList.remove('serving');
+            if (state.serverTeam === state.leftTeam) getEl('area-left').classList.add('serving'); else getEl('area-right').classList.add('serving');
+
+            // 1. 先清除所有高亮與文字
+            ['pos-l-left','pos-r-left','pos-l-right','pos-r-right'].forEach(id=>{
+                const el = getEl(id);
+                el.classList.remove('pos-active');
+                el.innerText = ""; // 先清空
+            });
+
+            // 2. 計算雙方的球員 (發球者 & 搭檔)
+            // Team A (Server Idx, Partner is Idx+1)
+            let serverA = getPlayerName('A', state.serverIdxA);
+            let partnerA = getPlayerName('A', getNextIdx('A', state.serverIdxA));
+            
+            // Team B
+            let serverB = getPlayerName('B', state.serverIdxB);
+            let partnerB = getPlayerName('B', getNextIdx('B', state.serverIdxB));
+
+            // 3. 填入文字 (根據分數單雙數決定位置)
+            // 注意：羽球規則，偶數分在右區(Even/Right)，奇數分在左區(Odd/Left)
+            // 這裡的 Left/Right 是相對於「主審看過去」的左右
+            
+            // 處理左側區域 (假設是 A 隊)
+            let leftTeamKey = state.leftTeam; // 'A' or 'B'
+            let leftTeamScore = (leftTeamKey === 'A') ? state.scoreA : state.scoreB;
+            let leftServerName = (leftTeamKey === 'A') ? serverA : serverB;
+            let leftPartnerName = (leftTeamKey === 'A') ? partnerA : partnerB;
+            let leftTeamTotalPlayers = getSegmentedData(`team${leftTeamKey}_players`, currentMatchIdx).split(/[,，]/).length;
+
+            // 左側區域的 DOM ID
+            // pos-l-left = 奇數區(左), pos-r-left = 偶數區(右)
+            if (leftTeamScore % 2 === 0) { // 偶數分
+                getEl('pos-r-left').innerText = leftServerName; // 發球者在右
+                if(leftTeamTotalPlayers > 1) getEl('pos-l-left').innerText = leftPartnerName; // 搭檔在左
+            } else { // 奇數分
+                getEl('pos-l-left').innerText = leftServerName; // 發球者在左
+                if(leftTeamTotalPlayers > 1) getEl('pos-r-left').innerText = leftPartnerName; // 搭檔在右
+            }
+
+            // 處理右側區域 (假設是 B 隊)
+            let rightTeamKey = (leftTeamKey === 'A') ? 'B' : 'A';
+            let rightTeamScore = (rightTeamKey === 'A') ? state.scoreA : state.scoreB;
+            let rightServerName = (rightTeamKey === 'A') ? serverA : serverB;
+            let rightPartnerName = (rightTeamKey === 'A') ? partnerA : partnerB;
+            let rightTeamTotalPlayers = getSegmentedData(`team${rightTeamKey}_players`, currentMatchIdx).split(/[,，]/).length;
+
+            // 右側區域的 DOM ID
+            // pos-l-right = 奇數區(左), pos-r-right = 偶數區(右)
+            if (rightTeamScore % 2 === 0) { // 偶數分
+                getEl('pos-r-right').innerText = rightServerName; // 發球者在右
+                if(rightTeamTotalPlayers > 1) getEl('pos-l-right').innerText = rightPartnerName;
+            } else { // 奇數分
+                getEl('pos-l-right').innerText = rightServerName; // 發球者在左
+                if(rightTeamTotalPlayers > 1) getEl('pos-r-right').innerText = rightPartnerName;
+            }
+
+            // 4. 高亮「真正發球者」
+            // 我們已經知道誰是發球方 (state.serverTeam)
+            let activeTeamSide = (state.serverTeam === state.leftTeam) ? 'left' : 'right';
+            let activeScore = (state.serverTeam === 'A') ? state.scoreA : state.scoreB;
+            
+            let targetId = "";
+            if (activeTeamSide === 'left') {
+                targetId = (activeScore % 2 === 0) ? 'pos-r-left' : 'pos-l-left';
+            } else {
+                targetId = (activeScore % 2 === 0) ? 'pos-r-right' : 'pos-l-right';
+            }
+            getEl(targetId).classList.add('pos-active');
+
+            syncToFirebase();
+            saveToLocal(); 
+        }
+
+        // ============================================
+
         let settingsSnapshot = {};
         function openSettings() {
             settingsSnapshot = {
@@ -475,6 +547,7 @@
             if (team === 'A') state.scoreA++; else state.scoreB++;
             if (team !== state.serverTeam) {
                 state.serverTeam = team;
+                // Sideout: change to next player in the roster
                 if (team === 'A') state.serverIdxA = getNextIdx('A', state.serverIdxA); else state.serverIdxB = getNextIdx('B', state.serverIdxB);
             }
             checkSwap(); render();
@@ -520,28 +593,17 @@
         function swapSidesManual() { safeConfirm("確認手動交換場地？", () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); }); }
         function resetGame() { state = { leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: getEl('initServer').value, serverIdxA: 0, serverIdxB: 0, swappedPoints: [] }; historyStack = []; render(); saveToLocal(); }
         
-        // V31: 智慧防重覆邏輯
         function logGameOnly() {
-            // 檢查清單中最後一筆是否跟當前一模一樣
+            // 智慧防重覆
             if (pendingRecords.length > 0) {
                 const last = pendingRecords[pendingRecords.length - 1];
-                // 檢查場次(Match)、A分數、B分數、場地(Court)
-                if (last.matchStr === `G${currentMatchIdx+1}` &&
-                    last.sA === state.scoreA &&
-                    last.sB === state.scoreB) {
-                    showToast("⚠️ 此比分已紀錄過");
-                    return; // 拒絕存檔
+                if (last.matchStr === `G${currentMatchIdx+1}` && last.sA === state.scoreA && last.sB === state.scoreB) {
+                    showToast("⚠️ 此比分已紀錄過"); return;
                 }
             }
-            
-            logGame(); // 執行存檔
-            
+            logGame(); 
             const link = getEl('gform_link').value;
-            if (!link) {
-                showToast("⚠️ 已存本機 (未設定連結)");
-            } else {
-                showToast("✅ 已紀錄比分");
-            }
+            if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
         }
 
         function endMatchAndNext() {
@@ -551,34 +613,6 @@
                 resetGame(); 
                 showToast("✅ 進入下一場"); 
             });
-        }
-
-        function render() {
-            let isA_Left = (state.leftTeam === 'A');
-            getEl('name-box-left').innerText = getTeamName(isA_Left?'A':'B');
-            getEl('name-box-right').innerText = getTeamName(isA_Left?'B':'A');
-            getEl('disp-score-left').innerText = isA_Left ? state.scoreA : state.scoreB;
-            getEl('disp-score-right').innerText = isA_Left ? state.scoreB : state.scoreA;
-            getEl('match-counter').innerText = `G${currentMatchIdx+1}`;
-            
-            getEl('area-left').className = isA_Left ? "side team-a" : "side team-b"; 
-            getEl('area-right').className = isA_Left ? "side team-b" : "side team-a";
-            
-            getEl('area-left').classList.remove('serving'); getEl('area-right').classList.remove('serving');
-            if (state.serverTeam === state.leftTeam) getEl('area-left').classList.add('serving'); else getEl('area-right').classList.add('serving');
-
-            ['pos-l-left','pos-r-left','pos-l-right','pos-r-right'].forEach(id=>getEl(id).classList.remove('pos-active'));
-            let score = (state.serverTeam==='A')?state.scoreA:state.scoreB;
-            let sName = getPlayerName(state.serverTeam, state.serverTeam==='A'?state.serverIdxA:state.serverIdxB);
-            
-            let targetId = (state.serverTeam === state.leftTeam) 
-                ? (score % 2 == 0 ? 'pos-r-left' : 'pos-l-left')
-                : (score % 2 == 0 ? 'pos-r-right' : 'pos-l-right');
-            let targetDiv = getEl(targetId);
-            if(targetDiv) { targetDiv.classList.add('pos-active'); targetDiv.innerText = sName; }
-
-            syncToFirebase();
-            saveToLocal(); 
         }
 
         function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
@@ -640,15 +674,9 @@
             params.forEach((value, key) => { if (keys[value]) mapping[keys[value]] = key; });
             return { baseUrl, mapping };
         }
-        
-        // V31: 上傳按鈕不使用 alert
         async function uploadAllPending() {
             const link = getEl('gform_link').value;
-            if (!link) { 
-                // 使用 Modal 提示，不破壞全螢幕
-                showModal("提示", "請先在設定中貼上 Google Form 連結", false, () => openSettings());
-                return; 
-            }
+            if (!link) { showToast("請先貼上 Google Form 連結！"); return; }
             const config = parseLinkAndGetIDs(link);
             if (!config || Object.keys(config.mapping).length < 7) { showToast("連結格式錯誤！"); return; }
             const targets = pendingRecords.filter(r => r.status === 'pending');
