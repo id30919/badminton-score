@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>羽球賽事即時看板</title>
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -48,15 +49,14 @@
         }
         .t-score { font-size: 60px; font-weight: bold; line-height: 1; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); margin-bottom: 5px; }
         
-        /* V28: 球員名單樣式 */
         .t-players {
             font-size: 14px; color: #aaa; line-height: 1.4;
             background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px;
             max-width: 90%; word-wrap: break-word;
         }
 
-        .color-a { color: #ff9800; } /* 橘 */
-        .color-b { color: #00b0ff; } /* 藍 */
+        .color-a { color: #ff9800; } 
+        .color-b { color: #00b0ff; } 
         
         .vs { font-size: 14px; color: #666; margin: 15px 10px 0; font-weight: bold; }
 
@@ -78,7 +78,6 @@
     </div>
 
     <script>
-        // Firebase Config
         const firebaseConfig = {
           apiKey: "AIzaSyAq-sTArXeGDVpdjnbLEzh5WpQ5mkmsyoA",
           authDomain: "badminton-live-6237e.firebaseapp.com",
@@ -104,7 +103,17 @@
                     return;
                 }
 
-                const matches = Object.keys(data).map(key => data[key]);
+                // V30: 過濾掉超過12小時未更新的舊資料
+                const now = Date.now();
+                const matches = Object.keys(data)
+                    .map(key => data[key])
+                    .filter(m => (now - m.timestamp) < 43200000); // 12小時 = 43200000毫秒
+
+                if (matches.length === 0) {
+                    container.innerHTML = "<div class='no-data'>目前沒有進行中的比賽</div>";
+                    return;
+                }
+
                 matches.sort((a, b) => parseInt(a.court) - parseInt(b.court));
 
                 matches.forEach(m => {
@@ -118,7 +127,6 @@
         }
 
         function createCard(m) {
-            // 判斷誰發球，加上羽球拍
             const iconA = m.serverTeam === 'A' ? '<span class="server-icon">🏸</span>' : '';
             const iconB = m.serverTeam === 'B' ? '<span class="server-icon">🏸</span>' : '';
 
@@ -133,14 +141,12 @@
                     <div class="team-box">
                         <div class="t-name color-a">${m.teamA} ${iconA}</div>
                         <div class="t-score color-a">${m.scoreA}</div>
-                        <!-- 顯示球員名單 -->
                         <div class="t-players">${m.playersA || '-'}</div>
                     </div>
                     <div class="vs">VS</div>
                     <div class="team-box">
                         <div class="t-name color-b">${m.teamB} ${iconB}</div>
                         <div class="t-score color-b">${m.scoreB}</div>
-                        <!-- 顯示球員名單 -->
                         <div class="t-players">${m.playersB || '-'}</div>
                     </div>
                 </div>
