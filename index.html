@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V32 (隊友修正版)</title>
+    <title>羽球主審 V33 (清除下線功能)</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -23,10 +23,11 @@
             display: flex; flex-direction: column; overflow: hidden; 
         }
         
-        /* Header */
+        /* === Header === */
         #header { 
             height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
-            border-bottom: 1px solid #444; padding-left: 60px; 
+            border-bottom: 1px solid #444;
+            padding-left: 60px; 
         }
         
         .header-left { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
@@ -195,6 +196,7 @@
         </div>
     </div>
 
+    <!-- Header -->
     <div id="header">
         <div class="header-left">
             <div class="rainbow-input-group theme-umpire" onclick="editUmpireName()">
@@ -219,6 +221,7 @@
         </div>
     </div>
 
+    <!-- Action Bar -->
     <div id="action-bar">
         <button class="btn-act btn-undo" onclick="undoPoint()">↩ 復原</button>
         <button class="btn-act btn-swap" onclick="swapSidesManual()">⇄ 換邊</button>
@@ -228,7 +231,9 @@
 
     <div id="court">
         <div id="area-left" class="side team-a">
-            <div class="team-name-wrapper"><div class="team-name" id="name-box-left">橘隊</div></div>
+            <div class="team-name-wrapper">
+                <div class="team-name" id="name-box-left">橘隊</div>
+            </div>
             <div class="score-bg-layer"><div class="score" id="disp-score-left">0</div></div>
             <div class="bottom-info-wrapper">
                 <div class="server-indicator">發球</div>
@@ -240,7 +245,9 @@
         </div>
 
         <div id="area-right" class="side team-b">
-            <div class="team-name-wrapper"><div class="team-name" id="name-box-right">藍隊</div></div>
+            <div class="team-name-wrapper">
+                <div class="team-name" id="name-box-right">藍隊</div>
+            </div>
             <div class="score-bg-layer"><div class="score" id="disp-score-right">0</div></div>
             <div class="bottom-info-wrapper">
                 <div class="server-indicator">發球</div>
@@ -255,7 +262,11 @@
     <!-- Settings -->
     <div id="settings-panel">
         <h3>比賽設定</h3>
-        <div class="row"><button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button></div>
+        
+        <div class="row">
+            <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
+        </div>
+
         <div class="switch-row">
             <label style="color:white; font-weight:bold; margin:0;">📳 震動回饋</label>
             <div style="display:flex; align-items:center; gap:10px;">
@@ -263,10 +274,12 @@
                 <input type="checkbox" id="vibrationToggle" class="toggle-checkbox" checked onchange="toggleVibration(this.checked)">
             </div>
         </div>
+
         <div class="row" style="background:#333; padding:10px; border-radius:5px; border:1px solid #555;">
             <label style="color:#ffeb3b; font-weight:bold;">🔠 分數大小: <span id="size-val">250</span>px</label>
             <input type="range" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
+        
         <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
         <div class="row"><label>A隊名單 (;分場次)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊"></div>
         <div class="row"><label>A隊員 (例如: 王,李)</label><input id="teamA_players" class="full-width" value="王,李"></div>
@@ -274,12 +287,20 @@
         <div class="row"><label>B隊員 (例如: 張,林)</label><input id="teamB_players" class="full-width" value="張,林"></div>
         <div class="row"><label>換邊分數</label><input id="swapPoints" class="full-width" value="11"></div>
         <div class="row"><label>發球方</label><select id="initServer" class="full-width" onchange="resetGame()"><option value="A">A隊先發</option><option value="B">B隊先發</option></select></div>
+        
+        <!-- V33: 新增清除按鈕 -->
+        <div class="row" style="border-top:1px solid #555; margin-top:15px; padding-top:15px;">
+            <button class="btn-act" onclick="clearCourtData()" style="background:#b71c1c; border:1px solid #ff5252; width:100%;">🗑️ 清除此場地 (直播下線)</button>
+            <div style="font-size:12px; color:#aaa; margin-top:5px; text-align:center;">該場地今天比完後請按此，將從直播牆移除</div>
+        </div>
+
         <div style="display:flex; gap:10px; margin-top:20px; padding-bottom:20px;">
             <button class="btn-act" style="background:#555;" onclick="cancelSettings()">✖ 取消</button>
             <button class="btn-act" style="background:green;" onclick="saveSettings()">✔ 儲存並關閉</button>
         </div>
     </div>
     
+    <!-- History -->
     <div id="history-panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3>歷史紀錄</h3>
@@ -365,124 +386,6 @@
             } catch(e) { console.error("Load Error", e); }
         }
 
-        // ================= V32 邏輯修正 =================
-        function render() {
-            let isA_Left = (state.leftTeam === 'A');
-            getEl('name-box-left').innerText = getTeamName(isA_Left?'A':'B');
-            getEl('name-box-right').innerText = getTeamName(isA_Left?'B':'A');
-            getEl('disp-score-left').innerText = isA_Left ? state.scoreA : state.scoreB;
-            getEl('disp-score-right').innerText = isA_Left ? state.scoreB : state.scoreA;
-            getEl('match-counter').innerText = `G${currentMatchIdx+1}`;
-            
-            getEl('area-left').className = isA_Left ? "side team-a" : "side team-b"; 
-            getEl('area-right').className = isA_Left ? "side team-b" : "side team-a";
-            
-            getEl('area-left').classList.remove('serving'); getEl('area-right').classList.remove('serving');
-            if (state.serverTeam === state.leftTeam) getEl('area-left').classList.add('serving'); else getEl('area-right').classList.add('serving');
-
-            // 1. 先清除所有高亮與文字
-            ['pos-l-left','pos-r-left','pos-l-right','pos-r-right'].forEach(id=>{
-                const el = getEl(id);
-                el.classList.remove('pos-active');
-                el.innerText = ""; // 先清空
-            });
-
-            // 2. 計算雙方的球員 (發球者 & 搭檔)
-            // Team A (Server Idx, Partner is Idx+1)
-            let serverA = getPlayerName('A', state.serverIdxA);
-            let partnerA = getPlayerName('A', getNextIdx('A', state.serverIdxA));
-            
-            // Team B
-            let serverB = getPlayerName('B', state.serverIdxB);
-            let partnerB = getPlayerName('B', getNextIdx('B', state.serverIdxB));
-
-            // 3. 填入文字 (根據分數單雙數決定位置)
-            // 注意：羽球規則，偶數分在右區(Even/Right)，奇數分在左區(Odd/Left)
-            // 這裡的 Left/Right 是相對於「主審看過去」的左右
-            
-            // 處理左側區域 (假設是 A 隊)
-            let leftTeamKey = state.leftTeam; // 'A' or 'B'
-            let leftTeamScore = (leftTeamKey === 'A') ? state.scoreA : state.scoreB;
-            let leftServerName = (leftTeamKey === 'A') ? serverA : serverB;
-            let leftPartnerName = (leftTeamKey === 'A') ? partnerA : partnerB;
-            let leftTeamTotalPlayers = getSegmentedData(`team${leftTeamKey}_players`, currentMatchIdx).split(/[,，]/).length;
-
-            // 左側區域的 DOM ID
-            // pos-l-left = 奇數區(左), pos-r-left = 偶數區(右)
-            if (leftTeamScore % 2 === 0) { // 偶數分
-                getEl('pos-r-left').innerText = leftServerName; // 發球者在右
-                if(leftTeamTotalPlayers > 1) getEl('pos-l-left').innerText = leftPartnerName; // 搭檔在左
-            } else { // 奇數分
-                getEl('pos-l-left').innerText = leftServerName; // 發球者在左
-                if(leftTeamTotalPlayers > 1) getEl('pos-r-left').innerText = leftPartnerName; // 搭檔在右
-            }
-
-            // 處理右側區域 (假設是 B 隊)
-            let rightTeamKey = (leftTeamKey === 'A') ? 'B' : 'A';
-            let rightTeamScore = (rightTeamKey === 'A') ? state.scoreA : state.scoreB;
-            let rightServerName = (rightTeamKey === 'A') ? serverA : serverB;
-            let rightPartnerName = (rightTeamKey === 'A') ? partnerA : partnerB;
-            let rightTeamTotalPlayers = getSegmentedData(`team${rightTeamKey}_players`, currentMatchIdx).split(/[,，]/).length;
-
-            // 右側區域的 DOM ID
-            // pos-l-right = 奇數區(左), pos-r-right = 偶數區(右)
-            if (rightTeamScore % 2 === 0) { // 偶數分
-                getEl('pos-r-right').innerText = rightServerName; // 發球者在右
-                if(rightTeamTotalPlayers > 1) getEl('pos-l-right').innerText = rightPartnerName;
-            } else { // 奇數分
-                getEl('pos-l-right').innerText = rightServerName; // 發球者在左
-                if(rightTeamTotalPlayers > 1) getEl('pos-r-right').innerText = rightPartnerName;
-            }
-
-            // 4. 高亮「真正發球者」
-            // 我們已經知道誰是發球方 (state.serverTeam)
-            let activeTeamSide = (state.serverTeam === state.leftTeam) ? 'left' : 'right';
-            let activeScore = (state.serverTeam === 'A') ? state.scoreA : state.scoreB;
-            
-            let targetId = "";
-            if (activeTeamSide === 'left') {
-                targetId = (activeScore % 2 === 0) ? 'pos-r-left' : 'pos-l-left';
-            } else {
-                targetId = (activeScore % 2 === 0) ? 'pos-r-right' : 'pos-l-right';
-            }
-            getEl(targetId).classList.add('pos-active');
-
-            syncToFirebase();
-            saveToLocal(); 
-        }
-
-        // ============================================
-
-        let settingsSnapshot = {};
-        function openSettings() {
-            settingsSnapshot = {
-                gform_link: getEl('gform_link').value,
-                teamA_name: getEl('teamA_name').value,
-                teamA_players: getEl('teamA_players').value,
-                teamB_name: getEl('teamB_name').value,
-                teamB_players: getEl('teamB_players').value,
-                swapPoints: getEl('swapPoints').value
-            };
-            getEl('settings-panel').classList.add('panel-visible');
-        }
-        function cancelSettings() {
-            if (settingsSnapshot) {
-                getEl('gform_link').value = settingsSnapshot.gform_link || "";
-                getEl('teamA_name').value = settingsSnapshot.teamA_name || "";
-                getEl('teamA_players').value = settingsSnapshot.teamA_players || "";
-                getEl('teamB_name').value = settingsSnapshot.teamB_name || "";
-                getEl('teamB_players').value = settingsSnapshot.teamB_players || "";
-                getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
-            }
-            getEl('settings-panel').classList.remove('panel-visible');
-            render(); 
-        }
-        function saveSettings() {
-            render(); saveToLocal(); syncToFirebase(); 
-            getEl('settings-panel').classList.remove('panel-visible');
-            showToast("✅ 設定已儲存");
-        }
-
         let toastTimer;
         function showToast(msg) {
             const el = getEl('toast-msg'); el.innerHTML = msg; el.classList.add('show');
@@ -547,7 +450,6 @@
             if (team === 'A') state.scoreA++; else state.scoreB++;
             if (team !== state.serverTeam) {
                 state.serverTeam = team;
-                // Sideout: change to next player in the roster
                 if (team === 'A') state.serverIdxA = getNextIdx('A', state.serverIdxA); else state.serverIdxB = getNextIdx('B', state.serverIdxB);
             }
             checkSwap(); render();
@@ -594,7 +496,6 @@
         function resetGame() { state = { leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: getEl('initServer').value, serverIdxA: 0, serverIdxB: 0, swappedPoints: [] }; historyStack = []; render(); saveToLocal(); }
         
         function logGameOnly() {
-            // 智慧防重覆
             if (pendingRecords.length > 0) {
                 const last = pendingRecords[pendingRecords.length - 1];
                 if (last.matchStr === `G${currentMatchIdx+1}` && last.sA === state.scoreA && last.sB === state.scoreB) {
@@ -613,6 +514,75 @@
                 resetGame(); 
                 showToast("✅ 進入下一場"); 
             });
+        }
+
+        // V33: 清除場地資料 (下線)
+        function clearCourtData() {
+            if(!isLive) { showToast("⚠️ 請先開啟直播連線"); return; }
+            const cNum = getEl('courtNum').value;
+            safeConfirm(`確定要清除【場地 ${cNum}】的直播資料嗎？\n(觀眾將無法看到此場地)`, () => {
+                db.ref('courts/court_' + cNum).remove()
+                    .then(() => showToast("🗑️ 場地已下線"))
+                    .catch(e => showToast("❌ 清除失敗"));
+            });
+        }
+
+        function render() {
+            let isA_Left = (state.leftTeam === 'A');
+            getEl('name-box-left').innerText = getTeamName(isA_Left?'A':'B');
+            getEl('name-box-right').innerText = getTeamName(isA_Left?'B':'A');
+            getEl('disp-score-left').innerText = isA_Left ? state.scoreA : state.scoreB;
+            getEl('disp-score-right').innerText = isA_Left ? state.scoreB : state.scoreA;
+            getEl('match-counter').innerText = `G${currentMatchIdx+1}`;
+            
+            getEl('area-left').className = isA_Left ? "side team-a" : "side team-b"; 
+            getEl('area-right').className = isA_Left ? "side team-b" : "side team-a";
+            
+            getEl('area-left').classList.remove('serving'); getEl('area-right').classList.remove('serving');
+            if (state.serverTeam === state.leftTeam) getEl('area-left').classList.add('serving'); else getEl('area-right').classList.add('serving');
+
+            ['pos-l-left','pos-r-left','pos-l-right','pos-r-right'].forEach(id=>{ const el = getEl(id); el.classList.remove('pos-active'); el.innerText = ""; });
+
+            let serverA = getPlayerName('A', state.serverIdxA);
+            let partnerA = getPlayerName('A', getNextIdx('A', state.serverIdxA));
+            let serverB = getPlayerName('B', state.serverIdxB);
+            let partnerB = getPlayerName('B', getNextIdx('B', state.serverIdxB));
+
+            let leftTeamKey = state.leftTeam; 
+            let leftTeamScore = (leftTeamKey === 'A') ? state.scoreA : state.scoreB;
+            let leftServerName = (leftTeamKey === 'A') ? serverA : serverB;
+            let leftPartnerName = (leftTeamKey === 'A') ? partnerA : partnerB;
+            let leftTeamTotalPlayers = getSegmentedData(`team${leftTeamKey}_players`, currentMatchIdx).split(/[,，]/).length;
+
+            if (leftTeamScore % 2 === 0) { 
+                getEl('pos-r-left').innerText = leftServerName; 
+                if(leftTeamTotalPlayers > 1) getEl('pos-l-left').innerText = leftPartnerName; 
+            } else { 
+                getEl('pos-l-left').innerText = leftServerName; 
+                if(leftTeamTotalPlayers > 1) getEl('pos-r-left').innerText = leftPartnerName; 
+            }
+
+            let rightTeamKey = (leftTeamKey === 'A') ? 'B' : 'A';
+            let rightTeamScore = (rightTeamKey === 'A') ? state.scoreA : state.scoreB;
+            let rightServerName = (rightTeamKey === 'A') ? serverA : serverB;
+            let rightPartnerName = (rightTeamKey === 'A') ? partnerA : partnerB;
+            let rightTeamTotalPlayers = getSegmentedData(`team${rightTeamKey}_players`, currentMatchIdx).split(/[,，]/).length;
+
+            if (rightTeamScore % 2 === 0) { 
+                getEl('pos-r-right').innerText = rightServerName; 
+                if(rightTeamTotalPlayers > 1) getEl('pos-l-right').innerText = rightPartnerName;
+            } else { 
+                getEl('pos-l-right').innerText = rightServerName; 
+                if(rightTeamTotalPlayers > 1) getEl('pos-r-right').innerText = rightPartnerName;
+            }
+
+            let activeTeamSide = (state.serverTeam === state.leftTeam) ? 'left' : 'right';
+            let activeScore = (state.serverTeam === 'A') ? state.scoreA : state.scoreB;
+            let targetId = (activeTeamSide === 'left') ? ((activeScore % 2 === 0) ? 'pos-r-left' : 'pos-l-left') : ((activeScore % 2 === 0) ? 'pos-r-right' : 'pos-l-right');
+            getEl(targetId).classList.add('pos-active');
+
+            syncToFirebase();
+            saveToLocal(); 
         }
 
         function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
@@ -703,7 +673,25 @@
             });
         }
         function updateStatus(id, type, text) { const el = getEl(`status-${id}`); if (el) { el.className = `log-status status-${type}`; el.innerText = text; } }
-        function toggleSettings() { openSettings(); }
+        function openSettings() {
+            settingsSnapshot = {
+                gform_link: getEl('gform_link').value,
+                teamA_name: getEl('teamA_name').value, teamA_players: getEl('teamA_players').value,
+                teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
+                swapPoints: getEl('swapPoints').value
+            };
+            getEl('settings-panel').classList.add('panel-visible');
+        }
+        function cancelSettings() {
+            if (settingsSnapshot) {
+                getEl('gform_link').value = settingsSnapshot.gform_link || "";
+                getEl('teamA_name').value = settingsSnapshot.teamA_name || ""; getEl('teamA_players').value = settingsSnapshot.teamA_players || "";
+                getEl('teamB_name').value = settingsSnapshot.teamB_name || ""; getEl('teamB_players').value = settingsSnapshot.teamB_players || "";
+                getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
+            }
+            getEl('settings-panel').classList.remove('panel-visible'); render(); 
+        }
+        function saveSettings() { render(); saveToLocal(); syncToFirebase(); getEl('settings-panel').classList.remove('panel-visible'); showToast("✅ 設定已儲存"); }
         function toggleHistory() { getEl('history-panel').classList.toggle('panel-visible'); }
     </script>
 </body>
