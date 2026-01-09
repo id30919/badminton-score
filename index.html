@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V39 (核心修復版)</title>
+    <title>羽球主審 V40 (萬用符號版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -69,10 +69,10 @@
             #match-counter { font-size: 14px !important; margin-right: 0; }
         }
 
-        /* Action Bar (4 Buttons) */
-        #action-bar { height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        /* Action Bar */
+        #action-bar { height: 60px; background: #222; display: flex; justify-content: space-between; align-items: center; padding: 0 2px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .btn-act { 
-            flex: 1; margin: 0 3px; height: 44px; border-radius: 8px; border: none; 
+            flex: 1; margin: 0 3px; height: 44px; border-radius: 6px; border: none; 
             color: white; font-weight: bold; font-size: 15px; 
             cursor: pointer; display: flex; align-items: center; justify-content: center; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
@@ -194,12 +194,12 @@
         </div>
     </div>
 
-    <!-- Action Bar -->
+    <!-- Action Bar (4 Buttons) -->
     <div id="action-bar">
         <button class="btn-act btn-undo" onclick="undoPoint()">↩ 復原</button>
         <button class="btn-act btn-swap" onclick="swapSidesManual()">⇄ 換邊</button>
         <button class="btn-act btn-log" onclick="logGameOnly()">💾 紀錄</button>
-        <button class="btn-act btn-end" onclick="endMatchAndNext()">🏁 結束</button>
+        <button class="btn-act btn-end" onclick="endMatchAndNext()">🏁 結束歸零</button>
     </div>
 
     <div id="court">
@@ -226,7 +226,6 @@
     <div id="settings-panel">
         <h3>比賽設定</h3>
         
-        <!-- 手動修改比分 -->
         <div class="row" style="background:#444; padding:15px; border-radius:8px; display:flex; justify-content:space-around; align-items:center;">
             <div style="text-align:center;">
                 <div style="color:var(--color-left); font-weight:bold; margin-bottom:5px;">橘隊分數</div>
@@ -242,11 +241,16 @@
         <div class="row">
             <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
         </div>
+        
+        <!-- V40: 新增重置G1按鈕 -->
+        <div class="row">
+            <button class="btn-act" onclick="resetMatchCounter()" style="background:#ff9800; width:100%; border:1px solid #ffb74d;">🔄 重置回 G1</button>
+        </div>
 
-        <!-- 換點設定 -->
         <div class="row" style="border:1px solid #7c4dff; padding:10px; border-radius:5px;">
             <label style="color:#b388ff; font-weight:bold;">🔄 自動換點 (Switch Point)</label>
-            <input id="switchMatchPoints" class="full-width" placeholder="例如: 30,60,90 (達到即換點)" style="margin-top:5px;">
+            <!-- V40: 修改提示文字 -->
+            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63,84,105 (分數達到即換點)" style="margin-top:5px;">
             <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
                 <input type="checkbox" id="resetScoreOnSwitch" class="toggle-checkbox">
                 <label for="resetScoreOnSwitch" style="color:#ccc; margin:0;">換點後分數歸零？</label>
@@ -275,9 +279,10 @@
         </div>
         
         <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
-        <div class="row"><label>A隊名單 (;分場次)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊"></div>
+        <!-- V40: 修改標籤文字 -->
+        <div class="row"><label>A隊名稱 (。分下一點)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊"></div>
         <div class="row"><label>A隊員 (例如: 王,李; 陳,林)</label><input id="teamA_players" class="full-width" value="王,李"></div>
-        <div class="row"><label>B隊名單 (;分場次)</label><input id="teamB_name" class="full-width" value="藍隊;藍二隊"></div>
+        <div class="row"><label>B隊名稱 (。分下一點)</label><input id="teamB_name" class="full-width" value="藍隊;藍二隊"></div>
         <div class="row"><label>B隊員 (例如: 張,林; 趙,錢)</label><input id="teamB_players" class="full-width" value="張,林"></div>
         <div class="row"><label>換邊分數</label><input id="swapPoints" class="full-width" value="11"></div>
         <div class="row"><label>發球方</label><select id="initServer" class="full-width" onchange="resetGame()"><option value="A">A隊先發</option><option value="B">B隊先發</option></select></div>
@@ -338,7 +343,7 @@
             render();
         });
 
-        // 重新補回的核心函數
+        // 核心修復：補回遺失的函數
         function logGame() {
             const record = {
                 id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
@@ -377,7 +382,7 @@
             try {
                 const data = JSON.parse(raw);
                 state = data.state || state;
-                if(!state.switchedMatchPoints) state.switchedMatchPoints = []; // 修正舊資料
+                if(!state.switchedMatchPoints) state.switchedMatchPoints = [];
                 currentMatchIdx = data.currentMatchIdx || 0;
                 historyStack = data.historyStack || [];
                 pendingRecords = data.pendingRecords || [];
@@ -499,21 +504,31 @@
         }
 
         function updateInputSegment(id, newVal) {
-            let input = getEl(id); let parts = input.value.split(/[;；]/);
+            let input = getEl(id); let parts = input.value.split(/[;；.。]/);
             let safeIdx = Math.min(currentMatchIdx, parts.length - 1);
-            parts[safeIdx] = newVal; input.value = parts.join(' ; '); saveToLocal();
+            parts[safeIdx] = newVal; input.value = parts.join(';'); saveToLocal();
         }
 
-        function getSegmentedData(id, idx) { let val = getEl(id).value.split(/[;；]/); return val[Math.min(idx, val.length-1)]?.trim() || ""; }
+        // V40: 萬用分隔符 + 循環邏輯
+        function getSegmentedData(id, idx) { 
+            let val = getEl(id).value.split(/[;；.。]/); 
+            return val[idx % val.length]?.trim() || ""; // Loop
+        }
         function getTeamName(k) { return getSegmentedData(`team${k}_name`, currentMatchIdx) || `隊${k}`; }
-        function getPlayerName(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/); return arr.length ? arr[i % arr.length].trim() : ""; }
-        function getNextIdx(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/); let len = arr.length || 1; return (i + 1) % len; }
-        function getPlayerList(k) { return getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/).map(s => s.trim()).filter(s => s); }
+        function getPlayerName(k, i) { 
+            let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/); 
+            return arr.length ? arr[i % arr.length].trim() : ""; 
+        }
+        function getNextIdx(k, i) { 
+            let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/); 
+            let len = arr.length || 1; 
+            return (i + 1) % len; 
+        }
+        function getPlayerList(k) { 
+            return getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/).map(s => s.trim()).filter(s => s); 
+        }
         function getCurrentPlayersString(teamKey) {
-            let raw = getEl(`team${teamKey}_players`).value;
-            let parts = raw.split(/[;；]/);
-            let idx = Math.min(currentMatchIdx, parts.length - 1);
-            return parts[idx] ? parts[idx].trim() : "";
+            return getSegmentedData(`team${teamKey}_players`, currentMatchIdx);
         }
 
         function undoPoint() { if (historyStack.length) { state = historyStack.pop(); render(); } }
@@ -538,6 +553,15 @@
                 swappedPoints: [], switchedMatchPoints: []
             }; 
             historyStack = []; render(); saveToLocal(); 
+        }
+
+        // V40: 重置回 G1
+        function resetMatchCounter() {
+            if(confirm("確定要將場次重置回 G1 嗎？")) {
+                currentMatchIdx = 0;
+                resetGame();
+                showToast("已重置為 G1");
+            }
         }
         
         function logGameOnly() {
@@ -603,7 +627,7 @@
             let targetId = "";
             
             if (mode === 'position') {
-                 targetId = (activeTeamSide === 'left') ? ((activeScore % 2 === 0) ? 'pos-r-left' : 'pos-l-left') : ((activeScore % 2 === 0) ? 'pos-r-right' : 'pos-l-right');
+                 targetId = (activeTeamSide === 'left') ? ((activeScore % 2 === 0) ? 'pos-r-left' : 'pos-l-left') : ((activeTeamSide === 'right') ? ((activeScore % 2 === 0) ? 'pos-r-right' : 'pos-l-right') : '');
             } else {
                  let currentIdx = (state.serverTeam === 'A') ? state.serverIdxA : state.serverIdxB;
                  targetId = (activeTeamSide === 'left') ? `pos-box-left-${currentIdx}` : `pos-box-right-${currentIdx}`;
@@ -713,12 +737,6 @@
         }
         function saveSettings() { render(); saveToLocal(); syncToFirebase(); getEl('settings-panel').classList.remove('panel-visible'); showToast("✅ 設定已儲存"); }
         function toggleHistory() { getEl('history-panel').classList.toggle('panel-visible'); }
-        function getCurrentPlayersString(teamKey) {
-            let raw = getEl(`team${teamKey}_players`).value;
-            let parts = raw.split(/[;；]/);
-            let idx = Math.min(currentMatchIdx, parts.length - 1);
-            return parts[idx] ? parts[idx].trim() : "";
-        }
     </script>
 </body>
 </html>
