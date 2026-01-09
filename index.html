@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V35 (渲染修復版)</title>
+    <title>羽球主審 V36 (積分接力版)</title>
     
-    <!-- 圖示設定 -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
     <meta name="apple-mobile-web-app-title" content="羽球計分">
@@ -38,11 +37,8 @@
         .header-left { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
         .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 
-        .rainbow-input-group {
-            display: flex; align-items: stretch; border-radius: 6px; overflow: hidden;
-            height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .rainbow-label { padding: 0 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .rainbow-input-group { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .rainbow-label { padding: 0 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
         .rainbow-input { border: none; color: white; padding: 0; height: 100%; text-align: center; font-weight: bold; font-size: 14px; outline: none; cursor: pointer; font-family: 'Segoe UI', sans-serif; user-select: none; }
         
         .theme-umpire .rainbow-label { background: #7b1fa2; }
@@ -73,11 +69,18 @@
             #match-counter { font-size: 14px !important; margin-right: 0; }
         }
 
-        /* Action Bar */
-        #action-bar { height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .btn-act { flex: 1; margin: 0 3px; height: 44px; border-radius: 8px; border: none; color: white; font-weight: bold; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        /* Action Bar (5 Buttons) */
+        #action-bar { height: 60px; background: #222; display: flex; justify-content: space-between; align-items: center; padding: 0 2px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .btn-act { 
+            flex: 1; margin: 0 2px; height: 44px; border-radius: 6px; border: none; 
+            color: white; font-weight: bold; font-size: 13px; /* 縮小字體以容納5個 */
+            cursor: pointer; display: flex; align-items: center; justify-content: center; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            white-space: pre-wrap; line-height: 1.1;
+        }
         .btn-undo { background: #546e7a; }
         .btn-swap { background: #f57c00; } 
+        .btn-next { background: #7c4dff; border: 1px solid #b388ff; font-size: 14px; } /* 新按鈕 */
         .btn-log  { background: #43a047; }
         .btn-end  { background: #d32f2f; border: 1px solid #ff8a80; }
 
@@ -97,7 +100,11 @@
 
         /* Court Area */
         #court { flex: 1; display: flex; position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .side { flex: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative; cursor: pointer; user-select: none; transition: background-color 0.2s; padding: 15px 0; overflow: hidden; min-height: 300px; }
+        .side { 
+            flex: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+            position: relative; cursor: pointer; user-select: none; 
+            transition: background-color 0.2s; padding: 15px 0; overflow: hidden; min-height: 300px;
+        }
         .side.team-a { background-color: var(--color-left); } 
         .side.team-b { background-color: var(--color-right); }
         
@@ -115,22 +122,13 @@
         .position-box { 
             width: 92%; height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); 
             background: rgba(0,0,0,0.4); pointer-events: auto; flex-shrink: 0;
-            backdrop-filter: blur(2px); margin-bottom: 20px; 
-            overflow: hidden;
+            backdrop-filter: blur(2px); margin-bottom: 20px; overflow: hidden;
         }
         
-        /* 傳統站位模式 */
+        /* 顯示模式樣式 */
         .mode-position .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: white; }
         .mode-position .pos-item:last-child { border-right: none; }
-
-        /* 多人名單模式 */
-        .mode-roster .pos-item { 
-            flex: 1; border-right: 1px solid rgba(255,255,255,0.5); 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 14px; font-weight: bold; color: white; 
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-            cursor: pointer; 
-        }
+        .mode-roster .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
         .mode-roster .pos-item:last-child { border-right: none; }
         .mode-roster .pos-item:active { background: rgba(255,255,255,0.2); }
         .pos-item.active { background: rgba(255,255,255,0.95); color: #000; font-size: 20px; text-shadow: none; }
@@ -196,10 +194,11 @@
         </div>
     </div>
 
-    <!-- Action Bar -->
+    <!-- V36 Action Bar: 5 Buttons -->
     <div id="action-bar">
         <button class="btn-act btn-undo" onclick="undoPoint()">↩ 復原</button>
         <button class="btn-act btn-swap" onclick="swapSidesManual()">⇄ 換邊</button>
+        <button class="btn-act btn-next" onclick="nextPointKeepScore()">▶ 下一點</button>
         <button class="btn-act btn-log" onclick="logGameOnly()">💾 紀錄</button>
         <button class="btn-act btn-end" onclick="endMatchAndNext()">🏁 結束</button>
     </div>
@@ -227,13 +226,10 @@
     <!-- Settings -->
     <div id="settings-panel">
         <h3>比賽設定</h3>
+        <div class="row"><button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button></div>
         
         <div class="row">
-            <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
-        </div>
-
-        <div class="row">
-            <label style="color:#00e676; font-weight:bold;">📺 顯示模式 (Display Mode)</label>
+            <label style="color:#00e676; font-weight:bold;">📺 顯示模式</label>
             <select id="displayMode" class="full-width" onchange="render()">
                 <option value="position">🏸 傳統站位 (左右跳)</option>
                 <option value="roster">📋 固定名單 (多人制)</option>
@@ -247,17 +243,16 @@
                 <input type="checkbox" id="vibrationToggle" class="toggle-checkbox" checked onchange="toggleVibration(this.checked)">
             </div>
         </div>
-
+        
         <div class="row" style="background:#333; padding:10px; border-radius:5px; border:1px solid #555;">
             <label style="color:#ffeb3b; font-weight:bold;">🔠 分數大小: <span id="size-val">250</span>px</label>
             <input type="range" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
-        
         <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
         <div class="row"><label>A隊名單 (;分場次)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊"></div>
-        <div class="row"><label>A隊員 (例如: 王,李)</label><input id="teamA_players" class="full-width" value="王,李"></div>
+        <div class="row"><label>A隊員 (例如: 王,李; 陳,林)</label><input id="teamA_players" class="full-width" value="王,李"></div>
         <div class="row"><label>B隊名單 (;分場次)</label><input id="teamB_name" class="full-width" value="藍隊;藍二隊"></div>
-        <div class="row"><label>B隊員 (例如: 張,林)</label><input id="teamB_players" class="full-width" value="張,林"></div>
+        <div class="row"><label>B隊員 (例如: 張,林; 趙,錢)</label><input id="teamB_players" class="full-width" value="張,林"></div>
         <div class="row"><label>換邊分數</label><input id="swapPoints" class="full-width" value="11"></div>
         <div class="row"><label>發球方</label><select id="initServer" class="full-width" onchange="resetGame()"><option value="A">A隊先發</option><option value="B">B隊先發</option></select></div>
         
@@ -466,6 +461,18 @@
             if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
         }
 
+        // V36: 新增功能 - 下一點並保留分數
+        function nextPointKeepScore() {
+            safeConfirm("確認進入下一點？(分數將保留並繼續累加)", () => {
+                logGame(); 
+                currentMatchIdx++; 
+                // Do NOT reset score, just update match index and save
+                saveToLocal();
+                render(); 
+                showToast("✅ 已進入下一點 (分數續計)");
+            });
+        }
+
         function endMatchAndNext() {
             safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => { 
                 logGame(); 
@@ -482,7 +489,6 @@
             });
         }
 
-        // === V35 核心 Render ===
         function render() {
             const mode = getEl('displayMode').value;
             let isA_Left = (state.leftTeam === 'A');
@@ -510,7 +516,6 @@
                 renderRosterMode(boxR, isA_Left ? 'B' : 'A');
             }
 
-            // Highlighting (Safely check if element exists)
             let activeTeamSide = (state.serverTeam === state.leftTeam) ? 'left' : 'right';
             let activeScore = (state.serverTeam === 'A') ? state.scoreA : state.scoreB;
             let targetId = "";
@@ -523,7 +528,7 @@
             }
 
             const targetEl = document.getElementById(targetId);
-            if (targetEl) targetEl.classList.add('active'); // Prevent null crash
+            if (targetEl) targetEl.classList.add('active'); 
 
             syncToFirebase();
             saveToLocal(); 
@@ -536,7 +541,6 @@
             let score = (teamKey === 'A') ? state.scoreA : state.scoreB;
             let totalPlayers = getPlayerList(teamKey).length;
             
-            // Assign unique IDs for targeting
             let sideSuffix = (container.id === 'pos-box-left') ? 'left' : 'right';
             let idL = `pos-l-${sideSuffix}`;
             let idR = `pos-r-${sideSuffix}`;
@@ -554,7 +558,7 @@
             if (players.length === 0) { container.innerHTML = '<div class="pos-item">無名單</div>'; return; }
             players.forEach((p, idx) => {
                 const div = document.createElement('div');
-                div.id = `pos-box-${sideSuffix}-${idx}`; // Unique ID for safe targeting
+                div.id = `pos-box-${sideSuffix}-${idx}`;
                 div.className = 'pos-item';
                 div.innerText = p;
                 div.onclick = (e) => { e.stopPropagation(); setServer(teamKey, idx); };
@@ -618,17 +622,10 @@
                 getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
                 getEl('displayMode').value = settingsSnapshot.displayMode || "position";
             }
-            getEl('settings-panel').classList.remove('panel-visible');
-            render(); 
+            getEl('settings-panel').classList.remove('panel-visible'); render(); 
         }
         function saveSettings() { render(); saveToLocal(); syncToFirebase(); getEl('settings-panel').classList.remove('panel-visible'); showToast("✅ 設定已儲存"); }
         function toggleHistory() { getEl('history-panel').classList.toggle('panel-visible'); }
-        function getCurrentPlayersString(teamKey) {
-            let raw = getEl(`team${teamKey}_players`).value;
-            let parts = raw.split(/[;；]/);
-            let idx = Math.min(currentMatchIdx, parts.length - 1);
-            return parts[idx] ? parts[idx].trim() : "";
-        }
     </script>
 </body>
 </html>
