@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>羽球賽事即時看板</title>
+    
+    <!-- === V39 新增：直播端專用圖示 === -->
+    <!-- 瀏覽器分頁圖示 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎥</text></svg>">
+    <!-- 手機桌面圖示 (深色背景+攝影機) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>🎥</text></svg>">
+    <!-- App 名稱設定 -->
+    <meta name="apple-mobile-web-app-title" content="賽事直播">
+    <meta name="application-name" content="賽事直播">
+    <!-- ============================== -->
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -55,6 +66,7 @@
             max-width: 90%; word-wrap: break-word; min-height: 20px;
         }
 
+        /* 橘藍配色 */
         .color-a { color: #ff9800; } 
         .color-b { color: #00b0ff; } 
         
@@ -78,7 +90,6 @@
     </div>
 
     <script>
-        // ============== 你的 Firebase 設定 (已填入) ==============
         const firebaseConfig = {
           apiKey: "AIzaSyAq-sTArXeGDVpdjnbLEzh5WpQ5mkmsyoA",
           authDomain: "badminton-live-6237e.firebaseapp.com",
@@ -95,7 +106,6 @@
             const db = firebase.database();
             const container = document.getElementById('grid-container');
 
-            // 監聽資料庫
             db.ref('courts').on('value', (snapshot) => {
                 const data = snapshot.val();
                 container.innerHTML = ""; 
@@ -105,7 +115,6 @@
                     return;
                 }
 
-                // 過濾掉超過12小時未更新的舊資料
                 const now = Date.now();
                 const matches = Object.keys(data)
                     .map(key => data[key])
