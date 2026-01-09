@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V36 (積分接力版)</title>
+    <title>羽球主審 V37 (終極整合修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -73,14 +73,13 @@
         #action-bar { height: 60px; background: #222; display: flex; justify-content: space-between; align-items: center; padding: 0 2px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .btn-act { 
             flex: 1; margin: 0 2px; height: 44px; border-radius: 6px; border: none; 
-            color: white; font-weight: bold; font-size: 13px; /* 縮小字體以容納5個 */
+            color: white; font-weight: bold; font-size: 13px; 
             cursor: pointer; display: flex; align-items: center; justify-content: center; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            white-space: pre-wrap; line-height: 1.1;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); white-space: pre-wrap; line-height: 1.1;
         }
         .btn-undo { background: #546e7a; }
         .btn-swap { background: #f57c00; } 
-        .btn-next { background: #7c4dff; border: 1px solid #b388ff; font-size: 14px; } /* 新按鈕 */
+        .btn-next { background: #7c4dff; border: 1px solid #b388ff; font-size: 14px; } 
         .btn-log  { background: #43a047; }
         .btn-end  { background: #d32f2f; border: 1px solid #ff8a80; }
 
@@ -194,7 +193,7 @@
         </div>
     </div>
 
-    <!-- V36 Action Bar: 5 Buttons -->
+    <!-- Action Bar -->
     <div id="action-bar">
         <button class="btn-act btn-undo" onclick="undoPoint()">↩ 復原</button>
         <button class="btn-act btn-swap" onclick="swapSidesManual()">⇄ 換邊</button>
@@ -447,8 +446,37 @@
         }
         
         function swapSidesManual() { safeConfirm("確認手動交換場地？", () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); }); }
-        function resetGame() { state = { leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: getEl('initServer').value, serverIdxA: 0, serverIdxB: 0, swappedPoints: [] }; historyStack = []; render(); saveToLocal(); }
         
+        function resetGame() { 
+            state = { 
+                leftTeam: 'A', 
+                scoreA: 0, scoreB: 0, 
+                serverTeam: getEl('initServer').value, 
+                serverIdxA: 0, serverIdxB: 0, 
+                swappedPoints: [] 
+            }; 
+            historyStack = []; 
+            render(); 
+            saveToLocal(); 
+        }
+
+        // V37: 重新加入所有 Log 相關函數
+        function logGame() {
+            const record = {
+                id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
+                tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
+                matchStr: `G${currentMatchIdx+1}`, status: 'pending'
+            };
+            pendingRecords.push(record); renderLogItem(record);
+            saveToLocal();
+        }
+
+        function renderLogItem(r) {
+            let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
+            div.innerHTML = `<div class="log-info"><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div><div class="log-status status-pending" id="status-${r.id}">待傳送</div>`;
+            getEl('log-container').prepend(div);
+        }
+
         function logGameOnly() {
             if (pendingRecords.length > 0) {
                 const last = pendingRecords[pendingRecords.length - 1];
@@ -461,12 +489,12 @@
             if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
         }
 
-        // V36: 新增功能 - 下一點並保留分數
         function nextPointKeepScore() {
             safeConfirm("確認進入下一點？(分數將保留並繼續累加)", () => {
                 logGame(); 
                 currentMatchIdx++; 
-                // Do NOT reset score, just update match index and save
+                state.serverIdxA = 0; // 重置發球順位
+                state.serverIdxB = 0;
                 saveToLocal();
                 render(); 
                 showToast("✅ 已進入下一點 (分數續計)");
