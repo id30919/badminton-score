@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V38 (自動換點版)</title>
+    <title>羽球主審 V39 (核心修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -38,7 +38,7 @@
         .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 
         .rainbow-input-group { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .rainbow-label { padding: 0 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .rainbow-label { padding: 0 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
         .rainbow-input { border: none; color: white; padding: 0; height: 100%; text-align: center; font-weight: bold; font-size: 14px; outline: none; cursor: pointer; font-family: 'Segoe UI', sans-serif; user-select: none; }
         
         .theme-umpire .rainbow-label { background: #7b1fa2; }
@@ -69,10 +69,10 @@
             #match-counter { font-size: 14px !important; margin-right: 0; }
         }
 
-        /* Action Bar (4 Buttons again) */
-        #action-bar { height: 60px; background: #222; display: flex; justify-content: space-between; align-items: center; padding: 0 2px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        /* Action Bar (4 Buttons) */
+        #action-bar { height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .btn-act { 
-            flex: 1; margin: 0 2px; height: 44px; border-radius: 6px; border: none; 
+            flex: 1; margin: 0 3px; height: 44px; border-radius: 8px; border: none; 
             color: white; font-weight: bold; font-size: 15px; 
             cursor: pointer; display: flex; align-items: center; justify-content: center; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
@@ -141,11 +141,8 @@
         .toggle-checkbox { width: 20px; height: 20px; cursor: pointer; }
         input[type=range] { width: 100%; margin: 10px 0; }
         
-        /* V38: 手動比分輸入框 */
-        .manual-score-input { 
-            width: 80px; font-size: 24px; font-weight: bold; text-align: center; 
-            background: #222; border: 2px solid #555; color: white; border-radius: 8px; padding: 5px;
-        }
+        /* 手動比分 */
+        .manual-score-input { width: 80px; font-size: 24px; font-weight: bold; text-align: center; background: #222; border: 2px solid #555; color: white; border-radius: 8px; padding: 5px; }
 
         .log-item { background: #333; margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #555; display: flex; justify-content: space-between; align-items: center; }
         .log-info { font-size: 14px; color: #ddd; }
@@ -229,7 +226,7 @@
     <div id="settings-panel">
         <h3>比賽設定</h3>
         
-        <!-- V38: 手動修改比分 -->
+        <!-- 手動修改比分 -->
         <div class="row" style="background:#444; padding:15px; border-radius:8px; display:flex; justify-content:space-around; align-items:center;">
             <div style="text-align:center;">
                 <div style="color:var(--color-left); font-weight:bold; margin-bottom:5px;">橘隊分數</div>
@@ -246,10 +243,10 @@
             <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
         </div>
 
-        <!-- V38: 換點設定 -->
+        <!-- 換點設定 -->
         <div class="row" style="border:1px solid #7c4dff; padding:10px; border-radius:5px;">
             <label style="color:#b388ff; font-weight:bold;">🔄 自動換點 (Switch Point)</label>
-            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63,84,105 (達到即換點)" style="margin-top:5px;">
+            <input id="switchMatchPoints" class="full-width" placeholder="例如: 30,60,90 (達到即換點)" style="margin-top:5px;">
             <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
                 <input type="checkbox" id="resetScoreOnSwitch" class="toggle-checkbox">
                 <label for="resetScoreOnSwitch" style="color:#ccc; margin:0;">換點後分數歸零？</label>
@@ -325,8 +322,7 @@
         let state = { 
             leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: 'A', 
             serverIdxA: 0, serverIdxB: 0, 
-            swappedPoints: [], 
-            switchedMatchPoints: [] // V38: Track switched points
+            swappedPoints: [], switchedMatchPoints: [] 
         };
         let historyStack = []; let pendingRecords = []; 
         let isVibrationEnabled = true;
@@ -342,6 +338,23 @@
             render();
         });
 
+        // 重新補回的核心函數
+        function logGame() {
+            const record = {
+                id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
+                tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
+                matchStr: `G${currentMatchIdx+1}`, status: 'pending'
+            };
+            pendingRecords.push(record); renderLogItem(record);
+            saveToLocal();
+        }
+
+        function renderLogItem(r) {
+            let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
+            div.innerHTML = `<div class="log-info"><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div><div class="log-status status-pending" id="status-${r.id}">待傳送</div>`;
+            getEl('log-container').prepend(div);
+        }
+
         function saveToLocal() {
             const data = {
                 state, currentMatchIdx, historyStack, pendingRecords,
@@ -351,7 +364,6 @@
                     teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
                     gform_link: getEl('gform_link').value, swapPoints: getEl('swapPoints').value,
                     displayMode: getEl('displayMode').value,
-                    // V38 New Settings
                     switchMatchPoints: getEl('switchMatchPoints').value,
                     resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked
                 }
@@ -365,6 +377,7 @@
             try {
                 const data = JSON.parse(raw);
                 state = data.state || state;
+                if(!state.switchedMatchPoints) state.switchedMatchPoints = []; // 修正舊資料
                 currentMatchIdx = data.currentMatchIdx || 0;
                 historyStack = data.historyStack || [];
                 pendingRecords = data.pendingRecords || [];
@@ -378,7 +391,6 @@
                     getEl('gform_link').value = data.inputs.gform_link || "";
                     getEl('swapPoints').value = data.inputs.swapPoints || "11";
                     getEl('displayMode').value = data.inputs.displayMode || "position";
-                    // V38 Load
                     getEl('switchMatchPoints').value = data.inputs.switchMatchPoints || "";
                     getEl('resetScoreOnSwitch').checked = data.inputs.resetScoreOnSwitch || false;
                 }
@@ -440,16 +452,10 @@
             safePrompt(`修改 ${key} 隊名稱`, getTeamName(key), (val) => { if(val) { updateInputSegment(`team${key}_name`, val); render(); } });
         }
 
-        // V38: 手動修改分數
         function updateManualScore() {
             let sA = parseInt(getEl('manualScoreA').value) || 0;
             let sB = parseInt(getEl('manualScoreB').value) || 0;
-            
-            saveState(); // 記錄修改前狀態
-            state.scoreA = sA;
-            state.scoreB = sB;
-            render();
-            showToast("比分已手動更新");
+            saveState(); state.scoreA = sA; state.scoreB = sB; render(); showToast("比分已手動更新");
         }
 
         function addPoint(side) {
@@ -461,40 +467,30 @@
                 if (team === 'A') state.serverIdxA = getNextIdx('A', state.serverIdxA); else state.serverIdxB = getNextIdx('B', state.serverIdxB);
             }
             checkSwap(); 
-            checkMatchPoint(); // V38: 檢查換點
+            checkMatchPoint();
             render();
         }
 
-        // V38: 自動換點邏輯
         function checkMatchPoint() {
             let pts = getEl('switchMatchPoints').value.split(/[,，]/).map(Number).filter(n => n > 0);
             let max = Math.max(state.scoreA, state.scoreB);
             
             if (pts.includes(max) && !state.switchedMatchPoints.includes(max)) {
-                // 如果已經觸發過，就不再觸發
                 safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => {
                     executeMatchSwitch(max);
                 });
-                state.switchedMatchPoints.push(max); // 標記已觸發
+                state.switchedMatchPoints.push(max); 
             }
         }
 
         function executeMatchSwitch(point) {
-            logGame(); // 1. 紀錄
-            currentMatchIdx++; // 2. 下一點
-            
-            // 3. 檢查是否歸零
+            logGame(); 
+            currentMatchIdx++; 
             if (getEl('resetScoreOnSwitch').checked) {
                 state.scoreA = 0; state.scoreB = 0;
-                // 重置發球順序 (新的一局)
                 state.serverIdxA = 0; state.serverIdxB = 0;
-            } else {
-                // 如果不歸零，只需確保發球權邏輯正確 (維持現狀)
-            }
-            
-            saveToLocal();
-            render();
-            showToast(`✅ 已切換至第 ${currentMatchIdx+1} 點`);
+            } 
+            saveToLocal(); render(); showToast(`✅ 已切換至第 ${currentMatchIdx+1} 點`);
         }
 
         function setServer(teamKey, playerIdx) {
@@ -541,9 +537,7 @@
                 serverIdxA: 0, serverIdxB: 0, 
                 swappedPoints: [], switchedMatchPoints: []
             }; 
-            historyStack = []; 
-            render(); 
-            saveToLocal(); 
+            historyStack = []; render(); saveToLocal(); 
         }
         
         function logGameOnly() {
@@ -583,7 +577,6 @@
             getEl('disp-score-right').innerText = isA_Left ? state.scoreB : state.scoreA;
             getEl('match-counter').innerText = `G${currentMatchIdx+1}`;
             
-            // V38: Update Manual Score Inputs
             getEl('manualScoreA').value = state.scoreA;
             getEl('manualScoreB').value = state.scoreB;
 
@@ -720,7 +713,12 @@
         }
         function saveSettings() { render(); saveToLocal(); syncToFirebase(); getEl('settings-panel').classList.remove('panel-visible'); showToast("✅ 設定已儲存"); }
         function toggleHistory() { getEl('history-panel').classList.toggle('panel-visible'); }
+        function getCurrentPlayersString(teamKey) {
+            let raw = getEl(`team${teamKey}_players`).value;
+            let parts = raw.split(/[;；]/);
+            let idx = Math.min(currentMatchIdx, parts.length - 1);
+            return parts[idx] ? parts[idx].trim() : "";
+        }
     </script>
 </body>
 </html>
-
