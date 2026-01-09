@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V37 (終極整合修復版)</title>
+    <title>羽球主審 V38 (自動換點版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -69,17 +69,16 @@
             #match-counter { font-size: 14px !important; margin-right: 0; }
         }
 
-        /* Action Bar (5 Buttons) */
+        /* Action Bar (4 Buttons again) */
         #action-bar { height: 60px; background: #222; display: flex; justify-content: space-between; align-items: center; padding: 0 2px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .btn-act { 
             flex: 1; margin: 0 2px; height: 44px; border-radius: 6px; border: none; 
-            color: white; font-weight: bold; font-size: 13px; 
+            color: white; font-weight: bold; font-size: 15px; 
             cursor: pointer; display: flex; align-items: center; justify-content: center; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3); white-space: pre-wrap; line-height: 1.1;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         .btn-undo { background: #546e7a; }
         .btn-swap { background: #f57c00; } 
-        .btn-next { background: #7c4dff; border: 1px solid #b388ff; font-size: 14px; } 
         .btn-log  { background: #43a047; }
         .btn-end  { background: #d32f2f; border: 1px solid #ff8a80; }
 
@@ -124,7 +123,6 @@
             backdrop-filter: blur(2px); margin-bottom: 20px; overflow: hidden;
         }
         
-        /* 顯示模式樣式 */
         .mode-position .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: white; }
         .mode-position .pos-item:last-child { border-right: none; }
         .mode-roster .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
@@ -143,6 +141,12 @@
         .toggle-checkbox { width: 20px; height: 20px; cursor: pointer; }
         input[type=range] { width: 100%; margin: 10px 0; }
         
+        /* V38: 手動比分輸入框 */
+        .manual-score-input { 
+            width: 80px; font-size: 24px; font-weight: bold; text-align: center; 
+            background: #222; border: 2px solid #555; color: white; border-radius: 8px; padding: 5px;
+        }
+
         .log-item { background: #333; margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #555; display: flex; justify-content: space-between; align-items: center; }
         .log-info { font-size: 14px; color: #ddd; }
         .log-status { font-size: 12px; margin-left: 10px; padding: 3px 8px; border-radius: 4px; }
@@ -197,7 +201,6 @@
     <div id="action-bar">
         <button class="btn-act btn-undo" onclick="undoPoint()">↩ 復原</button>
         <button class="btn-act btn-swap" onclick="swapSidesManual()">⇄ 換邊</button>
-        <button class="btn-act btn-next" onclick="nextPointKeepScore()">▶ 下一點</button>
         <button class="btn-act btn-log" onclick="logGameOnly()">💾 紀錄</button>
         <button class="btn-act btn-end" onclick="endMatchAndNext()">🏁 結束</button>
     </div>
@@ -225,8 +228,34 @@
     <!-- Settings -->
     <div id="settings-panel">
         <h3>比賽設定</h3>
-        <div class="row"><button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button></div>
         
+        <!-- V38: 手動修改比分 -->
+        <div class="row" style="background:#444; padding:15px; border-radius:8px; display:flex; justify-content:space-around; align-items:center;">
+            <div style="text-align:center;">
+                <div style="color:var(--color-left); font-weight:bold; margin-bottom:5px;">橘隊分數</div>
+                <input type="number" id="manualScoreA" class="manual-score-input" value="0" onchange="updateManualScore()">
+            </div>
+            <div style="font-size:24px; color:#aaa;">:</div>
+            <div style="text-align:center;">
+                <div style="color:var(--color-right); font-weight:bold; margin-bottom:5px;">藍隊分數</div>
+                <input type="number" id="manualScoreB" class="manual-score-input" value="0" onchange="updateManualScore()">
+            </div>
+        </div>
+
+        <div class="row">
+            <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
+        </div>
+
+        <!-- V38: 換點設定 -->
+        <div class="row" style="border:1px solid #7c4dff; padding:10px; border-radius:5px;">
+            <label style="color:#b388ff; font-weight:bold;">🔄 自動換點 (Switch Point)</label>
+            <input id="switchMatchPoints" class="full-width" placeholder="例如: 30,60,90 (達到即換點)" style="margin-top:5px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+                <input type="checkbox" id="resetScoreOnSwitch" class="toggle-checkbox">
+                <label for="resetScoreOnSwitch" style="color:#ccc; margin:0;">換點後分數歸零？</label>
+            </div>
+        </div>
+
         <div class="row">
             <label style="color:#00e676; font-weight:bold;">📺 顯示模式</label>
             <select id="displayMode" class="full-width" onchange="render()">
@@ -247,6 +276,7 @@
             <label style="color:#ffeb3b; font-weight:bold;">🔠 分數大小: <span id="size-val">250</span>px</label>
             <input type="range" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
+        
         <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
         <div class="row"><label>A隊名單 (;分場次)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊"></div>
         <div class="row"><label>A隊員 (例如: 王,李; 陳,林)</label><input id="teamA_players" class="full-width" value="王,李"></div>
@@ -292,7 +322,12 @@
 
         const STORAGE_KEY = 'badminton_v23_state';
         let currentMatchIdx = 0;
-        let state = { leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: 'A', serverIdxA: 0, serverIdxB: 0, swappedPoints: [] };
+        let state = { 
+            leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: 'A', 
+            serverIdxA: 0, serverIdxB: 0, 
+            swappedPoints: [], 
+            switchedMatchPoints: [] // V38: Track switched points
+        };
         let historyStack = []; let pendingRecords = []; 
         let isVibrationEnabled = true;
 
@@ -315,7 +350,10 @@
                     teamA_name: getEl('teamA_name').value, teamA_players: getEl('teamA_players').value,
                     teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
                     gform_link: getEl('gform_link').value, swapPoints: getEl('swapPoints').value,
-                    displayMode: getEl('displayMode').value
+                    displayMode: getEl('displayMode').value,
+                    // V38 New Settings
+                    switchMatchPoints: getEl('switchMatchPoints').value,
+                    resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked
                 }
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -340,6 +378,9 @@
                     getEl('gform_link').value = data.inputs.gform_link || "";
                     getEl('swapPoints').value = data.inputs.swapPoints || "11";
                     getEl('displayMode').value = data.inputs.displayMode || "position";
+                    // V38 Load
+                    getEl('switchMatchPoints').value = data.inputs.switchMatchPoints || "";
+                    getEl('resetScoreOnSwitch').checked = data.inputs.resetScoreOnSwitch || false;
                 }
                 getEl('log-container').innerHTML = '';
                 pendingRecords.forEach(r => renderLogItem(r));
@@ -399,6 +440,18 @@
             safePrompt(`修改 ${key} 隊名稱`, getTeamName(key), (val) => { if(val) { updateInputSegment(`team${key}_name`, val); render(); } });
         }
 
+        // V38: 手動修改分數
+        function updateManualScore() {
+            let sA = parseInt(getEl('manualScoreA').value) || 0;
+            let sB = parseInt(getEl('manualScoreB').value) || 0;
+            
+            saveState(); // 記錄修改前狀態
+            state.scoreA = sA;
+            state.scoreB = sB;
+            render();
+            showToast("比分已手動更新");
+        }
+
         function addPoint(side) {
             saveState();
             let team = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
@@ -407,7 +460,41 @@
                 state.serverTeam = team;
                 if (team === 'A') state.serverIdxA = getNextIdx('A', state.serverIdxA); else state.serverIdxB = getNextIdx('B', state.serverIdxB);
             }
-            checkSwap(); render();
+            checkSwap(); 
+            checkMatchPoint(); // V38: 檢查換點
+            render();
+        }
+
+        // V38: 自動換點邏輯
+        function checkMatchPoint() {
+            let pts = getEl('switchMatchPoints').value.split(/[,，]/).map(Number).filter(n => n > 0);
+            let max = Math.max(state.scoreA, state.scoreB);
+            
+            if (pts.includes(max) && !state.switchedMatchPoints.includes(max)) {
+                // 如果已經觸發過，就不再觸發
+                safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => {
+                    executeMatchSwitch(max);
+                });
+                state.switchedMatchPoints.push(max); // 標記已觸發
+            }
+        }
+
+        function executeMatchSwitch(point) {
+            logGame(); // 1. 紀錄
+            currentMatchIdx++; // 2. 下一點
+            
+            // 3. 檢查是否歸零
+            if (getEl('resetScoreOnSwitch').checked) {
+                state.scoreA = 0; state.scoreB = 0;
+                // 重置發球順序 (新的一局)
+                state.serverIdxA = 0; state.serverIdxB = 0;
+            } else {
+                // 如果不歸零，只需確保發球權邏輯正確 (維持現狀)
+            }
+            
+            saveToLocal();
+            render();
+            showToast(`✅ 已切換至第 ${currentMatchIdx+1} 點`);
         }
 
         function setServer(teamKey, playerIdx) {
@@ -438,7 +525,7 @@
         
         function checkSwap() {
             let max = Math.max(state.scoreA, state.scoreB);
-            let pts = getEl('swapPoints').value.split(',').map(Number);
+            let pts = getEl('swapPoints').value.split(/[,，]/).map(Number);
             if (pts.includes(max) && !state.swappedPoints.includes(max)) {
                 state.swappedPoints.push(max); 
                 safeConfirm(`分數 ${state.scoreA}:${state.scoreB} 換邊？`, () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); });
@@ -449,34 +536,16 @@
         
         function resetGame() { 
             state = { 
-                leftTeam: 'A', 
-                scoreA: 0, scoreB: 0, 
+                leftTeam: 'A', scoreA: 0, scoreB: 0, 
                 serverTeam: getEl('initServer').value, 
                 serverIdxA: 0, serverIdxB: 0, 
-                swappedPoints: [] 
+                swappedPoints: [], switchedMatchPoints: []
             }; 
             historyStack = []; 
             render(); 
             saveToLocal(); 
         }
-
-        // V37: 重新加入所有 Log 相關函數
-        function logGame() {
-            const record = {
-                id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
-                tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
-                matchStr: `G${currentMatchIdx+1}`, status: 'pending'
-            };
-            pendingRecords.push(record); renderLogItem(record);
-            saveToLocal();
-        }
-
-        function renderLogItem(r) {
-            let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
-            div.innerHTML = `<div class="log-info"><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div><div class="log-status status-pending" id="status-${r.id}">待傳送</div>`;
-            getEl('log-container').prepend(div);
-        }
-
+        
         function logGameOnly() {
             if (pendingRecords.length > 0) {
                 const last = pendingRecords[pendingRecords.length - 1];
@@ -487,18 +556,6 @@
             logGame(); 
             const link = getEl('gform_link').value;
             if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
-        }
-
-        function nextPointKeepScore() {
-            safeConfirm("確認進入下一點？(分數將保留並繼續累加)", () => {
-                logGame(); 
-                currentMatchIdx++; 
-                state.serverIdxA = 0; // 重置發球順位
-                state.serverIdxB = 0;
-                saveToLocal();
-                render(); 
-                showToast("✅ 已進入下一點 (分數續計)");
-            });
         }
 
         function endMatchAndNext() {
@@ -526,6 +583,10 @@
             getEl('disp-score-right').innerText = isA_Left ? state.scoreB : state.scoreA;
             getEl('match-counter').innerText = `G${currentMatchIdx+1}`;
             
+            // V38: Update Manual Score Inputs
+            getEl('manualScoreA').value = state.scoreA;
+            getEl('manualScoreB').value = state.scoreB;
+
             getEl('area-left').className = isA_Left ? "side team-a" : "side team-b"; 
             getEl('area-right').className = isA_Left ? "side team-b" : "side team-a";
             
@@ -638,6 +699,8 @@
                 teamA_name: getEl('teamA_name').value, teamA_players: getEl('teamA_players').value,
                 teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
                 swapPoints: getEl('swapPoints').value,
+                switchMatchPoints: getEl('switchMatchPoints').value,
+                resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
                 displayMode: getEl('displayMode').value
             };
             getEl('settings-panel').classList.add('panel-visible');
@@ -648,9 +711,12 @@
                 getEl('teamA_name').value = settingsSnapshot.teamA_name || ""; getEl('teamA_players').value = settingsSnapshot.teamA_players || "";
                 getEl('teamB_name').value = settingsSnapshot.teamB_name || ""; getEl('teamB_players').value = settingsSnapshot.teamB_players || "";
                 getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
+                getEl('switchMatchPoints').value = settingsSnapshot.switchMatchPoints || "";
+                getEl('resetScoreOnSwitch').checked = settingsSnapshot.resetScoreOnSwitch;
                 getEl('displayMode').value = settingsSnapshot.displayMode || "position";
             }
-            getEl('settings-panel').classList.remove('panel-visible'); render(); 
+            getEl('settings-panel').classList.remove('panel-visible');
+            render(); 
         }
         function saveSettings() { render(); saveToLocal(); syncToFirebase(); getEl('settings-panel').classList.remove('panel-visible'); showToast("✅ 設定已儲存"); }
         function toggleHistory() { getEl('history-panel').classList.toggle('panel-visible'); }
