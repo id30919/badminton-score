@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V33 (清除下線功能)</title>
+    <title>羽球主審 V34 (多人名單版)</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -23,11 +23,10 @@
             display: flex; flex-direction: column; overflow: hidden; 
         }
         
-        /* === Header === */
+        /* Header */
         #header { 
             height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
-            border-bottom: 1px solid #444;
-            padding-left: 60px; 
+            border-bottom: 1px solid #444; padding-left: 60px; 
         }
         
         .header-left { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
@@ -37,33 +36,18 @@
             display: flex; align-items: stretch; border-radius: 6px; overflow: hidden;
             height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        .rainbow-label { 
-            padding: 0 10px; display: flex; align-items: center; justify-content: center; 
-            font-size: 14px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        }
-        .rainbow-input { 
-            border: none; color: white; padding: 0; height: 100%; text-align: center;
-            font-weight: bold; font-size: 14px; outline: none; cursor: pointer;
-            font-family: 'Segoe UI', sans-serif; user-select: none;
-        }
+        .rainbow-label { padding: 0 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .rainbow-input { border: none; color: white; padding: 0; height: 100%; text-align: center; font-weight: bold; font-size: 14px; outline: none; cursor: pointer; font-family: 'Segoe UI', sans-serif; user-select: none; }
         
         .theme-umpire .rainbow-label { background: #7b1fa2; }
         .theme-umpire .rainbow-input { background: #4a148c; width: 70px; }
         .theme-court .rainbow-label { background: #00796b; }
         .theme-court .rainbow-input { background: #004d40; width: 40px; }
 
-        .btn-icon { 
-            background: transparent; border: 1px solid #666; color: #ddd; 
-            width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .btn-icon { background: transparent; border: 1px solid #666; color: #ddd; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
         .btn-icon:active { background: #555; }
 
-        .live-switch {
-            display: flex; align-items: center; gap: 6px; cursor: pointer;
-            padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111;
-            height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s;
-        }
+        .live-switch { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111; height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s; }
         .live-switch.active { background: rgba(0, 200, 0, 0.2); border-color: #00ff00; }
         .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; transition: all 0.3s; }
         .live-switch.active .live-dot { background: #00ff00; box-shadow: 0 0 5px #00ff00; }
@@ -84,16 +68,8 @@
         }
 
         /* Action Bar */
-        #action-bar {
-            height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100;
-            border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        .btn-act {
-            flex: 1; margin: 0 3px; height: 44px; border-radius: 8px; border: none;
-            color: white; font-weight: bold; font-size: 15px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 3px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
+        #action-bar { height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .btn-act { flex: 1; margin: 0 3px; height: 44px; border-radius: 8px; border: none; color: white; font-weight: bold; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .btn-undo { background: #546e7a; }
         .btn-swap { background: #f57c00; } 
         .btn-log  { background: #43a047; }
@@ -110,37 +86,22 @@
         .u-btn-cancel { background: #555; color: white; }
         .u-btn-confirm { background: #00c853; color: white; }
 
-        #toast-msg {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px;
-            font-size: 14px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
-            border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
+        #toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px; font-size: 14px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s; border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         #toast-msg.show { opacity: 1; }
 
         /* Court Area */
-        #court { 
-            flex: 1; display: flex; position: relative; 
-            overflow-y: auto; -webkit-overflow-scrolling: touch; 
-        }
+        #court { flex: 1; display: flex; position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .side { 
-            flex: 1; display: flex; flex-direction: column; 
-            justify-content: space-between; align-items: center;
+            flex: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center;
             position: relative; cursor: pointer; user-select: none; 
             transition: background-color 0.2s; padding: 15px 0; overflow: hidden; min-height: 300px;
         }
         .side.team-a { background-color: var(--color-left); } 
         .side.team-b { background-color: var(--color-right); }
         
-        .score-bg-layer { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            z-index: 0; width: 100%; text-align: center; opacity: 0.6; 
-        }
-        .score { 
-            font-size: var(--score-size); font-weight: bold; line-height: 1; 
-            pointer-events: none; transition: font-size 0.2s; text-shadow: 0 0 20px rgba(0,0,0,0.3); 
-        }
-
+        .score-bg-layer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; width: 100%; text-align: center; opacity: 0.6; }
+        .score { font-size: var(--score-size); font-weight: bold; line-height: 1; pointer-events: none; transition: font-size 0.2s; text-shadow: 0 0 20px rgba(0,0,0,0.3); }
+        
         .team-name-wrapper { width: 100%; text-align: center; z-index: 10; min-height: 50px; }
         .team-name { font-size: 32px; font-weight: bold; pointer-events: auto; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
         
@@ -152,13 +113,34 @@
         }
         .side.serving .server-indicator { opacity: 1; }
         
+        /* === V34 修改：發球框佈局 === */
         .position-box { 
-            width: 92%; height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); 
-            background: rgba(0,0,0,0.4); pointer-events: auto; flex-shrink: 0;
-            backdrop-filter: blur(2px); margin-bottom: 20px; 
+            width: 92%; height: 60px; display: flex; 
+            border: 2px solid rgba(255,255,255,0.8); 
+            background: rgba(0,0,0,0.4); 
+            pointer-events: auto; /* 允許點擊 */
+            flex-shrink: 0; backdrop-filter: blur(2px); margin-bottom: 20px; 
+            overflow: hidden; /* 防止超出 */
         }
-        .pos-l, .pos-r { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; pointer-events: none; font-weight: bold; }
-        .pos-active { background: rgba(255,255,255,0.95); color: #000; font-weight: bold; font-size: 22px; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
+        
+        /* 傳統站位模式 */
+        .mode-position .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: white; }
+        .mode-position .pos-item:last-child { border-right: none; }
+
+        /* 多人名單模式 */
+        .mode-roster .pos-item { 
+            flex: 1; /* 平均分配寬度 */
+            border-right: 1px solid rgba(255,255,255,0.5); 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 14px; font-weight: bold; color: white; 
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            cursor: pointer; /* 可點擊切換 */
+        }
+        .mode-roster .pos-item:last-child { border-right: none; }
+        .mode-roster .pos-item:active { background: rgba(255,255,255,0.2); }
+
+        /* 激活狀態 (亮白底黑字) */
+        .pos-item.active { background: rgba(255,255,255,0.95); color: #000; font-size: 20px; text-shadow: none; }
         
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
@@ -208,7 +190,6 @@
                 <input type="number" id="courtNum" class="rainbow-input" value="1" readonly>
             </div>
         </div>
-        
         <div class="header-right" style="display:flex; align-items:center; gap:8px;">
             <div class="live-switch" id="liveToggle" onclick="handleLiveClick()">
                 <div class="live-dot"></div>
@@ -231,29 +212,24 @@
 
     <div id="court">
         <div id="area-left" class="side team-a">
-            <div class="team-name-wrapper">
-                <div class="team-name" id="name-box-left">橘隊</div>
-            </div>
+            <div class="team-name-wrapper"><div class="team-name" id="name-box-left">橘隊</div></div>
             <div class="score-bg-layer"><div class="score" id="disp-score-left">0</div></div>
             <div class="bottom-info-wrapper">
                 <div class="server-indicator">發球</div>
+                <!-- V34: 動態容器 -->
                 <div class="position-box" id="pos-box-left">
-                    <div class="pos-l" id="pos-l-left">左區</div>
-                    <div class="pos-r" id="pos-r-left">右區</div>
+                    <!-- Javascript will fill this -->
                 </div>
             </div>
         </div>
 
         <div id="area-right" class="side team-b">
-            <div class="team-name-wrapper">
-                <div class="team-name" id="name-box-right">藍隊</div>
-            </div>
+            <div class="team-name-wrapper"><div class="team-name" id="name-box-right">藍隊</div></div>
             <div class="score-bg-layer"><div class="score" id="disp-score-right">0</div></div>
             <div class="bottom-info-wrapper">
                 <div class="server-indicator">發球</div>
                 <div class="position-box" id="pos-box-right">
-                    <div class="pos-l" id="pos-l-right">左區</div>
-                    <div class="pos-r" id="pos-r-right">右區</div>
+                    <!-- Javascript will fill this -->
                 </div>
             </div>
         </div>
@@ -265,6 +241,15 @@
         
         <div class="row">
             <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
+        </div>
+
+        <!-- V34: 顯示模式切換 -->
+        <div class="row">
+            <label style="color:#00e676; font-weight:bold;">📺 顯示模式 (Display Mode)</label>
+            <select id="displayMode" class="full-width" onchange="render()">
+                <option value="position">🏸 傳統站位 (左右跳)</option>
+                <option value="roster">📋 固定名單 (多人制)</option>
+            </select>
         </div>
 
         <div class="switch-row">
@@ -282,16 +267,14 @@
         
         <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
         <div class="row"><label>A隊名單 (;分場次)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊"></div>
-        <div class="row"><label>A隊員 (例如: 王,李)</label><input id="teamA_players" class="full-width" value="王,李"></div>
+        <div class="row"><label>A隊員 (例如: 王,李,陳,林)</label><input id="teamA_players" class="full-width" value="王,李"></div>
         <div class="row"><label>B隊名單 (;分場次)</label><input id="teamB_name" class="full-width" value="藍隊;藍二隊"></div>
-        <div class="row"><label>B隊員 (例如: 張,林)</label><input id="teamB_players" class="full-width" value="張,林"></div>
+        <div class="row"><label>B隊員 (例如: 張,林,趙,錢)</label><input id="teamB_players" class="full-width" value="張,林"></div>
         <div class="row"><label>換邊分數</label><input id="swapPoints" class="full-width" value="11"></div>
         <div class="row"><label>發球方</label><select id="initServer" class="full-width" onchange="resetGame()"><option value="A">A隊先發</option><option value="B">B隊先發</option></select></div>
         
-        <!-- V33: 新增清除按鈕 -->
         <div class="row" style="border-top:1px solid #555; margin-top:15px; padding-top:15px;">
             <button class="btn-act" onclick="clearCourtData()" style="background:#b71c1c; border:1px solid #ff5252; width:100%;">🗑️ 清除此場地 (直播下線)</button>
-            <div style="font-size:12px; color:#aaa; margin-top:5px; text-align:center;">該場地今天比完後請按此，將從直播牆移除</div>
         </div>
 
         <div style="display:flex; gap:10px; margin-top:20px; padding-bottom:20px;">
@@ -300,7 +283,6 @@
         </div>
     </div>
     
-    <!-- History -->
     <div id="history-panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3>歷史紀錄</h3>
@@ -338,8 +320,6 @@
             loadFromLocal();
             setupLongPress(getEl('name-box-left'), () => editTeamName('left'));
             setupLongPress(getEl('name-box-right'), () => editTeamName('right'));
-            setupLongPress(getEl('pos-box-left'), () => editPlayerName('left'));
-            setupLongPress(getEl('pos-box-right'), () => editPlayerName('right'));
             bindClickPoint('area-left', 'left');
             bindClickPoint('area-right', 'right');
             render();
@@ -349,14 +329,11 @@
             const data = {
                 state, currentMatchIdx, historyStack, pendingRecords,
                 inputs: {
-                    umpireName: getEl('umpireName').value,
-                    courtNum: getEl('courtNum').value,
-                    teamA_name: getEl('teamA_name').value,
-                    teamA_players: getEl('teamA_players').value,
-                    teamB_name: getEl('teamB_name').value,
-                    teamB_players: getEl('teamB_players').value,
-                    gform_link: getEl('gform_link').value,
-                    swapPoints: getEl('swapPoints').value
+                    umpireName: getEl('umpireName').value, courtNum: getEl('courtNum').value,
+                    teamA_name: getEl('teamA_name').value, teamA_players: getEl('teamA_players').value,
+                    teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
+                    gform_link: getEl('gform_link').value, swapPoints: getEl('swapPoints').value,
+                    displayMode: getEl('displayMode').value // V34: Save mode
                 }
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -380,6 +357,7 @@
                     getEl('teamB_players').value = data.inputs.teamB_players || "張,林";
                     getEl('gform_link').value = data.inputs.gform_link || "";
                     getEl('swapPoints').value = data.inputs.swapPoints || "11";
+                    getEl('displayMode').value = data.inputs.displayMode || "position";
                 }
                 getEl('log-container').innerHTML = '';
                 pendingRecords.forEach(r => renderLogItem(r));
@@ -416,7 +394,7 @@
         function bindClickPoint(elemId, side) {
             const el = getEl(elemId);
             el.addEventListener('click', (e) => {
-                if (e.target.closest('.btn-act') || e.target.closest('#controls-overlay')) return;
+                if (e.target.closest('.btn-act') || e.target.closest('#controls-overlay') || e.target.closest('.position-box')) return;
                 if (el.dataset.longPressHandled === "true") { el.dataset.longPressHandled = "false"; return; }
                 doVibrate(30); addPoint(side);
                 el.classList.remove('flash-active'); void el.offsetWidth; el.classList.add('flash-active');
@@ -438,11 +416,6 @@
             let key = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
             safePrompt(`修改 ${key} 隊名稱`, getTeamName(key), (val) => { if(val) { updateInputSegment(`team${key}_name`, val); render(); } });
         }
-        function editPlayerName(side) {
-            let key = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
-            let idx = (key === 'A') ? state.serverIdxA : state.serverIdxB;
-            safePrompt("修改球員", getPlayerName(key, idx), (val) => { if(val) { updatePlayerInput(`team${key}_players`, idx, val); render(); } });
-        }
 
         function addPoint(side) {
             saveState();
@@ -455,30 +428,38 @@
             checkSwap(); render();
         }
 
+        // V34: 手動指定發球者 (Roster Mode Only)
+        function setServer(teamKey, playerIdx) {
+            // Check if user clicked the opponent side (invalid in standard rules, but let's allow setting server for active side)
+            // But usually you click to set *who is serving for that team*.
+            // We need to update serverIdxA or serverIdxB
+            if (teamKey === 'A') state.serverIdxA = playerIdx;
+            else state.serverIdxB = playerIdx;
+            
+            // Note: We don't automatically change state.serverTeam (active side) here, 
+            // because you might just be correcting the rotation order without changing score.
+            // But if you click a player on the *serving side*, it updates who is serving.
+            
+            doVibrate(30);
+            render();
+            showToast(`已指定發球：${getPlayerName(teamKey, playerIdx)}`);
+        }
+
         function updateInputSegment(id, newVal) {
             let input = getEl(id); let parts = input.value.split(/[;；]/);
             let safeIdx = Math.min(currentMatchIdx, parts.length - 1);
             parts[safeIdx] = newVal; input.value = parts.join(' ; '); saveToLocal();
-        }
-        function updatePlayerInput(id, pIdx, newVal) {
-            let input = getEl(id); let mParts = input.value.split(/[;；]/);
-            let mIdx = Math.min(currentMatchIdx, mParts.length - 1);
-            let players = mParts[mIdx].split(/[,，]/);
-            players[pIdx % players.length] = newVal;
-            mParts[mIdx] = players.join(','); input.value = mParts.join(' ; '); saveToLocal();
-        }
-
-        function getCurrentPlayersString(teamKey) {
-            let raw = getEl(`team${teamKey}_players`).value;
-            let parts = raw.split(/[;；]/);
-            let idx = Math.min(currentMatchIdx, parts.length - 1);
-            return parts[idx] ? parts[idx].trim() : "";
         }
 
         function getSegmentedData(id, idx) { let val = getEl(id).value.split(/[;；]/); return val[Math.min(idx, val.length-1)]?.trim() || ""; }
         function getTeamName(k) { return getSegmentedData(`team${k}_name`, currentMatchIdx) || `隊${k}`; }
         function getPlayerName(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/); return arr.length ? arr[i % arr.length].trim() : ""; }
         function getNextIdx(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/); let len = arr.length || 1; return (i + 1) % len; }
+        
+        // V34: 取得整隊列表
+        function getPlayerList(k) {
+            return getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，]/).map(s => s.trim()).filter(s => s);
+        }
 
         function undoPoint() { if (historyStack.length) { state = historyStack.pop(); render(); } }
         function saveState() { let copy = JSON.parse(JSON.stringify(state)); historyStack.push(copy); if(historyStack.length>50) historyStack.shift(); }
@@ -508,26 +489,21 @@
         }
 
         function endMatchAndNext() {
-            safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => { 
-                logGame(); 
-                currentMatchIdx++; 
-                resetGame(); 
-                showToast("✅ 進入下一場"); 
-            });
+            safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => { logGame(); currentMatchIdx++; resetGame(); showToast("✅ 進入下一場"); });
         }
-
-        // V33: 清除場地資料 (下線)
         function clearCourtData() {
             if(!isLive) { showToast("⚠️ 請先開啟直播連線"); return; }
             const cNum = getEl('courtNum').value;
-            safeConfirm(`確定要清除【場地 ${cNum}】的直播資料嗎？\n(觀眾將無法看到此場地)`, () => {
-                db.ref('courts/court_' + cNum).remove()
-                    .then(() => showToast("🗑️ 場地已下線"))
-                    .catch(e => showToast("❌ 清除失敗"));
+            safeConfirm(`確定要清除【場地 ${cNum}】的直播資料嗎？`, () => {
+                db.ref('courts/court_' + cNum).remove().then(() => showToast("🗑️ 場地已下線")).catch(e => showToast("❌ 清除失敗"));
             });
         }
 
+        // === V34 核心 Render ===
         function render() {
+            const mode = getEl('displayMode').value; // 'position' or 'roster'
+            
+            // 通用 UI 更新
             let isA_Left = (state.leftTeam === 'A');
             getEl('name-box-left').innerText = getTeamName(isA_Left?'A':'B');
             getEl('name-box-right').innerText = getTeamName(isA_Left?'B':'A');
@@ -538,51 +514,90 @@
             getEl('area-left').className = isA_Left ? "side team-a" : "side team-b"; 
             getEl('area-right').className = isA_Left ? "side team-b" : "side team-a";
             
+            // 發球指示
             getEl('area-left').classList.remove('serving'); getEl('area-right').classList.remove('serving');
             if (state.serverTeam === state.leftTeam) getEl('area-left').classList.add('serving'); else getEl('area-right').classList.add('serving');
 
-            ['pos-l-left','pos-r-left','pos-l-right','pos-r-right'].forEach(id=>{ const el = getEl(id); el.classList.remove('pos-active'); el.innerText = ""; });
+            // 準備容器
+            const boxL = getEl('pos-box-left');
+            const boxR = getEl('pos-box-right');
+            boxL.innerHTML = ''; boxR.innerHTML = '';
+            boxL.className = `position-box mode-${mode}`;
+            boxR.className = `position-box mode-${mode}`;
 
-            let serverA = getPlayerName('A', state.serverIdxA);
-            let partnerA = getPlayerName('A', getNextIdx('A', state.serverIdxA));
-            let serverB = getPlayerName('B', state.serverIdxB);
-            let partnerB = getPlayerName('B', getNextIdx('B', state.serverIdxB));
-
-            let leftTeamKey = state.leftTeam; 
-            let leftTeamScore = (leftTeamKey === 'A') ? state.scoreA : state.scoreB;
-            let leftServerName = (leftTeamKey === 'A') ? serverA : serverB;
-            let leftPartnerName = (leftTeamKey === 'A') ? partnerA : partnerB;
-            let leftTeamTotalPlayers = getSegmentedData(`team${leftTeamKey}_players`, currentMatchIdx).split(/[,，]/).length;
-
-            if (leftTeamScore % 2 === 0) { 
-                getEl('pos-r-left').innerText = leftServerName; 
-                if(leftTeamTotalPlayers > 1) getEl('pos-l-left').innerText = leftPartnerName; 
-            } else { 
-                getEl('pos-l-left').innerText = leftServerName; 
-                if(leftTeamTotalPlayers > 1) getEl('pos-r-left').innerText = leftPartnerName; 
+            // 根據模式渲染
+            if (mode === 'position') {
+                // === 傳統模式 (左/右) ===
+                renderPositionMode(boxL, isA_Left ? 'A' : 'B', 'left');
+                renderPositionMode(boxR, isA_Left ? 'B' : 'A', 'right');
+            } else {
+                // === V34: 多人固定名單模式 ===
+                renderRosterMode(boxL, isA_Left ? 'A' : 'B');
+                renderRosterMode(boxR, isA_Left ? 'B' : 'A');
             }
-
-            let rightTeamKey = (leftTeamKey === 'A') ? 'B' : 'A';
-            let rightTeamScore = (rightTeamKey === 'A') ? state.scoreA : state.scoreB;
-            let rightServerName = (rightTeamKey === 'A') ? serverA : serverB;
-            let rightPartnerName = (rightTeamKey === 'A') ? partnerA : partnerB;
-            let rightTeamTotalPlayers = getSegmentedData(`team${rightTeamKey}_players`, currentMatchIdx).split(/[,，]/).length;
-
-            if (rightTeamScore % 2 === 0) { 
-                getEl('pos-r-right').innerText = rightServerName; 
-                if(rightTeamTotalPlayers > 1) getEl('pos-l-right').innerText = rightPartnerName;
-            } else { 
-                getEl('pos-l-right').innerText = rightServerName; 
-                if(rightTeamTotalPlayers > 1) getEl('pos-r-right').innerText = rightPartnerName;
-            }
-
-            let activeTeamSide = (state.serverTeam === state.leftTeam) ? 'left' : 'right';
-            let activeScore = (state.serverTeam === 'A') ? state.scoreA : state.scoreB;
-            let targetId = (activeTeamSide === 'left') ? ((activeScore % 2 === 0) ? 'pos-r-left' : 'pos-l-left') : ((activeScore % 2 === 0) ? 'pos-r-right' : 'pos-l-right');
-            getEl(targetId).classList.add('pos-active');
 
             syncToFirebase();
             saveToLocal(); 
+        }
+
+        function renderPositionMode(container, teamKey, side) {
+            // Reuse logic from V33
+            let serverIdx = (teamKey === 'A') ? state.serverIdxA : state.serverIdxB;
+            let serverName = getPlayerName(teamKey, serverIdx);
+            let partnerName = getPlayerName(teamKey, getNextIdx(teamKey, serverIdx));
+            let score = (teamKey === 'A') ? state.scoreA : state.scoreB;
+            let totalPlayers = getPlayerList(teamKey).length;
+
+            let html = '';
+            // Determine active text based on score (Even=Right, Odd=Left)
+            // Left Side of screen: L=Odd, R=Even
+            // Right Side of screen: L=Odd, R=Even
+            
+            // Build Left Box (Odd)
+            let txtL = (score % 2 !== 0) ? serverName : (totalPlayers > 1 ? partnerName : "");
+            let activeL = (state.serverTeam === teamKey && score % 2 !== 0) ? "active" : "";
+            
+            // Build Right Box (Even)
+            let txtR = (score % 2 === 0) ? serverName : (totalPlayers > 1 ? partnerName : "");
+            let activeR = (state.serverTeam === teamKey && score % 2 === 0) ? "active" : "";
+
+            container.innerHTML = `
+                <div class="pos-item ${activeL}">${txtL || '左區'}</div>
+                <div class="pos-item ${activeR}">${txtR || '右區'}</div>
+            `;
+        }
+
+        function renderRosterMode(container, teamKey) {
+            const players = getPlayerList(teamKey);
+            // Current Server Index for this team
+            const currentIdx = (teamKey === 'A') ? state.serverIdxA : state.serverIdxB;
+            const isServingTeam = (state.serverTeam === teamKey);
+
+            if (players.length === 0) {
+                container.innerHTML = '<div class="pos-item">無名單</div>';
+                return;
+            }
+
+            players.forEach((p, idx) => {
+                const div = document.createElement('div');
+                // Only highlight if it's the serving team AND this is the current server index
+                // OR just show who is "current rotator" even if not serving (optional, but requested: "highlight when serving")
+                // User said: "change to who serves, turn white" -> imply only serving team.
+                // But typically you want to know rotation for both. Let's highlight rotation for both, but maybe different style?
+                // Request: "Same as original" -> White bg black text.
+                
+                let isActive = (idx === currentIdx) && isServingTeam;
+                
+                div.className = `pos-item ${isActive ? 'active' : ''}`;
+                div.innerText = p;
+                
+                // Click to set server manually
+                div.onclick = (e) => {
+                    e.stopPropagation();
+                    setServer(teamKey, idx);
+                };
+                container.appendChild(div);
+            });
         }
 
         function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
@@ -673,12 +688,16 @@
             });
         }
         function updateStatus(id, type, text) { const el = getEl(`status-${id}`); if (el) { el.className = `log-status status-${type}`; el.innerText = text; } }
+        
+        // V30: Updated toggleSettings to openSettings
+        let settingsSnapshot = {};
         function openSettings() {
             settingsSnapshot = {
                 gform_link: getEl('gform_link').value,
                 teamA_name: getEl('teamA_name').value, teamA_players: getEl('teamA_players').value,
                 teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
-                swapPoints: getEl('swapPoints').value
+                swapPoints: getEl('swapPoints').value,
+                displayMode: getEl('displayMode').value // V34
             };
             getEl('settings-panel').classList.add('panel-visible');
         }
@@ -688,11 +707,18 @@
                 getEl('teamA_name').value = settingsSnapshot.teamA_name || ""; getEl('teamA_players').value = settingsSnapshot.teamA_players || "";
                 getEl('teamB_name').value = settingsSnapshot.teamB_name || ""; getEl('teamB_players').value = settingsSnapshot.teamB_players || "";
                 getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
+                getEl('displayMode').value = settingsSnapshot.displayMode || "position";
             }
             getEl('settings-panel').classList.remove('panel-visible'); render(); 
         }
         function saveSettings() { render(); saveToLocal(); syncToFirebase(); getEl('settings-panel').classList.remove('panel-visible'); showToast("✅ 設定已儲存"); }
         function toggleHistory() { getEl('history-panel').classList.toggle('panel-visible'); }
+        function getCurrentPlayersString(teamKey) {
+            let raw = getEl(`team${teamKey}_players`).value;
+            let parts = raw.split(/[;；]/);
+            let idx = Math.min(currentMatchIdx, parts.length - 1);
+            return parts[idx] ? parts[idx].trim() : "";
+        }
     </script>
 </body>
 </html>
