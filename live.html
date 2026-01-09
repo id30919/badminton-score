@@ -52,7 +52,7 @@
         .t-players {
             font-size: 14px; color: #aaa; line-height: 1.4;
             background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px;
-            max-width: 90%; word-wrap: break-word;
+            max-width: 90%; word-wrap: break-word; min-height: 20px;
         }
 
         .color-a { color: #ff9800; } 
@@ -78,6 +78,7 @@
     </div>
 
     <script>
+        // ============== 你的 Firebase 設定 (已填入) ==============
         const firebaseConfig = {
           apiKey: "AIzaSyAq-sTArXeGDVpdjnbLEzh5WpQ5mkmsyoA",
           authDomain: "badminton-live-6237e.firebaseapp.com",
@@ -94,6 +95,7 @@
             const db = firebase.database();
             const container = document.getElementById('grid-container');
 
+            // 監聽資料庫
             db.ref('courts').on('value', (snapshot) => {
                 const data = snapshot.val();
                 container.innerHTML = ""; 
@@ -103,11 +105,11 @@
                     return;
                 }
 
-                // V30: 過濾掉超過12小時未更新的舊資料
+                // 過濾掉超過12小時未更新的舊資料
                 const now = Date.now();
                 const matches = Object.keys(data)
                     .map(key => data[key])
-                    .filter(m => (now - m.timestamp) < 43200000); // 12小時 = 43200000毫秒
+                    .filter(m => (now - m.timestamp) < 43200000); 
 
                 if (matches.length === 0) {
                     container.innerHTML = "<div class='no-data'>目前沒有進行中的比賽</div>";
@@ -141,13 +143,13 @@
                     <div class="team-box">
                         <div class="t-name color-a">${m.teamA} ${iconA}</div>
                         <div class="t-score color-a">${m.scoreA}</div>
-                        <div class="t-players">${m.playersA || '-'}</div>
+                        <div class="t-players">${m.playersA || ''}</div>
                     </div>
                     <div class="vs">VS</div>
                     <div class="team-box">
                         <div class="t-name color-b">${m.teamB} ${iconB}</div>
                         <div class="t-score color-b">${m.scoreB}</div>
-                        <div class="t-players">${m.playersB || '-'}</div>
+                        <div class="t-players">${m.playersB || ''}</div>
                     </div>
                 </div>
                 <div class="footer-info">
