@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>羽球賽事即時看板</title>
+    
+    <!-- === V39 新增：直播端專用圖示 === -->
+    <!-- 瀏覽器分頁圖示 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎥</text></svg>">
+    <!-- 手機桌面圖示 (深色背景+攝影機) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>🎥</text></svg>">
+    <!-- App 名稱設定 -->
+    <meta name="apple-mobile-web-app-title" content="賽事直播">
+    <meta name="application-name" content="賽事直播">
+    <!-- ============================== -->
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        body { background: #1a1a1a; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        h1 { text-align: center; color: #ffeb3b; margin-top: 0; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
+        
+        #grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .court-card {
+            background: #333;
+            border-radius: 12px;
+            padding: 15px;
+            border: 2px solid #444;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+        }
+        
+        .card-header { 
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 16px; color: #ccc; margin-bottom: 15px; 
+            border-bottom: 1px solid #555; padding-bottom: 8px; 
+        }
+        .court-badge { background: #555; padding: 2px 8px; border-radius: 4px; color: white; font-weight: bold; }
+        .match-info { color: #00e676; font-weight: bold; }
+
+        .teams-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .team-box { flex: 1; text-align: center; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        
+        .t-name { 
+            font-size: 22px; font-weight: bold; margin-bottom: 5px; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            padding: 0 5px; width: 100%;
+        }
+        .t-score { font-size: 60px; font-weight: bold; line-height: 1; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); margin-bottom: 5px; }
+        
+        .t-players {
+            font-size: 14px; color: #aaa; line-height: 1.4;
+            background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px;
+            max-width: 90%; word-wrap: break-word; min-height: 20px;
+        }
+
+        /* 橘藍配色 */
+        .color-a { color: #ff9800; } 
+        .color-b { color: #00b0ff; } 
+        
+        .vs { font-size: 14px; color: #666; margin: 15px 10px 0; font-weight: bold; }
+
+        .footer-info { 
+            font-size: 14px; text-align: center; margin-top: 10px; 
+            background: rgba(0,0,0,0.3); padding: 8px; border-radius: 5px; color: #888;
+        }
+        
+        .server-icon { font-size: 16px; margin-left: 5px; }
+        
+        .no-data { text-align:center; grid-column: 1/-1; color:#666; margin-top: 50px; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+    <h1>🏸 Live Scores</h1>
+    <div id="grid-container">
+        <div class="no-data">連線中... / 等待比賽開始</div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyAq-sTArXeGDVpdjnbLEzh5WpQ5mkmsyoA",
+          authDomain: "badminton-live-6237e.firebaseapp.com",
+          databaseURL: "https://badminton-live-6237e-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "badminton-live-6237e",
+          storageBucket: "badminton-live-6237e.firebasestorage.app",
+          messagingSenderId: "414631038880",
+          appId: "1:414631038880:web:acd4ad9ebcda0c4598dec5",
+          measurementId: "G-2K7HYBBMXX"
+        };
+
+        try {
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.database();
+            const container = document.getElementById('grid-container');
+
+            db.ref('courts').on('value', (snapshot) => {
+                const data = snapshot.val();
+                container.innerHTML = ""; 
+                
+                if (!data) {
+                    container.innerHTML = "<div class='no-data'>目前沒有進行中的比賽</div>";
+                    return;
+                }
+
+                const now = Date.now();
+                const matches = Object.keys(data)
+                    .map(key => data[key])
+                    .filter(m => (now - m.timestamp) < 43200000); 
+
+                if (matches.length === 0) {
+                    container.innerHTML = "<div class='no-data'>目前沒有進行中的比賽</div>";
+                    return;
+                }
+
+                matches.sort((a, b) => parseInt(a.court) - parseInt(b.court));
+
+                matches.forEach(m => {
+                    const card = createCard(m);
+                    container.appendChild(card);
+                });
+            });
+        } catch(e) {
+            console.error("Firebase Error", e);
+            document.getElementById('grid-container').innerHTML = "<div class='no-data' style='color:red'>連線失敗，請檢查設定</div>";
+        }
+
+        function createCard(m) {
+            const iconA = m.serverTeam === 'A' ? '<span class="server-icon">🏸</span>' : '';
+            const iconB = m.serverTeam === 'B' ? '<span class="server-icon">🏸</span>' : '';
+
+            const div = document.createElement('div');
+            div.className = 'court-card';
+            div.innerHTML = `
+                <div class="card-header">
+                    <span class="court-badge">場地 ${m.court}</span>
+                    <span class="match-info">${m.match}</span>
+                </div>
+                <div class="teams-row">
+                    <div class="team-box">
+                        <div class="t-name color-a">${m.teamA} ${iconA}</div>
+                        <div class="t-score color-a">${m.scoreA}</div>
+                        <div class="t-players">${m.playersA || ''}</div>
+                    </div>
+                    <div class="vs">VS</div>
+                    <div class="team-box">
+                        <div class="t-name color-b">${m.teamB} ${iconB}</div>
+                        <div class="t-score color-b">${m.scoreB}</div>
+                        <div class="t-players">${m.playersB || ''}</div>
+                    </div>
+                </div>
+                <div class="footer-info">
+                    主審: ${m.umpire || '-'}
+                </div>
+            `;
+            return div;
+        }
+    </script>
+</body>
+</html>
