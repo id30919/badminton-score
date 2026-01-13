@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V45 (紀錄強化版)</title>
+    <title>羽球主審 V46 (紀錄修復+時間戳記)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -48,7 +48,7 @@
         .theme-court .rainbow-input { background: #004d40; width: 40px; }
 
         .btn-icon { background: transparent; border: 1px solid #666; color: #ddd; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-        .btn-icon:active { background: #555; }
+        .btn-icon.active { background: #555; color: #fff; border-color: #fff; }
 
         .live-switch { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111; height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s; }
         .live-switch.active { background: rgba(0, 200, 0, 0.2); border-color: #00ff00; }
@@ -133,6 +133,7 @@
         .mode-position .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: white; }
         .mode-position .pos-item:last-child { border-right: none; }
         
+        /* 多人名單模式 (右至左) */
         .position-box.mode-roster { flex-direction: row-reverse; }
         .mode-roster .pos-item { 
             flex: 1; border-left: 1px solid rgba(255,255,255,0.5); border-right: none;
@@ -160,12 +161,15 @@
         .manual-score-input { width: 80px; font-size: 24px; font-weight: bold; text-align: center; background: #222; border: 2px solid #555; color: white; border-radius: 8px; padding: 5px; }
 
         .log-item { background: #333; margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #555; display: flex; justify-content: space-between; align-items: center; }
-        .log-info { font-size: 14px; color: #ddd; }
-        .log-status { font-size: 12px; margin-left: 10px; padding: 3px 8px; border-radius: 4px; }
+        .log-info { font-size: 14px; color: #ddd; width: 70%; }
+        .log-status { font-size: 12px; margin-left: 10px; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
         .status-pending { background: #555; color: #ccc; }
         .status-sending { background: #ff9800; color: #000; }
-        .status-done { background: #4caf50; color: #fff; } /* 綠色 */
+        .status-done { background: #4caf50; color: #fff; }
         .status-error { background: #f44336; color: #fff; }
+        
+        /* 時間戳記樣式 */
+        .log-time { color: #888; font-size: 12px; display: block; margin-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -204,8 +208,8 @@
             </div>
             <span id="match-counter" style="color:yellow; font-weight:bold; font-size:18px;">G1</span>
             <button class="btn-icon" onclick="toggleFullScreen()" title="全螢幕">⛶</button>
-            <button class="btn-icon" onclick="openSettings()">⚙</button>
-            <button class="btn-icon" onclick="toggleHistory()">📝</button>
+            <button id="btn-settings" class="btn-icon" onclick="togglePanel('settings')">⚙</button>
+            <button id="btn-history" class="btn-icon" onclick="togglePanel('history')">📝</button>
         </div>
     </div>
 
@@ -257,7 +261,7 @@
 
         <div class="row" style="border:1px solid #7c4dff; padding:10px; border-radius:5px;">
             <label style="color:#b388ff; font-weight:bold;">🔄 自動換點 (Switch Point)</label>
-            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63,84,105" style="margin-top:5px;">
+            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63 (分數達到即換點)" style="margin-top:5px;">
             <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
                 <input type="checkbox" id="resetScoreOnSwitch" class="toggle-checkbox">
                 <label for="resetScoreOnSwitch" style="color:#ccc; margin:0;">換點後分數歸零？</label>
@@ -319,7 +323,7 @@
             </div>
         </div>
         <div id="log-container"></div>
-        <button class="btn-act" style="background:#555; margin-top:20px;" onclick="toggleHistory()">關閉</button>
+        <button class="btn-act" style="background:#555; margin-top:20px;" onclick="togglePanel('history')">關閉</button>
     </div>
 
     <script>
@@ -359,15 +363,27 @@
             render();
         });
 
-        // 核心功能：紀錄比分 (必須在全域定義)
+        // 核心功能：紀錄比分 (V46 包含時間戳)
         function logGame() {
             const record = {
-                id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
-                tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
-                matchStr: `G${currentMatchIdx+1}`, status: 'pending'
+                id: Date.now(), 
+                timeStr: formatTime(Date.now()), // V46: 新增時間字串
+                court: getEl('courtNum').value || "練習", 
+                umpire: getEl('umpireName').value || "-",
+                tA: getTeamName('A'), tB: getTeamName('B'), 
+                sA: state.scoreA, sB: state.scoreB, 
+                winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
+                matchStr: `G${currentMatchIdx+1}`, 
+                status: 'pending'
             };
-            pendingRecords.push(record); renderLogItem(record);
+            pendingRecords.push(record); 
+            renderLogItem(record);
             saveToLocal();
+        }
+
+        function formatTime(ms) {
+            const d = new Date(ms);
+            return `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
         }
 
         function renderLogItem(r) {
@@ -376,80 +392,35 @@
             let statusText = (r.status === 'done') ? '已上傳' : (r.status === 'error' ? '失敗' : '待傳送');
             
             div.innerHTML = `
-                <div class="log-info"><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div>
+                <div class="log-info">
+                    <span class="log-time">${r.timeStr || ''}</span>
+                    <b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}
+                </div>
                 <div class="log-status ${statusClass}" id="status-${r.id}">${statusText}</div>
             `;
             getEl('log-container').prepend(div);
         }
 
-        // 核心功能：按鈕點擊紀錄
+        // V46: 修復清空功能
+        function clearAllHistory() {
+            safeConfirm("確定要清空本機的所有紀錄嗎？(無法復原)", () => {
+                pendingRecords = [];
+                getEl('log-container').innerHTML = '';
+                saveToLocal();
+                showToast("🗑️ 紀錄已清空");
+            });
+        }
+
         function logGameOnly() {
-            doVibrate(30); // V45: 震動
-            // 防重覆
             if (pendingRecords.length > 0) {
                 const last = pendingRecords[pendingRecords.length - 1];
                 if (last.matchStr === `G${currentMatchIdx+1}` && last.sA === state.scoreA && last.sB === state.scoreB) {
-                    showToast("⚠️ 比分未變動 (已略過)"); return;
+                    showToast("⚠️ 此比分已紀錄過"); return;
                 }
             }
             logGame(); 
             const link = getEl('gform_link').value;
             if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
-        }
-
-        // 核心功能：上傳全部
-        async function uploadAllPending() {
-            const link = getEl('gform_link').value;
-            if (!link) { showToast("請先貼上 Google Form 連結！"); return; }
-            const config = parseLinkAndGetIDs(link);
-            if (!config || Object.keys(config.mapping).length < 7) { showToast("連結格式錯誤！"); return; }
-            const targets = pendingRecords.filter(r => r.status === 'pending' || r.status === 'error');
-            if (targets.length === 0) { showToast("沒有待傳送的紀錄"); return; }
-            
-            safeConfirm(`上傳 ${targets.length} 筆資料？`, async () => {
-                for (let r of targets) {
-                    updateStatus(r.id, 'sending', '傳送中...');
-                    const formData = new FormData();
-                    formData.append(config.mapping.court, r.court); formData.append(config.mapping.umpire, r.umpire);
-                    formData.append(config.mapping.tA, r.tA); formData.append(config.mapping.tB, r.tB);
-                    formData.append(config.mapping.sA, r.sA); formData.append(config.mapping.sB, r.sB);
-                    formData.append(config.mapping.winner, r.winner);
-                    if(config.mapping.matchStr) formData.append(config.mapping.matchStr, r.matchStr);
-
-                    try {
-                        await fetch(config.baseUrl, { method: 'POST', mode: 'no-cors', body: formData });
-                        r.status = 'done'; updateStatus(r.id, 'done', '✅ 已上傳');
-                    } catch (e) {
-                        r.status = 'error'; updateStatus(r.id, 'error', '❌ 失敗');
-                    }
-                    saveToLocal(); // Update status
-                    await new Promise(res => setTimeout(res, 500));
-                }
-                showToast("上傳作業結束");
-            });
-        }
-
-        function parseLinkAndGetIDs(link) {
-            if (!link.includes('docs.google.com')) return null;
-            const baseUrl = link.split('?')[0].replace('viewform', 'formResponse');
-            const params = new URLSearchParams(link.split('?')[1]);
-            const mapping = {};
-            const keys = { 
-                '__COURT__': 'court', '__UMPIRE__': 'umpire', 
-                '__TEAMA__': 'tA', '__TEAMB__': 'tB', 
-                '__SCOREA__': 'sA', '__SCOREB__': 'sB', 
-                '__WINNER__': 'winner', '__MATCHSTR__': 'matchStr'
-            };
-            params.forEach((value, key) => { if (keys[value]) mapping[keys[value]] = key; });
-            return { baseUrl, mapping };
-        }
-
-        function updateStatus(id, type, text) { 
-            const el = getEl(`status-${id}`); 
-            if (el) { 
-                el.className = `log-status status-${type}`; 
-                el.innerText = text; 
-            } 
         }
 
         function saveToLocal() {
@@ -572,9 +543,7 @@
             let pts = getEl('switchMatchPoints').value.split(/[,，]/).map(Number).filter(n => n > 0);
             let max = Math.max(state.scoreA, state.scoreB);
             if (pts.includes(max) && !state.switchedMatchPoints.includes(max)) {
-                safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => {
-                    executeMatchSwitch(max);
-                });
+                safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => { executeMatchSwitch(max); });
                 state.switchedMatchPoints.push(max); 
             }
         }
@@ -713,6 +682,21 @@
             saveToLocal(); 
         }
 
+        function toggleServerByIndicator(sideClicked) {
+            event.stopPropagation();
+            doVibrate(30);
+            let teamOnClickedSide = (sideClicked === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
+            if (teamOnClickedSide === state.serverTeam) {
+                if (teamOnClickedSide === 'A') state.serverIdxA = getNextIdx('A', state.serverIdxA);
+                else state.serverIdxB = getNextIdx('B', state.serverIdxB);
+                showToast(`🔄 發球員輪轉`);
+            } else {
+                state.serverTeam = teamOnClickedSide;
+                showToast(`✅ 指定發球方：${getTeamName(teamOnClickedSide)}`);
+            }
+            render();
+        }
+
         function updateServerIndicator(side, teamKey) {
             const el = getEl(`ind-${side}`);
             if (teamKey === state.serverTeam) {
@@ -793,80 +777,74 @@
             showToast("順序已更新");
         }
 
-        function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
-        
-        function handleLiveClick() {
-            if (isLive) { isLive = false; updateLiveUI(); } 
-            else {
-                safePrompt("請輸入場地編號", getEl('courtNum').value, (val) => {
-                    if(!val) { showToast('請輸入場地'); return; }
-                    getEl('courtNum').value = val;
-                    setTimeout(() => {
-                        safePrompt("請輸入主審姓名", getEl('umpireName').value, (uVal) => {
-                            getEl('umpireName').value = uVal || "城隍爺";
-                            isLive = true; updateLiveUI(); syncToFirebase();
-                        });
-                    }, 200);
-                });
+        function togglePanel(panelName) {
+            const settings = getEl('settings-panel');
+            const history = getEl('history-panel');
+            const btnS = getEl('btn-settings'); 
+            const btnH = getEl('btn-history');  
+
+            if (panelName === 'settings') {
+                if (settings.classList.contains('panel-visible')) {
+                    cancelSettings(); 
+                    btnS.classList.remove('active');
+                } else {
+                    history.classList.remove('panel-visible'); 
+                    btnH.classList.remove('active');
+                    openSettings(); 
+                    btnS.classList.add('active');
+                }
+            } else if (panelName === 'history') {
+                if (history.classList.contains('panel-visible')) {
+                    history.classList.remove('panel-visible');
+                    btnH.classList.remove('active');
+                } else {
+                    if(settings.classList.contains('panel-visible')) cancelSettings(); 
+                    btnS.classList.remove('active');
+                    history.classList.add('panel-visible');
+                    btnH.classList.add('active');
+                }
             }
-        }
-        
-        function updateLiveUI() {
-            const el = getEl('liveToggle'); const txt = getEl('liveText');
-            if (isLive) { el.classList.add('active'); txt.innerText = "直播中"; } 
-            else { el.classList.remove('active'); txt.innerText = "離線"; }
-        }
-        function syncToFirebase() {
-            if (!isLive || !db) return;
-            const courtNum = getEl('courtNum').value; if(!courtNum) return;
-            db.ref('courts/court_' + courtNum).set({
-                court: courtNum, match: `G${currentMatchIdx+1}`, umpire: getEl('umpireName').value,
-                teamA: getTeamName('A'), teamB: getTeamName('B'), 
-                playersA: getCurrentPlayersString('A'), playersB: getCurrentPlayersString('B'),
-                scoreA: state.scoreA, scoreB: state.scoreB,
-                server: getPlayerName(state.serverTeam, state.serverTeam==='A'?state.serverIdxA:state.serverIdxB),
-                serverTeam: state.serverTeam, timestamp: Date.now()
-            });
         }
 
-        // Settings Logic
-        let settingsSnapshot = {};
-        function openSettings() {
-            settingsSnapshot = {
-                gform_link: getEl('gform_link').value,
-                teamA_name: getEl('teamA_name').value, teamA_players: getEl('teamA_players').value,
-                teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
-                swapPoints: getEl('swapPoints').value,
-                switchMatchPoints: getEl('switchMatchPoints').value,
-                resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
-                displayMode: getEl('displayMode').value
-            };
-            getEl('history-panel').classList.remove('panel-visible'); // Close history
-            getEl('settings-panel').classList.add('panel-visible');
+        async function uploadAllPending() {
+            const link = getEl('gform_link').value;
+            if (!link) { showToast("請先貼上 Google Form 連結！"); return; }
+            const config = parseLinkAndGetIDs(link);
+            if (!config || Object.keys(config.mapping).length < 7) { showToast("連結格式錯誤！"); return; }
+            const targets = pendingRecords.filter(r => r.status === 'pending' || r.status === 'error');
+            if (targets.length === 0) { showToast("沒有待傳送的紀錄"); return; }
+            
+            safeConfirm(`上傳 ${targets.length} 筆資料？`, async () => {
+                for (let r of targets) {
+                    updateStatus(r.id, 'sending', '傳送中...');
+                    const formData = new FormData();
+                    formData.append(config.mapping.court, r.court); formData.append(config.mapping.umpire, r.umpire);
+                    formData.append(config.mapping.tA, r.tA); formData.append(config.mapping.tB, r.tB);
+                    formData.append(config.mapping.sA, r.sA); formData.append(config.mapping.sB, r.sB);
+                    formData.append(config.mapping.winner, r.winner);
+                    if(config.mapping.matchStr) formData.append(config.mapping.matchStr, r.matchStr);
+
+                    try {
+                        await fetch(config.baseUrl, { method: 'POST', mode: 'no-cors', body: formData });
+                        r.status = 'done'; updateStatus(r.id, 'done', '✅ 已上傳');
+                    } catch (e) {
+                        r.status = 'error'; updateStatus(r.id, 'error', '❌ 失敗');
+                    }
+                    saveToLocal(); // Update status in storage
+                    await new Promise(res => setTimeout(res, 500));
+                }
+                showToast("上傳作業結束");
+            });
         }
-        function cancelSettings() {
-            if (settingsSnapshot) {
-                getEl('gform_link').value = settingsSnapshot.gform_link || "";
-                getEl('teamA_name').value = settingsSnapshot.teamA_name || ""; getEl('teamA_players').value = settingsSnapshot.teamA_players || "";
-                getEl('teamB_name').value = settingsSnapshot.teamB_name || ""; getEl('teamB_players').value = settingsSnapshot.teamB_players || "";
-                getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
-                getEl('switchMatchPoints').value = settingsSnapshot.switchMatchPoints || "";
-                getEl('resetScoreOnSwitch').checked = settingsSnapshot.resetScoreOnSwitch;
-                getEl('displayMode').value = settingsSnapshot.displayMode || "position";
-            }
-            getEl('settings-panel').classList.remove('panel-visible');
-            render(); 
-        }
-        function saveSettings() { render(); saveToLocal(); syncToFirebase(); getEl('settings-panel').classList.remove('panel-visible'); showToast("✅ 設定已儲存"); }
-        function toggleHistory() { 
-            getEl('settings-panel').classList.remove('panel-visible'); // Close settings
-            getEl('history-panel').classList.toggle('panel-visible'); 
-        }
-        function getCurrentPlayersString(teamKey) {
-            let raw = getEl(`team${teamKey}_players`).value;
-            let parts = raw.split(/[;；.。]/);
-            let idx = Math.min(currentMatchIdx, parts.length - 1);
-            return parts[idx] ? parts[idx].trim() : "";
+        function updateStatus(id, type, text) { 
+            const el = getEl(`status-${id}`); 
+            if (el) { 
+                el.className = `log-status status-${type}`; 
+                el.innerText = text; 
+                if(type === 'done') { 
+                     // Add checkmark visual
+                }
+            } 
         }
     </script>
 </body>
