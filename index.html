@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V42 (V41修復+右至左排序)</title>
+    <title>羽球主審 V43 (上傳修復+測試鈕)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -50,7 +50,7 @@
         .theme-court .rainbow-input { background: #004d40; width: 40px; }
 
         .btn-icon { background: transparent; border: 1px solid #666; color: #ddd; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-        .btn-icon.active { background: #555; color: #fff; border-color: #fff; }
+        .btn-icon:active { background: #555; }
 
         .live-switch { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111; height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s; }
         .live-switch.active { background: rgba(0, 200, 0, 0.2); border-color: #00ff00; }
@@ -75,14 +75,13 @@
         /* Action Bar */
         #action-bar { height: 60px; background: #222; display: flex; justify-content: space-between; align-items: center; padding: 0 2px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .btn-act { 
-            flex: 1; margin: 0 2px; height: 44px; border-radius: 6px; border: none; 
-            color: white; font-weight: bold; font-size: 13px; 
+            flex: 1; margin: 0 3px; height: 44px; border-radius: 6px; border: none; 
+            color: white; font-weight: bold; font-size: 15px; 
             cursor: pointer; display: flex; align-items: center; justify-content: center; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3); white-space: pre-wrap; line-height: 1.1;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         .btn-undo { background: #546e7a; }
         .btn-swap { background: #f57c00; } 
-        .btn-next { background: #7c4dff; border: 1px solid #b388ff; font-size: 14px; }
         .btn-log  { background: #43a047; }
         .btn-end  { background: #d32f2f; border: 1px solid #ff8a80; }
 
@@ -136,23 +135,17 @@
         .mode-position .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: white; }
         .mode-position .pos-item:last-child { border-right: none; }
         
-        /* === V42 修改：多人名單模式 (右至左排列) === */
+        /* 多人名單模式 (右至左) */
         .position-box.mode-roster { flex-direction: row-reverse; }
-
         .mode-roster .pos-item { 
-            flex: 1; 
-            /* 邊框改為左邊 */
-            border-left: 1px solid rgba(255,255,255,0.5); border-right: none;
+            flex: 1; border-left: 1px solid rgba(255,255,255,0.5); border-right: none;
             display: flex; align-items: center; justify-content: center; 
             font-size: 14px; font-weight: bold; color: white; 
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
             cursor: pointer; position: relative; 
         }
-        /* 第一個元素 (DOM的1號，視覺上的最右邊) 不要有左邊框 */
         .mode-roster .pos-item:first-child { border-left: none; }
-        /* 避免 last-child 有線 */
         .mode-roster .pos-item:last-child { border-left: 1px solid rgba(255,255,255,0.5); }
-        
         .mode-roster .pos-item:active { background: rgba(255,255,255,0.2); }
         .pos-item.active { background: rgba(255,255,255,0.95); color: #000; font-size: 20px; text-shadow: none; }
         .drag-handle { color: rgba(255,255,255,0.5); margin-left: 5px; cursor: move; font-size: 12px; padding: 5px; }
@@ -223,7 +216,6 @@
     <div id="action-bar">
         <button class="btn-act btn-undo" onclick="undoPoint()">↩ 復原</button>
         <button class="btn-act btn-swap" onclick="swapSidesManual()">⇄ 換邊</button>
-        <button class="btn-act btn-next" onclick="nextPointKeepScore()">▶ 下一點</button>
         <button class="btn-act btn-log" onclick="logGameOnly()">💾 紀錄</button>
         <button class="btn-act btn-end" onclick="endMatchAndNext()">🏁 結束歸零</button>
     </div>
@@ -296,7 +288,15 @@
             <input type="range" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
         
-        <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
+        <!-- V43: 測試按鈕 -->
+        <div class="row">
+            <label>Google Form 預填連結</label>
+            <div style="display:flex; gap:5px;">
+                <input id="gform_link" class="full-width" placeholder="貼上連結...">
+                <button onclick="testLink()" style="background:#0288d1; border:none; color:white; border-radius:4px; padding:0 10px; cursor:pointer;">🧪 測試</button>
+            </div>
+        </div>
+        
         <div class="row"><label>A隊名稱 (。分下一點)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊"></div>
         <div class="row"><label>A隊員 (例如: 王,李; 陳,林)</label><input id="teamA_players" class="full-width" value="王,李"></div>
         <div class="row"><label>B隊名稱 (。分下一點)</label><input id="teamB_name" class="full-width" value="藍隊;藍二隊"></div>
@@ -363,7 +363,6 @@
             render();
         });
 
-        // Toggle Server Logic
         function toggleServerByIndicator(sideClicked) {
             event.stopPropagation();
             doVibrate(30);
@@ -379,10 +378,56 @@
             render();
         }
 
-        function toggleHistory() {
-             getEl('settings-panel').classList.remove('panel-visible'); // Close settings
-             getEl('history-panel').classList.toggle('panel-visible');
+        // V43: 補回遺失的 uploadAllPending
+        async function uploadAllPending() {
+            const link = getEl('gform_link').value;
+            if (!link) { showToast("請先貼上 Google Form 連結！"); return; }
+            const config = parseLinkAndGetIDs(link);
+            if (!config || Object.keys(config.mapping).length < 7) { showToast("連結格式錯誤！"); return; }
+            const targets = pendingRecords.filter(r => r.status === 'pending');
+            if (targets.length === 0) { showToast("沒有待傳送的紀錄"); return; }
+            
+            safeConfirm(`上傳 ${targets.length} 筆資料？`, async () => {
+                for (let r of targets) {
+                    updateStatus(r.id, 'sending', '傳送中...');
+                    const formData = new FormData();
+                    formData.append(config.mapping.court, r.court); formData.append(config.mapping.umpire, r.umpire);
+                    formData.append(config.mapping.tA, r.tA); formData.append(config.mapping.tB, r.tB);
+                    formData.append(config.mapping.sA, r.sA); formData.append(config.mapping.sB, r.sB);
+                    formData.append(config.mapping.winner, r.winner);
+                    // MatchStr
+                    if(config.mapping.matchStr) formData.append(config.mapping.matchStr, r.matchStr);
+
+                    try {
+                        await fetch(config.baseUrl, { method: 'POST', mode: 'no-cors', body: formData });
+                        r.status = 'done'; updateStatus(r.id, 'done', '✅ 已上傳');
+                    } catch (e) {
+                        r.status = 'error'; updateStatus(r.id, 'error', '❌ 失敗');
+                    }
+                    saveToLocal();
+                    await new Promise(res => setTimeout(res, 500));
+                }
+                showToast("上傳作業結束");
+            });
         }
+
+        // V43: 補回遺失的 parseLinkAndGetIDs
+        function parseLinkAndGetIDs(link) {
+            if (!link.includes('docs.google.com')) return null;
+            const baseUrl = link.split('?')[0].replace('viewform', 'formResponse');
+            const params = new URLSearchParams(link.split('?')[1]);
+            const mapping = {};
+            const keys = { 
+                '__COURT__': 'court', '__UMPIRE__': 'umpire', 
+                '__TEAMA__': 'tA', '__TEAMB__': 'tB', 
+                '__SCOREA__': 'sA', '__SCOREB__': 'sB', 
+                '__WINNER__': 'winner', '__MATCHSTR__': 'matchStr'
+            };
+            params.forEach((value, key) => { if (keys[value]) mapping[keys[value]] = key; });
+            return { baseUrl, mapping };
+        }
+        
+        function updateStatus(id, type, text) { const el = getEl(`status-${id}`); if (el) { el.className = `log-status status-${type}`; el.innerText = text; } }
 
         function clearAllHistory() {
             safeConfirm("確定要清空本機的所有紀錄嗎？(無法復原)", () => {
@@ -512,11 +557,8 @@
         function checkMatchPoint() {
             let pts = getEl('switchMatchPoints').value.split(/[,，]/).map(Number).filter(n => n > 0);
             let max = Math.max(state.scoreA, state.scoreB);
-            
             if (pts.includes(max) && !state.switchedMatchPoints.includes(max)) {
-                safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => {
-                    executeMatchSwitch(max);
-                });
+                safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => { executeMatchSwitch(max); });
                 state.switchedMatchPoints.push(max); 
             }
         }
@@ -581,23 +623,6 @@
             }
         }
         
-        // V42: 補回被遺漏的 logGame & renderLogItem
-        function logGame() {
-            const record = {
-                id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
-                tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
-                matchStr: `G${currentMatchIdx+1}`, status: 'pending'
-            };
-            pendingRecords.push(record); renderLogItem(record);
-            saveToLocal();
-        }
-
-        function renderLogItem(r) {
-            let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
-            div.innerHTML = `<div class="log-info"><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div><div class="log-status status-pending" id="status-${r.id}">待傳送</div>`;
-            getEl('log-container').prepend(div);
-        }
-
         function logGameOnly() {
             if (pendingRecords.length > 0) {
                 const last = pendingRecords[pendingRecords.length - 1];
@@ -608,19 +633,6 @@
             logGame(); 
             const link = getEl('gform_link').value;
             if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
-        }
-
-        // V42: V41缺少的 nextPointKeepScore (雖然你說不要按鈕，但函數還是留著給自動換點用)
-        function nextPointKeepScore() {
-            safeConfirm("確認進入下一點？(分數將保留並繼續累加)", () => {
-                logGame(); 
-                currentMatchIdx++; 
-                state.serverIdxA = 0; // 重置發球順位
-                state.serverIdxB = 0;
-                saveToLocal();
-                render(); 
-                showToast("✅ 已進入下一點 (分數續計)");
-            });
         }
 
         function endMatchAndNext() {
