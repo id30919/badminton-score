@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V40 (終極修復版)</title>
+    <title>羽球主審 V41 (直覺控盤版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -12,7 +12,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <!-- SortableJS (拖曳排序用) -->
+    <!-- SortableJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
     <style>
@@ -36,9 +36,7 @@
             height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
             border-bottom: 1px solid #444; padding-left: 60px; 
         }
-        
-        .header-left { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-        .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .header-left, .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 
         .rainbow-input-group { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .rainbow-label { padding: 0 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
@@ -76,7 +74,7 @@
         #action-bar { height: 60px; background: #222; display: flex; justify-content: space-between; align-items: center; padding: 0 2px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .btn-act { 
             flex: 1; margin: 0 3px; height: 44px; border-radius: 6px; border: none; 
-            color: white; font-weight: bold; font-size: 15px; 
+            color: white; font-weight: bold; font-size: 13px; 
             cursor: pointer; display: flex; align-items: center; justify-content: center; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.3); white-space: pre-wrap; line-height: 1.1;
         }
@@ -117,14 +115,27 @@
         
         .bottom-info-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; z-index: 10; min-height: 100px; justify-content: flex-end; }
         
+        /* V41: 互動式發球標籤 */
         .server-indicator { 
             font-size: 16px; padding: 6px 15px; border-radius: 20px; margin-bottom: 8px; 
-            pointer-events: auto; backdrop-filter: blur(2px); transition: all 0.2s; 
+            pointer-events: auto; /* 允許點擊 */
+            backdrop-filter: blur(2px); transition: all 0.2s; 
             font-weight: bold; border: 1px solid rgba(255,255,255,0.3);
-            display: block; opacity: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: block; opacity: 1; /* 永遠顯示 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
-        .side.serving .server-indicator { background: rgba(255,255,255,0.9); color: #000; transform: scale(1.05); border-color: white; }
-        .side:not(.serving) .server-indicator { background: rgba(0,0,0,0.5); color: #aaa; border-color: #555; }
+        
+        /* 發球方樣式 */
+        .side.serving .server-indicator { 
+            background: rgba(255,255,255,0.9); color: #000; 
+            transform: scale(1.05); border-color: white;
+        }
+        
+        /* 接發方樣式 (V41新增) */
+        .side:not(.serving) .server-indicator { 
+            background: rgba(0,0,0,0.5); color: #aaa; 
+            border-color: #555;
+        }
 
         .position-box { 
             width: 92%; height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); 
@@ -134,17 +145,8 @@
         
         .mode-position .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: white; }
         .mode-position .pos-item:last-child { border-right: none; }
-        
-        /* 多人名單模式 (右至左) */
-        .position-box.mode-roster { flex-direction: row-reverse; }
-        .mode-roster .pos-item { 
-            flex: 1; border-left: 1px solid rgba(255,255,255,0.5); border-right: none;
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 14px; font-weight: bold; color: white; 
-            overflow: hidden; white-space: nowrap; cursor: pointer; position: relative; 
-        }
-        .mode-roster .pos-item:first-child { border-left: none; }
-        .mode-roster .pos-item:last-child { border-left: 1px solid rgba(255,255,255,0.5); }
+        .mode-roster .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; position: relative; }
+        .mode-roster .pos-item:last-child { border-right: none; }
         .mode-roster .pos-item:active { background: rgba(255,255,255,0.2); }
         .pos-item.active { background: rgba(255,255,255,0.95); color: #000; font-size: 20px; text-shadow: none; }
         .drag-handle { color: rgba(255,255,255,0.5); margin-left: 5px; cursor: move; font-size: 12px; padding: 5px; }
@@ -152,28 +154,14 @@
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
 
-        /* Panels - 設定 z-index 和背景 */
-        #settings-panel, #history-panel { 
-            position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); 
-            background: #222; z-index: 2000; 
-            padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; 
-        }
+        #settings-panel, #history-panel { position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); background: #222; z-index: 2000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .panel-visible { display: block !important; }
-        
         .full-width { width: 100%; box-sizing: border-box; font-size: 16px; padding: 10px; margin-bottom: 10px; background: #444; border: 1px solid #666; color: white; }
         .row { margin-bottom: 15px; } label { display: block; color: #aaa; margin-bottom: 5px; }
         .switch-row { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; border-radius: 5px; border: 1px solid #555; margin-bottom: 15px; }
         .toggle-checkbox { width: 20px; height: 20px; cursor: pointer; }
         input[type=range] { width: 100%; margin: 10px 0; }
         .manual-score-input { width: 80px; font-size: 24px; font-weight: bold; text-align: center; background: #222; border: 2px solid #555; color: white; border-radius: 8px; padding: 5px; }
-
-        .log-item { background: #333; margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #555; display: flex; justify-content: space-between; align-items: center; }
-        .log-info { font-size: 14px; color: #ddd; }
-        .log-status { font-size: 12px; margin-left: 10px; padding: 3px 8px; border-radius: 4px; }
-        .status-pending { background: #555; color: #ccc; }
-        .status-sending { background: #ff9800; color: #000; }
-        .status-done { background: #4caf50; color: #fff; }
-        .status-error { background: #f44336; color: #fff; }
     </style>
 </head>
 <body>
@@ -228,6 +216,7 @@
             <div class="team-name-wrapper"><div class="team-name" id="name-box-left">橘隊</div></div>
             <div class="score-bg-layer"><div class="score" id="disp-score-left">0</div></div>
             <div class="bottom-info-wrapper">
+                <!-- V41: 互動式發球標籤 -->
                 <div class="server-indicator" id="ind-left" onclick="toggleServerByIndicator('left')">🏸 發球</div>
                 <div class="position-box" id="pos-box-left"></div>
             </div>
@@ -237,6 +226,7 @@
             <div class="team-name-wrapper"><div class="team-name" id="name-box-right">藍隊</div></div>
             <div class="score-bg-layer"><div class="score" id="disp-score-right">0</div></div>
             <div class="bottom-info-wrapper">
+                <!-- V41: 互動式發球標籤 -->
                 <div class="server-indicator" id="ind-right" onclick="toggleServerByIndicator('right')">✋ 接發</div>
                 <div class="position-box" id="pos-box-right"></div>
             </div>
@@ -248,21 +238,9 @@
         <div class="row"><button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button></div>
         <div class="row"><button class="btn-act" onclick="resetMatchCounter()" style="background:#ff9800; width:100%; border:1px solid #ffb74d;">🔄 重置回 G1</button></div>
 
-        <div class="row" style="background:#444; padding:15px; border-radius:8px; display:flex; justify-content:space-around; align-items:center;">
-            <div style="text-align:center;">
-                <div style="color:var(--color-left); font-weight:bold; margin-bottom:5px;">橘隊分數</div>
-                <input type="number" id="manualScoreA" class="manual-score-input" value="0" onchange="updateManualScore()">
-            </div>
-            <div style="font-size:24px; color:#aaa;">:</div>
-            <div style="text-align:center;">
-                <div style="color:var(--color-right); font-weight:bold; margin-bottom:5px;">藍隊分數</div>
-                <input type="number" id="manualScoreB" class="manual-score-input" value="0" onchange="updateManualScore()">
-            </div>
-        </div>
-
         <div class="row" style="border:1px solid #7c4dff; padding:10px; border-radius:5px;">
-            <label style="color:#b388ff; font-weight:bold;">🔄 自動換點 (Switch Point)</label>
-            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63,84,105" style="margin-top:5px;">
+            <label style="color:#b388ff; font-weight:bold;">🔄 自動換點</label>
+            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63 (分數達到即換點)" style="margin-top:5px;">
             <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
                 <input type="checkbox" id="resetScoreOnSwitch" class="toggle-checkbox">
                 <label for="resetScoreOnSwitch" style="color:#ccc; margin:0;">換點後分數歸零？</label>
@@ -292,9 +270,9 @@
         
         <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
         <div class="row"><label>A隊名稱 (。分下一點)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊"></div>
-        <div class="row"><label>A隊員 (例如: 王,李; 陳,林)</label><input id="teamA_players" class="full-width" value="王,李"></div>
+        <div class="row"><label>A隊員 (例如: 王,李)</label><input id="teamA_players" class="full-width" value="王,李"></div>
         <div class="row"><label>B隊名稱 (。分下一點)</label><input id="teamB_name" class="full-width" value="藍隊;藍二隊"></div>
-        <div class="row"><label>B隊員 (例如: 張,林; 趙,錢)</label><input id="teamB_players" class="full-width" value="張,林"></div>
+        <div class="row"><label>B隊員 (例如: 張,林)</label><input id="teamB_players" class="full-width" value="張,林"></div>
         <div class="row"><label>換邊分數</label><input id="swapPoints" class="full-width" value="11"></div>
         <div class="row"><label>發球方</label><select id="initServer" class="full-width" onchange="resetGame()"><option value="A">A隊先發</option><option value="B">B隊先發</option></select></div>
         
@@ -352,28 +330,36 @@
             loadFromLocal();
             setupLongPress(getEl('name-box-left'), () => editTeamName('left'));
             setupLongPress(getEl('name-box-right'), () => editTeamName('right'));
+            setupLongPress(getEl('pos-box-left'), () => editPlayerName('left'));
+            setupLongPress(getEl('pos-box-right'), () => editPlayerName('right'));
             bindClickPoint('area-left', 'left');
             bindClickPoint('area-right', 'right');
             render();
         });
 
-        // Toggle Server Logic
+        // V41: 點擊發球標籤處理 (切換發球方 or 輪轉)
         function toggleServerByIndicator(sideClicked) {
             event.stopPropagation();
             doVibrate(30);
+
+            // sideClicked is 'left' or 'right'
+            // state.leftTeam indicates who is on left (A or B)
             let teamOnClickedSide = (sideClicked === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
+
+            // 如果點到的是「目前發球方」，則執行「輪轉隊員 (Rotate)」
             if (teamOnClickedSide === state.serverTeam) {
+                // Rotate to next player
                 if (teamOnClickedSide === 'A') state.serverIdxA = getNextIdx('A', state.serverIdxA);
                 else state.serverIdxB = getNextIdx('B', state.serverIdxB);
                 showToast(`🔄 發球員輪轉`);
             } else {
+                // 如果點到的是「接發方」，則將其設為「發球方 (Set Server)」
                 state.serverTeam = teamOnClickedSide;
                 showToast(`✅ 指定發球方：${getTeamName(teamOnClickedSide)}`);
             }
             render();
         }
 
-        // Panel Toggle Logic (Fix Overlap)
         function togglePanel(panelName) {
             const settings = getEl('settings-panel');
             const history = getEl('history-panel');
@@ -385,7 +371,7 @@
                     cancelSettings(); 
                     btnS.classList.remove('active');
                 } else {
-                    history.classList.remove('panel-visible'); // Close history
+                    history.classList.remove('panel-visible'); 
                     btnH.classList.remove('active');
                     openSettings(); 
                     btnS.classList.add('active');
@@ -395,7 +381,7 @@
                     history.classList.remove('panel-visible');
                     btnH.classList.remove('active');
                 } else {
-                    if(settings.classList.contains('panel-visible')) cancelSettings(); // Close settings
+                    if(settings.classList.contains('panel-visible')) cancelSettings(); 
                     btnS.classList.remove('active');
                     history.classList.add('panel-visible');
                     btnH.classList.add('active');
@@ -403,26 +389,12 @@
             }
         }
 
-        // V40: 補回遺失的日誌功能
-        function logGame() {
-            const record = {
-                id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
-                tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
-                matchStr: `G${currentMatchIdx+1}`, status: 'pending'
-            };
-            pendingRecords.push(record); renderLogItem(record);
-            saveToLocal();
-        }
-
-        function renderLogItem(r) {
-            let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
-            div.innerHTML = `<div class="log-info"><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div><div class="log-status status-pending" id="status-${r.id}">待傳送</div>`;
-            getEl('log-container').prepend(div);
-        }
-
         function clearAllHistory() {
             safeConfirm("確定要清空本機的所有紀錄嗎？(無法復原)", () => {
-                pendingRecords = []; getEl('log-container').innerHTML = ''; saveToLocal(); showToast("🗑️ 紀錄已清空");
+                pendingRecords = [];
+                getEl('log-container').innerHTML = '';
+                saveToLocal();
+                showToast("🗑️ 紀錄已清空");
             });
         }
 
@@ -522,11 +494,10 @@
             let key = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
             safePrompt(`修改 ${key} 隊名稱`, getTeamName(key), (val) => { if(val) { updateInputSegment(`team${key}_name`, val); render(); } });
         }
-
-        function updateManualScore() {
-            let sA = parseInt(getEl('manualScoreA').value) || 0;
-            let sB = parseInt(getEl('manualScoreB').value) || 0;
-            saveState(); state.scoreA = sA; state.scoreB = sB; render(); showToast("比分已手動更新");
+        function editPlayerName(side) {
+            let key = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
+            let idx = (key === 'A') ? state.serverIdxA : state.serverIdxB;
+            safePrompt("修改球員", getPlayerName(key, idx), (val) => { if(val) { updatePlayerInput(`team${key}_players`, idx, val); render(); } });
         }
 
         function addPoint(side) {
@@ -545,8 +516,11 @@
         function checkMatchPoint() {
             let pts = getEl('switchMatchPoints').value.split(/[,，]/).map(Number).filter(n => n > 0);
             let max = Math.max(state.scoreA, state.scoreB);
+            
             if (pts.includes(max) && !state.switchedMatchPoints.includes(max)) {
-                safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => { executeMatchSwitch(max); });
+                safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => {
+                    executeMatchSwitch(max);
+                });
                 state.switchedMatchPoints.push(max); 
             }
         }
@@ -624,7 +598,7 @@
         }
 
         function endMatchAndNext() {
-            safeConfirm(`🏁 結束歸零？`, () => { 
+            safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => { 
                 logGame(); 
                 currentMatchIdx++; 
                 resetGame(); 
@@ -655,17 +629,11 @@
             getEl('disp-score-right').innerText = isA_Left ? state.scoreB : state.scoreA;
             getEl('match-counter').innerText = `G${currentMatchIdx+1}`;
             
-            getEl('manualScoreA').value = state.scoreA;
-            getEl('manualScoreB').value = state.scoreB;
-
             getEl('area-left').className = isA_Left ? "side team-a" : "side team-b"; 
             getEl('area-right').className = isA_Left ? "side team-b" : "side team-a";
             
             getEl('area-left').classList.remove('serving'); getEl('area-right').classList.remove('serving');
             if (state.serverTeam === state.leftTeam) getEl('area-left').classList.add('serving'); else getEl('area-right').classList.add('serving');
-            
-            updateServerIndicator('left', isA_Left ? 'A' : 'B');
-            updateServerIndicator('right', isA_Left ? 'B' : 'A');
 
             const boxL = getEl('pos-box-left'); const boxR = getEl('pos-box-right');
             boxL.innerHTML = ''; boxR.innerHTML = '';
@@ -693,10 +661,15 @@
             const targetEl = document.getElementById(targetId);
             if (targetEl) targetEl.classList.add('active'); 
 
+            // V41: 更新發球標籤的文字和樣式
+            updateServerIndicator('left', isA_Left ? 'A' : 'B');
+            updateServerIndicator('right', isA_Left ? 'B' : 'A');
+
             syncToFirebase();
             saveToLocal(); 
         }
 
+        // V41: 更新發球標籤文字
         function updateServerIndicator(side, teamKey) {
             const el = getEl(`ind-${side}`);
             if (teamKey === state.serverTeam) {
@@ -704,7 +677,7 @@
                 el.style.opacity = "1";
             } else {
                 el.innerText = "✋ 接發";
-                el.style.opacity = "0.7";
+                el.style.opacity = "0.7"; // 讓接發方稍微暗一點，但可見可點
             }
         }
 
