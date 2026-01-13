@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V46 (紀錄修復+時間戳記)</title>
+    <title>羽球主審 V45 (結構重組修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -36,7 +36,8 @@
             height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
             border-bottom: 1px solid #444; padding-left: 60px; 
         }
-        .header-left, .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .header-left { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 
         .rainbow-input-group { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .rainbow-label { padding: 0 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
@@ -48,7 +49,7 @@
         .theme-court .rainbow-input { background: #004d40; width: 40px; }
 
         .btn-icon { background: transparent; border: 1px solid #666; color: #ddd; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-        .btn-icon.active { background: #555; color: #fff; border-color: #fff; }
+        .btn-icon:active { background: #555; }
 
         .live-switch { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111; height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s; }
         .live-switch.active { background: rgba(0, 200, 0, 0.2); border-color: #00ff00; }
@@ -74,7 +75,7 @@
         #action-bar { height: 60px; background: #222; display: flex; justify-content: space-between; align-items: center; padding: 0 2px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .btn-act { 
             flex: 1; margin: 0 3px; height: 44px; border-radius: 6px; border: none; 
-            color: white; font-weight: bold; font-size: 15px; 
+            color: white; font-weight: bold; font-size: 13px; 
             cursor: pointer; display: flex; align-items: center; justify-content: center; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
@@ -161,15 +162,12 @@
         .manual-score-input { width: 80px; font-size: 24px; font-weight: bold; text-align: center; background: #222; border: 2px solid #555; color: white; border-radius: 8px; padding: 5px; }
 
         .log-item { background: #333; margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #555; display: flex; justify-content: space-between; align-items: center; }
-        .log-info { font-size: 14px; color: #ddd; width: 70%; }
-        .log-status { font-size: 12px; margin-left: 10px; padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
+        .log-info { font-size: 14px; color: #ddd; }
+        .log-status { font-size: 12px; margin-left: 10px; padding: 3px 8px; border-radius: 4px; }
         .status-pending { background: #555; color: #ccc; }
         .status-sending { background: #ff9800; color: #000; }
         .status-done { background: #4caf50; color: #fff; }
         .status-error { background: #f44336; color: #fff; }
-        
-        /* 時間戳記樣式 */
-        .log-time { color: #888; font-size: 12px; display: block; margin-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -327,6 +325,7 @@
     </div>
 
     <script>
+        // === 1. Config & Variables ===
         const firebaseConfig = {
           apiKey: "AIzaSyAq-sTArXeGDVpdjnbLEzh5WpQ5mkmsyoA",
           authDomain: "badminton-live-6237e.firebaseapp.com",
@@ -354,73 +353,40 @@
 
         const getEl = (id) => document.getElementById(id);
 
-        window.addEventListener('load', () => {
-            loadFromLocal();
-            setupLongPress(getEl('name-box-left'), () => editTeamName('left'));
-            setupLongPress(getEl('name-box-right'), () => editTeamName('right'));
-            bindClickPoint('area-left', 'left');
-            bindClickPoint('area-right', 'right');
-            render();
-        });
-
-        // 核心功能：紀錄比分 (V46 包含時間戳)
-        function logGame() {
-            const record = {
-                id: Date.now(), 
-                timeStr: formatTime(Date.now()), // V46: 新增時間字串
-                court: getEl('courtNum').value || "練習", 
-                umpire: getEl('umpireName').value || "-",
-                tA: getTeamName('A'), tB: getTeamName('B'), 
-                sA: state.scoreA, sB: state.scoreB, 
-                winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
-                matchStr: `G${currentMatchIdx+1}`, 
-                status: 'pending'
-            };
-            pendingRecords.push(record); 
-            renderLogItem(record);
-            saveToLocal();
+        // === 2. Helper Functions (Defined FIRST) ===
+        function doVibrate(ms) { if(isVibrationEnabled && navigator.vibrate) navigator.vibrate(ms); }
+        
+        let toastTimer;
+        function showToast(msg) {
+            const el = getEl('toast-msg'); el.innerHTML = msg; el.classList.add('show');
+            clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
         }
 
-        function formatTime(ms) {
-            const d = new Date(ms);
-            return `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+        let onModalConfirm = null;
+        function showModal(title, msg, inputMode, callback, defaultValue = "") {
+            getEl('u-modal-title').innerText = title; getEl('u-modal-msg').innerText = msg;
+            const input = getEl('u-modal-input');
+            if (inputMode) { input.style.display = 'block'; input.value = defaultValue; setTimeout(() => input.focus(), 300); } else { input.style.display = 'none'; }
+            onModalConfirm = () => { if (inputMode) callback(input.value); else callback(); closeUniversalModal(); };
+            getEl('u-modal-confirm-btn').onclick = onModalConfirm;
+            getEl('universal-modal').style.display = 'flex';
         }
+        function closeUniversalModal() { getEl('universal-modal').style.display = 'none'; onModalConfirm = null; }
+        function safeConfirm(msg, yesCallback) { showModal("確認", msg, false, yesCallback); }
+        function safePrompt(title, defaultValue, callback) { showModal("編輯", title, true, callback, defaultValue); }
 
-        function renderLogItem(r) {
-            let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
-            let statusClass = (r.status === 'done') ? 'status-done' : (r.status === 'error' ? 'status-error' : 'status-pending');
-            let statusText = (r.status === 'done') ? '已上傳' : (r.status === 'error' ? '失敗' : '待傳送');
-            
-            div.innerHTML = `
-                <div class="log-info">
-                    <span class="log-time">${r.timeStr || ''}</span>
-                    <b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}
-                </div>
-                <div class="log-status ${statusClass}" id="status-${r.id}">${statusText}</div>
-            `;
-            getEl('log-container').prepend(div);
-        }
-
-        // V46: 修復清空功能
-        function clearAllHistory() {
-            safeConfirm("確定要清空本機的所有紀錄嗎？(無法復原)", () => {
-                pendingRecords = [];
-                getEl('log-container').innerHTML = '';
-                saveToLocal();
-                showToast("🗑️ 紀錄已清空");
+        // === 3. Firebase & Storage Logic ===
+        function syncToFirebase() {
+            if (!isLive || !db) return;
+            const courtNum = getEl('courtNum').value; if(!courtNum) return;
+            db.ref('courts/court_' + courtNum).set({
+                court: courtNum, match: `G${currentMatchIdx+1}`, umpire: getEl('umpireName').value,
+                teamA: getTeamName('A'), teamB: getTeamName('B'), 
+                playersA: getCurrentPlayersString('A'), playersB: getCurrentPlayersString('B'),
+                scoreA: state.scoreA, scoreB: state.scoreB,
+                server: getPlayerName(state.serverTeam, state.serverTeam==='A'?state.serverIdxA:state.serverIdxB),
+                serverTeam: state.serverTeam, timestamp: Date.now()
             });
-        }
-
-        function logGameOnly() {
-            if (pendingRecords.length > 0) {
-                const last = pendingRecords[pendingRecords.length - 1];
-                if (last.matchStr === `G${currentMatchIdx+1}` && last.sA === state.scoreA && last.sB === state.scoreB) {
-                    showToast("⚠️ 此比分已紀錄過"); return;
-                }
-            }
-            logGame(); 
-            const link = getEl('gform_link').value;
-            if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
         }
 
         function saveToLocal() {
@@ -467,24 +433,182 @@
             } catch(e) { console.error("Load Error", e); }
         }
 
-        let toastTimer;
-        function showToast(msg) {
-            const el = getEl('toast-msg'); el.innerHTML = msg; el.classList.add('show');
-            clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+        // === 4. Game Logic ===
+        function addPoint(side) {
+            saveState();
+            let team = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
+            if (team === 'A') state.scoreA++; else state.scoreB++;
+            if (team !== state.serverTeam) {
+                state.serverTeam = team;
+                if (team === 'A') state.serverIdxA = getNextIdx('A', state.serverIdxA); else state.serverIdxB = getNextIdx('B', state.serverIdxB);
+            }
+            checkSwap(); 
+            checkMatchPoint();
+            render();
         }
 
-        let onModalConfirm = null;
-        function showModal(title, msg, inputMode, callback, defaultValue = "") {
-            getEl('u-modal-title').innerText = title; getEl('u-modal-msg').innerText = msg;
-            const input = getEl('u-modal-input');
-            if (inputMode) { input.style.display = 'block'; input.value = defaultValue; setTimeout(() => input.focus(), 300); } else { input.style.display = 'none'; }
-            onModalConfirm = () => { if (inputMode) callback(input.value); else callback(); closeUniversalModal(); };
-            getEl('u-modal-confirm-btn').onclick = onModalConfirm;
-            getEl('universal-modal').style.display = 'flex';
+        function checkSwap() {
+            let max = Math.max(state.scoreA, state.scoreB);
+            let pts = getEl('swapPoints').value.split(/[,，]/).map(Number);
+            if (pts.includes(max) && !state.swappedPoints.includes(max)) {
+                state.swappedPoints.push(max); 
+                safeConfirm(`分數 ${state.scoreA}:${state.scoreB} 換邊？`, () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); });
+            }
         }
-        function closeUniversalModal() { getEl('universal-modal').style.display = 'none'; onModalConfirm = null; }
-        function safeConfirm(msg, yesCallback) { showModal("確認", msg, false, yesCallback); }
-        function safePrompt(title, defaultValue, callback) { showModal("編輯", title, true, callback, defaultValue); }
+        
+        function checkMatchPoint() {
+            let pts = getEl('switchMatchPoints').value.split(/[,，]/).map(Number).filter(n => n > 0);
+            let max = Math.max(state.scoreA, state.scoreB);
+            if (pts.includes(max) && !state.switchedMatchPoints.includes(max)) {
+                safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => { executeMatchSwitch(max); });
+                state.switchedMatchPoints.push(max); 
+            }
+        }
+
+        function executeMatchSwitch(point) {
+            logGame(); 
+            currentMatchIdx++; 
+            if (getEl('resetScoreOnSwitch').checked) {
+                state.scoreA = 0; state.scoreB = 0;
+                state.serverIdxA = 0; state.serverIdxB = 0;
+            } 
+            saveToLocal(); render(); showToast(`✅ 已切換至第 ${currentMatchIdx+1} 點`);
+        }
+
+        function resetGame() { 
+            state = { 
+                leftTeam: 'A', scoreA: 0, scoreB: 0, 
+                serverTeam: getEl('initServer').value, 
+                serverIdxA: 0, serverIdxB: 0, 
+                swappedPoints: [], switchedMatchPoints: []
+            }; 
+            historyStack = []; render(); saveToLocal(); 
+        }
+
+        function logGame() {
+            const record = {
+                id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
+                tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
+                matchStr: `G${currentMatchIdx+1}`, status: 'pending'
+            };
+            pendingRecords.push(record); renderLogItem(record);
+            saveToLocal();
+        }
+
+        function renderLogItem(r) {
+            let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
+            let statusClass = (r.status === 'done') ? 'status-done' : (r.status === 'error' ? 'status-error' : 'status-pending');
+            let statusText = (r.status === 'done') ? '已上傳' : (r.status === 'error' ? '失敗' : '待傳送');
+            
+            div.innerHTML = `
+                <div class="log-info"><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div>
+                <div class="log-status ${statusClass}" id="status-${r.id}">${statusText}</div>
+            `;
+            getEl('log-container').prepend(div);
+        }
+
+        function logGameOnly() {
+            doVibrate(30);
+            if (pendingRecords.length > 0) {
+                const last = pendingRecords[pendingRecords.length - 1];
+                if (last.matchStr === `G${currentMatchIdx+1}` && last.sA === state.scoreA && last.sB === state.scoreB) {
+                    showToast("⚠️ 比分未變動 (已略過)"); return;
+                }
+            }
+            logGame(); 
+            const link = getEl('gform_link').value;
+            if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
+        }
+
+        function endMatchAndNext() {
+            safeConfirm(`🏁 結束歸零？`, () => { logGame(); currentMatchIdx++; resetGame(); showToast("✅ 進入下一場"); });
+        }
+
+        async function uploadAllPending() {
+            const link = getEl('gform_link').value;
+            if (!link) { showToast("請先貼上 Google Form 連結！"); return; }
+            const config = parseLinkAndGetIDs(link);
+            if (!config || Object.keys(config.mapping).length < 7) { showToast("連結格式錯誤！"); return; }
+            const targets = pendingRecords.filter(r => r.status === 'pending' || r.status === 'error');
+            if (targets.length === 0) { showToast("沒有待傳送的紀錄"); return; }
+            
+            safeConfirm(`上傳 ${targets.length} 筆資料？`, async () => {
+                for (let r of targets) {
+                    updateStatus(r.id, 'sending', '傳送中...');
+                    const formData = new FormData();
+                    formData.append(config.mapping.court, r.court); formData.append(config.mapping.umpire, r.umpire);
+                    formData.append(config.mapping.tA, r.tA); formData.append(config.mapping.tB, r.tB);
+                    formData.append(config.mapping.sA, r.sA); formData.append(config.mapping.sB, r.sB);
+                    formData.append(config.mapping.winner, r.winner);
+                    if(config.mapping.matchStr) formData.append(config.mapping.matchStr, r.matchStr);
+
+                    try {
+                        await fetch(config.baseUrl, { method: 'POST', mode: 'no-cors', body: formData });
+                        r.status = 'done'; updateStatus(r.id, 'done', '✅ 已上傳');
+                    } catch (e) {
+                        r.status = 'error'; updateStatus(r.id, 'error', '❌ 失敗');
+                    }
+                    saveToLocal(); // Update status
+                    await new Promise(res => setTimeout(res, 500));
+                }
+                showToast("上傳作業結束");
+            });
+        }
+
+        function parseLinkAndGetIDs(link) {
+            if (!link.includes('docs.google.com')) return null;
+            const baseUrl = link.split('?')[0].replace('viewform', 'formResponse');
+            const params = new URLSearchParams(link.split('?')[1]);
+            const mapping = {};
+            const keys = { 
+                '__COURT__': 'court', '__UMPIRE__': 'umpire', 
+                '__TEAMA__': 'tA', '__TEAMB__': 'tB', 
+                '__SCOREA__': 'sA', '__SCOREB__': 'sB', 
+                '__WINNER__': 'winner', '__MATCHSTR__': 'matchStr'
+            };
+            params.forEach((value, key) => { if (keys[value]) mapping[keys[value]] = key; });
+            return { baseUrl, mapping };
+        }
+
+        function updateStatus(id, type, text) { 
+            const el = getEl(`status-${id}`); 
+            if (el) { el.className = `log-status status-${type}`; el.innerText = text; } 
+        }
+
+        // === 5. UI/Interaction Logic ===
+        
+        let settingsSnapshot = {};
+        function openSettings() {
+            settingsSnapshot = {
+                gform_link: getEl('gform_link').value,
+                teamA_name: getEl('teamA_name').value, teamA_players: getEl('teamA_players').value,
+                teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
+                swapPoints: getEl('swapPoints').value,
+                switchMatchPoints: getEl('switchMatchPoints').value,
+                resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
+                displayMode: getEl('displayMode').value
+            };
+            getEl('history-panel').classList.remove('panel-visible'); // Close history
+            getEl('settings-panel').classList.add('panel-visible');
+        }
+        function cancelSettings() {
+            if (settingsSnapshot) {
+                getEl('gform_link').value = settingsSnapshot.gform_link || "";
+                getEl('teamA_name').value = settingsSnapshot.teamA_name || ""; getEl('teamA_players').value = settingsSnapshot.teamA_players || "";
+                getEl('teamB_name').value = settingsSnapshot.teamB_name || ""; getEl('teamB_players').value = settingsSnapshot.teamB_players || "";
+                getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
+                getEl('switchMatchPoints').value = settingsSnapshot.switchMatchPoints || "";
+                getEl('resetScoreOnSwitch').checked = settingsSnapshot.resetScoreOnSwitch;
+                getEl('displayMode').value = settingsSnapshot.displayMode || "position";
+            }
+            getEl('settings-panel').classList.remove('panel-visible');
+            render(); 
+        }
+        function saveSettings() { render(); saveToLocal(); syncToFirebase(); getEl('settings-panel').classList.remove('panel-visible'); showToast("✅ 設定已儲存"); }
+        function toggleHistory() { 
+            getEl('settings-panel').classList.remove('panel-visible'); // Close settings
+            getEl('history-panel').classList.toggle('panel-visible'); 
+        }
 
         function toggleFullScreen() {
             if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => showToast("無法全螢幕")); } 
@@ -492,7 +616,6 @@
         }
 
         function toggleVibration(checked) { isVibrationEnabled = checked; if(checked) doVibrate(50); }
-        function doVibrate(ms) { if(isVibrationEnabled && navigator.vibrate) navigator.vibrate(ms); }
 
         function bindClickPoint(elemId, side) {
             const el = getEl(elemId);
@@ -513,108 +636,28 @@
             element.addEventListener('touchcancel', cancel); element.addEventListener('mouseleave', cancel);
         }
 
+        // Edit Functions
         function editUmpireName() { safePrompt("修改主審姓名", getEl('umpireName').value, (val) => { if(val !== null) { getEl('umpireName').value = val; saveToLocal(); syncToFirebase(); } }); }
         function editCourtNum() { safePrompt("修改場地編號", getEl('courtNum').value, (val) => { if(val) { getEl('courtNum').value = val; saveToLocal(); syncToFirebase(); } }); }
         function editTeamName(side) {
             let key = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
             safePrompt(`修改 ${key} 隊名稱`, getTeamName(key), (val) => { if(val) { updateInputSegment(`team${key}_name`, val); render(); } });
         }
-
+        function editPlayerName(side) {
+            let key = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
+            let idx = (key === 'A') ? state.serverIdxA : state.serverIdxB;
+            safePrompt("修改球員", getPlayerName(key, idx), (val) => { if(val) { updatePlayerInput(`team${key}_players`, idx, val); render(); } });
+        }
         function updateManualScore() {
             let sA = parseInt(getEl('manualScoreA').value) || 0;
             let sB = parseInt(getEl('manualScoreB').value) || 0;
             saveState(); state.scoreA = sA; state.scoreB = sB; render(); showToast("比分已手動更新");
         }
-
-        function addPoint(side) {
-            saveState();
-            let team = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
-            if (team === 'A') state.scoreA++; else state.scoreB++;
-            if (team !== state.serverTeam) {
-                state.serverTeam = team;
-                if (team === 'A') state.serverIdxA = getNextIdx('A', state.serverIdxA); else state.serverIdxB = getNextIdx('B', state.serverIdxB);
-            }
-            checkSwap(); 
-            checkMatchPoint();
-            render();
-        }
-
-        function checkMatchPoint() {
-            let pts = getEl('switchMatchPoints').value.split(/[,，]/).map(Number).filter(n => n > 0);
-            let max = Math.max(state.scoreA, state.scoreB);
-            if (pts.includes(max) && !state.switchedMatchPoints.includes(max)) {
-                safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => { executeMatchSwitch(max); });
-                state.switchedMatchPoints.push(max); 
-            }
-        }
-
-        function executeMatchSwitch(point) {
-            logGame(); 
-            currentMatchIdx++; 
-            if (getEl('resetScoreOnSwitch').checked) {
-                state.scoreA = 0; state.scoreB = 0;
-                state.serverIdxA = 0; state.serverIdxB = 0;
-            } 
-            saveToLocal(); render(); showToast(`✅ 已切換至第 ${currentMatchIdx+1} 點`);
-        }
-
-        function setServer(teamKey, playerIdx) {
-            if (teamKey === 'A') state.serverIdxA = playerIdx; else state.serverIdxB = playerIdx;
-            doVibrate(30); render(); showToast(`已指定發球：${getPlayerName(teamKey, playerIdx)}`);
-        }
-
-        function updateInputSegment(id, newVal) {
-            let input = getEl(id); let parts = input.value.split(/[;；.。]/);
-            let safeIdx = Math.min(currentMatchIdx, parts.length - 1);
-            parts[safeIdx] = newVal; input.value = parts.join(';'); saveToLocal();
-        }
-
-        function getSegmentedData(id, idx) { let val = getEl(id).value.split(/[;；.。]/); return val[idx % val.length]?.trim() || ""; }
-        function getTeamName(k) { return getSegmentedData(`team${k}_name`, currentMatchIdx) || `隊${k}`; }
-        function getPlayerName(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/); return arr.length ? arr[i % arr.length].trim() : ""; }
-        function getNextIdx(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/); let len = arr.length || 1; return (i + 1) % len; }
-        function getPlayerList(k) { return getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/).map(s => s.trim()).filter(s => s); }
-        function getCurrentPlayersString(teamKey) { return getSegmentedData(`team${teamKey}_players`, currentMatchIdx); }
-
-        function undoPoint() { if (historyStack.length) { state = historyStack.pop(); render(); } }
-        function saveState() { let copy = JSON.parse(JSON.stringify(state)); historyStack.push(copy); if(historyStack.length>50) historyStack.shift(); }
-        
-        function checkSwap() {
-            let max = Math.max(state.scoreA, state.scoreB);
-            let pts = getEl('swapPoints').value.split(/[,，]/).map(Number);
-            if (pts.includes(max) && !state.swappedPoints.includes(max)) {
-                state.swappedPoints.push(max); 
-                safeConfirm(`分數 ${state.scoreA}:${state.scoreB} 換邊？`, () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); });
-            }
-        }
-        
         function swapSidesManual() { safeConfirm("確認手動交換場地？", () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); }); }
-        
-        function resetGame() { 
-            state = { 
-                leftTeam: 'A', scoreA: 0, scoreB: 0, 
-                serverTeam: getEl('initServer').value, 
-                serverIdxA: 0, serverIdxB: 0, 
-                swappedPoints: [], switchedMatchPoints: []
-            }; 
-            historyStack = []; render(); saveToLocal(); 
-        }
-
         function resetMatchCounter() {
             if(confirm("確定要將場次重置回 G1 嗎？")) {
-                currentMatchIdx = 0;
-                resetGame();
-                showToast("已重置為 G1");
+                currentMatchIdx = 0; resetGame(); showToast("已重置為 G1");
             }
-        }
-        
-        function endMatchAndNext() {
-            safeConfirm(`🏁 結束歸零？`, () => { 
-                logGame(); 
-                currentMatchIdx++; 
-                resetGame(); 
-                showToast("✅ 進入下一場"); 
-            });
         }
         function clearCourtData() {
             if(!isLive) { showToast("⚠️ 請先開啟直播連線"); return; }
@@ -623,14 +666,19 @@
                 db.ref('courts/court_' + cNum).remove().then(() => showToast("🗑️ 場地已下線")).catch(e => showToast("❌ 清除失敗"));
             });
         }
-
         function testLink() {
             const link = getEl('gform_link').value;
             if(!link) { showToast("請先貼上連結"); return; }
             let testUrl = link.replace('__COURT__', '1').replace('__UMPIRE__', 'TestUser').replace('__TEAMA__', 'TeamA').replace('__TEAMB__', 'TeamB').replace('__SCOREA__', '21').replace('__SCOREB__', '19').replace('__WINNER__', 'TeamA').replace('__MATCHSTR__', 'G1');
             window.open(testUrl, '_blank');
         }
+        function clearAllHistory() {
+            safeConfirm("確定要清空本機的所有紀錄嗎？(無法復原)", () => {
+                pendingRecords = []; getEl('log-container').innerHTML = ''; saveToLocal(); showToast("🗑️ 紀錄已清空");
+            });
+        }
 
+        // === 6. Render Logic ===
         function render() {
             const mode = getEl('displayMode').value;
             let isA_Left = (state.leftTeam === 'A');
@@ -777,74 +825,20 @@
             showToast("順序已更新");
         }
 
-        function togglePanel(panelName) {
-            const settings = getEl('settings-panel');
-            const history = getEl('history-panel');
-            const btnS = getEl('btn-settings'); 
-            const btnH = getEl('btn-history');  
-
-            if (panelName === 'settings') {
-                if (settings.classList.contains('panel-visible')) {
-                    cancelSettings(); 
-                    btnS.classList.remove('active');
-                } else {
-                    history.classList.remove('panel-visible'); 
-                    btnH.classList.remove('active');
-                    openSettings(); 
-                    btnS.classList.add('active');
-                }
-            } else if (panelName === 'history') {
-                if (history.classList.contains('panel-visible')) {
-                    history.classList.remove('panel-visible');
-                    btnH.classList.remove('active');
-                } else {
-                    if(settings.classList.contains('panel-visible')) cancelSettings(); 
-                    btnS.classList.remove('active');
-                    history.classList.add('panel-visible');
-                    btnH.classList.add('active');
-                }
-            }
-        }
-
-        async function uploadAllPending() {
-            const link = getEl('gform_link').value;
-            if (!link) { showToast("請先貼上 Google Form 連結！"); return; }
-            const config = parseLinkAndGetIDs(link);
-            if (!config || Object.keys(config.mapping).length < 7) { showToast("連結格式錯誤！"); return; }
-            const targets = pendingRecords.filter(r => r.status === 'pending' || r.status === 'error');
-            if (targets.length === 0) { showToast("沒有待傳送的紀錄"); return; }
-            
-            safeConfirm(`上傳 ${targets.length} 筆資料？`, async () => {
-                for (let r of targets) {
-                    updateStatus(r.id, 'sending', '傳送中...');
-                    const formData = new FormData();
-                    formData.append(config.mapping.court, r.court); formData.append(config.mapping.umpire, r.umpire);
-                    formData.append(config.mapping.tA, r.tA); formData.append(config.mapping.tB, r.tB);
-                    formData.append(config.mapping.sA, r.sA); formData.append(config.mapping.sB, r.sB);
-                    formData.append(config.mapping.winner, r.winner);
-                    if(config.mapping.matchStr) formData.append(config.mapping.matchStr, r.matchStr);
-
-                    try {
-                        await fetch(config.baseUrl, { method: 'POST', mode: 'no-cors', body: formData });
-                        r.status = 'done'; updateStatus(r.id, 'done', '✅ 已上傳');
-                    } catch (e) {
-                        r.status = 'error'; updateStatus(r.id, 'error', '❌ 失敗');
-                    }
-                    saveToLocal(); // Update status in storage
-                    await new Promise(res => setTimeout(res, 500));
-                }
-                showToast("上傳作業結束");
-            });
-        }
-        function updateStatus(id, type, text) { 
-            const el = getEl(`status-${id}`); 
-            if (el) { 
-                el.className = `log-status status-${type}`; 
-                el.innerText = text; 
-                if(type === 'done') { 
-                     // Add checkmark visual
-                }
-            } 
+        function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
+        
+        function saveState() { let copy = JSON.parse(JSON.stringify(state)); historyStack.push(copy); if(historyStack.length>50) historyStack.shift(); }
+        function undoPoint() { if (historyStack.length) { state = historyStack.pop(); render(); } }
+        function getNextIdx(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/); let len = arr.length || 1; return (i + 1) % len; }
+        function getSegmentedData(id, idx) { let val = getEl(id).value.split(/[;；.。]/); return val[idx % val.length]?.trim() || ""; }
+        function getTeamName(k) { return getSegmentedData(`team${k}_name`, currentMatchIdx) || `隊${k}`; }
+        function getPlayerName(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/); return arr.length ? arr[i % arr.length].trim() : ""; }
+        function getPlayerList(k) { return getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/).map(s => s.trim()).filter(s => s); }
+        function getCurrentPlayersString(teamKey) {
+            let raw = getEl(`team${teamKey}_players`).value;
+            let parts = raw.split(/[;；.。]/);
+            let idx = Math.min(currentMatchIdx, parts.length - 1);
+            return parts[idx] ? parts[idx].trim() : "";
         }
     </script>
 </body>
