@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V40 (萬用符號版)</title>
+    <title>羽球主審 V40 (GoogleForm 修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -194,7 +194,7 @@
         </div>
     </div>
 
-    <!-- Action Bar (4 Buttons) -->
+    <!-- Action Bar -->
     <div id="action-bar">
         <button class="btn-act btn-undo" onclick="undoPoint()">↩ 復原</button>
         <button class="btn-act btn-swap" onclick="swapSidesManual()">⇄ 換邊</button>
@@ -242,14 +242,13 @@
             <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
         </div>
         
-        <!-- V40: 新增重置G1按鈕 -->
+        <!-- V40: 重置回 G1 -->
         <div class="row">
             <button class="btn-act" onclick="resetMatchCounter()" style="background:#ff9800; width:100%; border:1px solid #ffb74d;">🔄 重置回 G1</button>
         </div>
 
         <div class="row" style="border:1px solid #7c4dff; padding:10px; border-radius:5px;">
             <label style="color:#b388ff; font-weight:bold;">🔄 自動換點 (Switch Point)</label>
-            <!-- V40: 修改提示文字 -->
             <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63,84,105 (分數達到即換點)" style="margin-top:5px;">
             <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
                 <input type="checkbox" id="resetScoreOnSwitch" class="toggle-checkbox">
@@ -278,8 +277,15 @@
             <input type="range" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
         
-        <div class="row"><label>Google Form 預填連結</label><input id="gform_link" class="full-width" placeholder="貼上連結..."></div>
-        <!-- V40: 修改標籤文字 -->
+        <!-- V40: 測試連結按鈕 -->
+        <div class="row">
+            <label>Google Form 預填連結</label>
+            <div style="display:flex; gap:5px;">
+                <input id="gform_link" class="full-width" placeholder="貼上連結...">
+                <button onclick="testLink()" style="background:#0288d1; border:none; color:white; border-radius:4px; padding:0 10px; cursor:pointer;">🧪 測試</button>
+            </div>
+        </div>
+        
         <div class="row"><label>A隊名稱 (。分下一點)</label><input id="teamA_name" class="full-width" value="橘隊;橘二隊"></div>
         <div class="row"><label>A隊員 (例如: 王,李; 陳,林)</label><input id="teamA_players" class="full-width" value="王,李"></div>
         <div class="row"><label>B隊名稱 (。分下一點)</label><input id="teamB_name" class="full-width" value="藍隊;藍二隊"></div>
@@ -343,7 +349,6 @@
             render();
         });
 
-        // 核心修復：補回遺失的函數
         function logGame() {
             const record = {
                 id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
@@ -509,7 +514,7 @@
             parts[safeIdx] = newVal; input.value = parts.join(';'); saveToLocal();
         }
 
-        // V40: 萬用分隔符 + 循環邏輯
+        // V40: 萬用分隔符
         function getSegmentedData(id, idx) { 
             let val = getEl(id).value.split(/[;；.。]/); 
             return val[idx % val.length]?.trim() || ""; // Loop
@@ -590,6 +595,25 @@
             safeConfirm(`確定要清除【場地 ${cNum}】的直播資料嗎？`, () => {
                 db.ref('courts/court_' + cNum).remove().then(() => showToast("🗑️ 場地已下線")).catch(e => showToast("❌ 清除失敗"));
             });
+        }
+
+        // V40: 測試連結
+        function testLink() {
+            const link = getEl('gform_link').value;
+            if(!link) { showToast("請先貼上連結"); return; }
+            
+            // 模擬填充
+            let testUrl = link
+                .replace('__COURT__', '1')
+                .replace('__UMPIRE__', 'TestUser')
+                .replace('__TEAMA__', 'TeamA')
+                .replace('__TEAMB__', 'TeamB')
+                .replace('__SCOREA__', '21')
+                .replace('__SCOREB__', '19')
+                .replace('__WINNER__', 'TeamA')
+                .replace('__MATCHSTR__', 'G1');
+                
+            window.open(testUrl, '_blank');
         }
 
         function render() {
@@ -737,6 +761,12 @@
         }
         function saveSettings() { render(); saveToLocal(); syncToFirebase(); getEl('settings-panel').classList.remove('panel-visible'); showToast("✅ 設定已儲存"); }
         function toggleHistory() { getEl('history-panel').classList.toggle('panel-visible'); }
+        function getCurrentPlayersString(teamKey) {
+            let raw = getEl(`team${teamKey}_players`).value;
+            let parts = raw.split(/[;；]/);
+            let idx = Math.min(currentMatchIdx, parts.length - 1);
+            return parts[idx] ? parts[idx].trim() : "";
+        }
     </script>
 </body>
 </html>
