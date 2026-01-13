@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V40 (GoogleForm 修復版)</title>
+    <title>羽球主審 V40 (拖曳排序版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -12,6 +12,9 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- V40: SortableJS (拖曳排序庫) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
     <style>
         :root { 
             --color-left: #ff9800; 
@@ -47,7 +50,7 @@
         .theme-court .rainbow-input { background: #004d40; width: 40px; }
 
         .btn-icon { background: transparent; border: 1px solid #666; color: #ddd; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-        .btn-icon:active { background: #555; }
+        .btn-icon.active { background: #555; border-color: #fff; color: #fff; } /* V40: 激活狀態 */
 
         .live-switch { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111; height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s; }
         .live-switch.active { background: rgba(0, 200, 0, 0.2); border-color: #00ff00; }
@@ -73,9 +76,9 @@
         #action-bar { height: 60px; background: #222; display: flex; justify-content: space-between; align-items: center; padding: 0 2px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .btn-act { 
             flex: 1; margin: 0 3px; height: 44px; border-radius: 6px; border: none; 
-            color: white; font-weight: bold; font-size: 15px; 
+            color: white; font-weight: bold; font-size: 13px; 
             cursor: pointer; display: flex; align-items: center; justify-content: center; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); white-space: pre-wrap; line-height: 1.1;
         }
         .btn-undo { background: #546e7a; }
         .btn-swap { background: #f57c00; } 
@@ -125,10 +128,25 @@
         
         .mode-position .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: white; }
         .mode-position .pos-item:last-child { border-right: none; }
-        .mode-roster .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+        
+        /* V40: 拖曳排序樣式 */
+        .mode-roster .pos-item { 
+            flex: 1; border-right: 1px solid rgba(255,255,255,0.5); 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 14px; font-weight: bold; color: white; 
+            overflow: hidden; white-space: nowrap; cursor: pointer;
+            position: relative;
+        }
         .mode-roster .pos-item:last-child { border-right: none; }
         .mode-roster .pos-item:active { background: rgba(255,255,255,0.2); }
         .pos-item.active { background: rgba(255,255,255,0.95); color: #000; font-size: 20px; text-shadow: none; }
+        
+        /* 拖曳手把 */
+        .drag-handle {
+            color: rgba(255,255,255,0.5); margin-left: 5px; cursor: move; font-size: 12px; padding: 5px;
+        }
+        /* 拖曳時的樣式 */
+        .sortable-ghost { opacity: 0.5; background: #666; }
         
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
@@ -141,7 +159,6 @@
         .toggle-checkbox { width: 20px; height: 20px; cursor: pointer; }
         input[type=range] { width: 100%; margin: 10px 0; }
         
-        /* 手動比分 */
         .manual-score-input { width: 80px; font-size: 24px; font-weight: bold; text-align: center; background: #222; border: 2px solid #555; color: white; border-radius: 8px; padding: 5px; }
 
         .log-item { background: #333; margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #555; display: flex; justify-content: space-between; align-items: center; }
@@ -189,8 +206,8 @@
             </div>
             <span id="match-counter" style="color:yellow; font-weight:bold; font-size:18px;">G1</span>
             <button class="btn-icon" onclick="toggleFullScreen()" title="全螢幕">⛶</button>
-            <button class="btn-icon" onclick="openSettings()">⚙</button>
-            <button class="btn-icon" onclick="toggleHistory()">📝</button>
+            <button id="btn-settings" class="btn-icon" onclick="togglePanel('settings')">⚙</button>
+            <button id="btn-history" class="btn-icon" onclick="togglePanel('history')">📝</button>
         </div>
     </div>
 
@@ -242,14 +259,13 @@
             <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
         </div>
         
-        <!-- V40: 重置回 G1 -->
         <div class="row">
             <button class="btn-act" onclick="resetMatchCounter()" style="background:#ff9800; width:100%; border:1px solid #ffb74d;">🔄 重置回 G1</button>
         </div>
 
         <div class="row" style="border:1px solid #7c4dff; padding:10px; border-radius:5px;">
             <label style="color:#b388ff; font-weight:bold;">🔄 自動換點 (Switch Point)</label>
-            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63,84,105 (分數達到即換點)" style="margin-top:5px;">
+            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63,84,105" style="margin-top:5px;">
             <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
                 <input type="checkbox" id="resetScoreOnSwitch" class="toggle-checkbox">
                 <label for="resetScoreOnSwitch" style="color:#ccc; margin:0;">換點後分數歸零？</label>
@@ -277,7 +293,6 @@
             <input type="range" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
         
-        <!-- V40: 測試連結按鈕 -->
         <div class="row">
             <label>Google Form 預填連結</label>
             <div style="display:flex; gap:5px;">
@@ -303,13 +318,18 @@
         </div>
     </div>
     
+    <!-- History -->
     <div id="history-panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3>歷史紀錄</h3>
-            <button class="btn-act" style="background:#009688; flex:none; width:auto; padding:0 15px;" onclick="uploadAllPending()">☁ 上傳全部</button>
+            <div style="display:flex; gap:5px;">
+                <!-- V40: 清空紀錄按鈕 -->
+                <button class="btn-act" style="background:#b71c1c; flex:none; width:auto; padding:0 10px; font-size:12px;" onclick="clearAllHistory()">🗑️ 清空</button>
+                <button class="btn-act" style="background:#009688; flex:none; width:auto; padding:0 15px;" onclick="uploadAllPending()">☁ 上傳全部</button>
+            </div>
         </div>
         <div id="log-container"></div>
-        <button class="btn-act" style="background:#555; margin-top:20px;" onclick="toggleHistory()">關閉</button>
+        <button class="btn-act" style="background:#555; margin-top:20px;" onclick="togglePanel('history')">關閉</button>
     </div>
 
     <script>
@@ -349,22 +369,122 @@
             render();
         });
 
-        function logGame() {
-            const record = {
-                id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
-                tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
-                matchStr: `G${currentMatchIdx+1}`, status: 'pending'
-            };
-            pendingRecords.push(record); renderLogItem(record);
+        // V40: Toggle Panels
+        function togglePanel(panelName) {
+            const settings = getEl('settings-panel');
+            const history = getEl('history-panel');
+            const btnS = getEl('btn-settings'); // Assuming you add id="btn-settings" to the gear icon
+            const btnH = getEl('btn-history');  // Assuming you add id="btn-history"
+
+            if (panelName === 'settings') {
+                if (settings.classList.contains('panel-visible')) {
+                    cancelSettings(); // Close
+                    btnS.classList.remove('active');
+                } else {
+                    history.classList.remove('panel-visible'); // Close history
+                    btnH.classList.remove('active');
+                    openSettings(); // Open settings
+                    btnS.classList.add('active');
+                }
+            } else if (panelName === 'history') {
+                if (history.classList.contains('panel-visible')) {
+                    history.classList.remove('panel-visible');
+                    btnH.classList.remove('active');
+                } else {
+                    if(settings.classList.contains('panel-visible')) cancelSettings(); // Close settings
+                    btnS.classList.remove('active');
+                    history.classList.add('panel-visible');
+                    btnH.classList.add('active');
+                }
+            }
+        }
+
+        // V40: Clear History
+        function clearAllHistory() {
+            safeConfirm("確定要清空本機的所有紀錄嗎？(無法復原)", () => {
+                pendingRecords = [];
+                getEl('log-container').innerHTML = '';
+                saveToLocal();
+                showToast("🗑️ 紀錄已清空");
+            });
+        }
+
+        // ... [Include all other existing functions: saveToLocal, loadFromLocal, toast, modal, vibration, setupLongPress, editFunctions, addPoint, updateInput, getSegmentedData, undo, checkSwap, swapManual, resetGame, logGame, renderLogItem, logGameOnly, endMatch, render, etc.] ...
+        // For brevity in this response, I'm ensuring the crucial parts for V40 are highlighted.
+        // Assume all previous logic (V39) is here. 
+
+        // V40: Drag and Drop Logic (SortableJS)
+        function initSortable(container, teamKey) {
+            new Sortable(container, {
+                animation: 150,
+                handle: '.drag-handle', // Only drag by handle
+                onEnd: function (evt) {
+                    // Update internal order
+                    const newOrderNames = Array.from(container.children).map(el => el.querySelector('.name-text').innerText);
+                    // Update input value
+                    updatePlayerListOrder(teamKey, newOrderNames);
+                }
+            });
+        }
+
+        function updatePlayerListOrder(teamKey, newNamesArray) {
+            let input = getEl(`team${teamKey}_players`);
+            let parts = input.value.split(/[;；.。]/);
+            let idx = Math.min(currentMatchIdx, parts.length - 1);
+            
+            parts[idx] = newNamesArray.join(',');
+            input.value = parts.join(';');
             saveToLocal();
+            // Don't re-render entire roster to avoid jitter, just update state if needed
+            showToast("順序已更新");
         }
 
-        function renderLogItem(r) {
-            let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
-            div.innerHTML = `<div class="log-info"><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div><div class="log-status status-pending" id="status-${r.id}">待傳送</div>`;
-            getEl('log-container').prepend(div);
+        // Modified renderRosterMode to include drag handle
+        function renderRosterMode(container, teamKey) {
+            const players = getPlayerList(teamKey);
+            const sideSuffix = (container.id === 'pos-box-left') ? 'left' : 'right';
+
+            // Clear first but check if sortable needs init
+            container.innerHTML = '';
+            container.classList.add('mode-roster'); // Ensure class
+
+            if (players.length === 0) { container.innerHTML = '<div class="pos-item">無名單</div>'; return; }
+            
+            players.forEach((p, idx) => {
+                const div = document.createElement('div');
+                div.id = `pos-box-${sideSuffix}-${idx}`;
+                div.className = 'pos-item';
+                
+                // Add Name
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'name-text';
+                nameSpan.innerText = p;
+                div.appendChild(nameSpan);
+
+                // Add Handle
+                const handle = document.createElement('span');
+                handle.className = 'drag-handle';
+                handle.innerText = '⋮';
+                div.appendChild(handle);
+                
+                // Click to set server
+                div.onclick = (e) => { 
+                    // If clicking handle, don't set server (let drag handle it)
+                    if(e.target.classList.contains('drag-handle')) return;
+                    e.stopPropagation(); 
+                    setServer(teamKey, idx); 
+                };
+                
+                container.appendChild(div);
+            });
+
+            // Initialize Sortable
+            initSortable(container, teamKey);
         }
 
+        // ... [Rest of V39 functions: saveToLocal, loadFromLocal, etc.] ...
+        
+        // Re-paste standard functions for completeness in the file copy
         function saveToLocal() {
             const data = {
                 state, currentMatchIdx, historyStack, pendingRecords,
@@ -514,27 +634,12 @@
             parts[safeIdx] = newVal; input.value = parts.join(';'); saveToLocal();
         }
 
-        // V40: 萬用分隔符
-        function getSegmentedData(id, idx) { 
-            let val = getEl(id).value.split(/[;；.。]/); 
-            return val[idx % val.length]?.trim() || ""; // Loop
-        }
+        function getSegmentedData(id, idx) { let val = getEl(id).value.split(/[;；.。]/); return val[idx % val.length]?.trim() || ""; }
         function getTeamName(k) { return getSegmentedData(`team${k}_name`, currentMatchIdx) || `隊${k}`; }
-        function getPlayerName(k, i) { 
-            let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/); 
-            return arr.length ? arr[i % arr.length].trim() : ""; 
-        }
-        function getNextIdx(k, i) { 
-            let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/); 
-            let len = arr.length || 1; 
-            return (i + 1) % len; 
-        }
-        function getPlayerList(k) { 
-            return getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/).map(s => s.trim()).filter(s => s); 
-        }
-        function getCurrentPlayersString(teamKey) {
-            return getSegmentedData(`team${teamKey}_players`, currentMatchIdx);
-        }
+        function getPlayerName(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/); return arr.length ? arr[i % arr.length].trim() : ""; }
+        function getNextIdx(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/); let len = arr.length || 1; return (i + 1) % len; }
+        function getPlayerList(k) { return getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/).map(s => s.trim()).filter(s => s); }
+        function getCurrentPlayersString(teamKey) { return getSegmentedData(`team${teamKey}_players`, currentMatchIdx); }
 
         function undoPoint() { if (historyStack.length) { state = historyStack.pop(); render(); } }
         function saveState() { let copy = JSON.parse(JSON.stringify(state)); historyStack.push(copy); if(historyStack.length>50) historyStack.shift(); }
@@ -560,7 +665,6 @@
             historyStack = []; render(); saveToLocal(); 
         }
 
-        // V40: 重置回 G1
         function resetMatchCounter() {
             if(confirm("確定要將場次重置回 G1 嗎？")) {
                 currentMatchIdx = 0;
@@ -569,6 +673,22 @@
             }
         }
         
+        function logGame() {
+            const record = {
+                id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
+                tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
+                matchStr: `G${currentMatchIdx+1}`, status: 'pending'
+            };
+            pendingRecords.push(record); renderLogItem(record);
+            saveToLocal();
+        }
+
+        function renderLogItem(r) {
+            let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
+            div.innerHTML = `<div class="log-info"><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div><div class="log-status status-pending" id="status-${r.id}">待傳送</div>`;
+            getEl('log-container').prepend(div);
+        }
+
         function logGameOnly() {
             if (pendingRecords.length > 0) {
                 const last = pendingRecords[pendingRecords.length - 1];
@@ -582,7 +702,7 @@
         }
 
         function endMatchAndNext() {
-            safeConfirm(`🏁 結束第 ${currentMatchIdx+1} 場，並進入下一場？`, () => { 
+            safeConfirm(`🏁 結束歸零？`, () => { 
                 logGame(); 
                 currentMatchIdx++; 
                 resetGame(); 
@@ -597,22 +717,10 @@
             });
         }
 
-        // V40: 測試連結
         function testLink() {
             const link = getEl('gform_link').value;
             if(!link) { showToast("請先貼上連結"); return; }
-            
-            // 模擬填充
-            let testUrl = link
-                .replace('__COURT__', '1')
-                .replace('__UMPIRE__', 'TestUser')
-                .replace('__TEAMA__', 'TeamA')
-                .replace('__TEAMB__', 'TeamB')
-                .replace('__SCOREA__', '21')
-                .replace('__SCOREB__', '19')
-                .replace('__WINNER__', 'TeamA')
-                .replace('__MATCHSTR__', 'G1');
-                
+            let testUrl = link.replace('__COURT__', '1').replace('__UMPIRE__', 'TestUser').replace('__TEAMA__', 'TeamA').replace('__TEAMB__', 'TeamB').replace('__SCOREA__', '21').replace('__SCOREB__', '19').replace('__WINNER__', 'TeamA').replace('__MATCHSTR__', 'G1');
             window.open(testUrl, '_blank');
         }
 
@@ -635,6 +743,8 @@
             if (state.serverTeam === state.leftTeam) getEl('area-left').classList.add('serving'); else getEl('area-right').classList.add('serving');
 
             const boxL = getEl('pos-box-left'); const boxR = getEl('pos-box-right');
+            
+            // 清除內容與樣式，重新渲染
             boxL.innerHTML = ''; boxR.innerHTML = '';
             boxL.className = `position-box mode-${mode}`; boxR.className = `position-box mode-${mode}`;
 
@@ -690,10 +800,48 @@
                 const div = document.createElement('div');
                 div.id = `pos-box-${sideSuffix}-${idx}`;
                 div.className = 'pos-item';
-                div.innerText = p;
-                div.onclick = (e) => { e.stopPropagation(); setServer(teamKey, idx); };
+                
+                // Name
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'name-text';
+                nameSpan.innerText = p;
+                div.appendChild(nameSpan);
+
+                // Handle
+                const handle = document.createElement('span');
+                handle.className = 'drag-handle';
+                handle.innerText = '⋮';
+                div.appendChild(handle);
+                
+                div.onclick = (e) => { 
+                    if(e.target.classList.contains('drag-handle')) return;
+                    e.stopPropagation(); 
+                    setServer(teamKey, idx); 
+                };
                 container.appendChild(div);
             });
+            initSortable(container, teamKey);
+        }
+
+        function initSortable(container, teamKey) {
+            new Sortable(container, {
+                animation: 150,
+                handle: '.drag-handle',
+                onEnd: function (evt) {
+                    const newOrderNames = Array.from(container.children).map(el => el.querySelector('.name-text').innerText);
+                    updatePlayerListOrder(teamKey, newOrderNames);
+                }
+            });
+        }
+
+        function updatePlayerListOrder(teamKey, newNamesArray) {
+            let input = getEl(`team${teamKey}_players`);
+            let parts = input.value.split(/[;；.。]/);
+            let idx = Math.min(currentMatchIdx, parts.length - 1);
+            parts[idx] = newNamesArray.join(',');
+            input.value = parts.join(';');
+            saveToLocal();
+            showToast("順序已更新");
         }
 
         function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
@@ -744,8 +892,20 @@
                 resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
                 displayMode: getEl('displayMode').value
             };
-            getEl('settings-panel').classList.add('panel-visible');
+            // Toggle logic: if history is open, close it.
+            getEl('history-panel').classList.remove('panel-visible');
+            getEl('btn-history').classList.remove('active');
+
+            const panel = getEl('settings-panel');
+            if(panel.classList.contains('panel-visible')) {
+                cancelSettings();
+                getEl('btn-settings').classList.remove('active');
+            } else {
+                panel.classList.add('panel-visible');
+                getEl('btn-settings').classList.add('active');
+            }
         }
+
         function cancelSettings() {
             if (settingsSnapshot) {
                 getEl('gform_link').value = settingsSnapshot.gform_link || "";
@@ -757,15 +917,30 @@
                 getEl('displayMode').value = settingsSnapshot.displayMode || "position";
             }
             getEl('settings-panel').classList.remove('panel-visible');
+            getEl('btn-settings').classList.remove('active');
             render(); 
         }
-        function saveSettings() { render(); saveToLocal(); syncToFirebase(); getEl('settings-panel').classList.remove('panel-visible'); showToast("✅ 設定已儲存"); }
-        function toggleHistory() { getEl('history-panel').classList.toggle('panel-visible'); }
-        function getCurrentPlayersString(teamKey) {
-            let raw = getEl(`team${teamKey}_players`).value;
-            let parts = raw.split(/[;；]/);
-            let idx = Math.min(currentMatchIdx, parts.length - 1);
-            return parts[idx] ? parts[idx].trim() : "";
+        function saveSettings() { 
+            render(); saveToLocal(); syncToFirebase(); 
+            getEl('settings-panel').classList.remove('panel-visible'); 
+            getEl('btn-settings').classList.remove('active');
+            showToast("✅ 設定已儲存"); 
+        }
+
+        function toggleHistory() { 
+            // Close settings if open
+            getEl('settings-panel').classList.remove('panel-visible');
+            getEl('btn-settings').classList.remove('active');
+
+            const panel = getEl('history-panel');
+            const btn = getEl('btn-history');
+            
+            panel.classList.toggle('panel-visible');
+            if(panel.classList.contains('panel-visible')) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
         }
     </script>
 </body>
