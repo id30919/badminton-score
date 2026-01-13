@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V46 (絕對秩序修復版)</title>
+    <title>羽球主審 V46 (設定儲存修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -36,7 +36,8 @@
             height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
             border-bottom: 1px solid #444; padding-left: 60px; 
         }
-        .header-left, .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .header-left { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 
         .rainbow-input-group { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .rainbow-label { padding: 0 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
@@ -167,7 +168,6 @@
         .status-sending { background: #ff9800; color: #000; }
         .status-done { background: #4caf50; color: #fff; }
         .status-error { background: #f44336; color: #fff; }
-        .log-time { color: #888; font-size: 12px; display: block; margin-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -206,8 +206,8 @@
             </div>
             <span id="match-counter" style="color:yellow; font-weight:bold; font-size:18px;">G1</span>
             <button class="btn-icon" onclick="toggleFullScreen()" title="全螢幕">⛶</button>
-            <button id="btn-settings" class="btn-icon" onclick="togglePanel('settings')">⚙</button>
-            <button id="btn-history" class="btn-icon" onclick="togglePanel('history')">📝</button>
+            <button class="btn-icon" onclick="openSettings()">⚙</button>
+            <button class="btn-icon" onclick="toggleHistory()">📝</button>
         </div>
     </div>
 
@@ -259,7 +259,7 @@
 
         <div class="row" style="border:1px solid #7c4dff; padding:10px; border-radius:5px;">
             <label style="color:#b388ff; font-weight:bold;">🔄 自動換點 (Switch Point)</label>
-            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63,84,105" style="margin-top:5px;">
+            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63 (分數達到即換點)" style="margin-top:5px;">
             <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
                 <input type="checkbox" id="resetScoreOnSwitch" class="toggle-checkbox">
                 <label for="resetScoreOnSwitch" style="color:#ccc; margin:0;">換點後分數歸零？</label>
@@ -325,7 +325,7 @@
     </div>
 
     <script>
-        // === 1. GLOBAL VARS ===
+        // === 1. GLOBAL VARS & CONFIG ===
         const firebaseConfig = {
           apiKey: "AIzaSyAq-sTArXeGDVpdjnbLEzh5WpQ5mkmsyoA",
           authDomain: "badminton-live-6237e.firebaseapp.com",
@@ -337,6 +337,8 @@
           measurementId: "G-2K7HYBBMXX"
         };
         let db; let isLive = false;
+        try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } catch (e) { console.error("Firebase Error:", e); }
+
         const STORAGE_KEY = 'badminton_v23_state';
         let currentMatchIdx = 0;
         let state = { leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: 'A', serverIdxA: 0, serverIdxB: 0, swappedPoints: [], switchedMatchPoints: [] };
@@ -345,14 +347,9 @@
         let settingsSnapshot = {};
         let toastTimer;
         let onModalConfirm = null;
-
-        // Try Init Firebase
-        try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } catch (e) { console.error("Firebase Error:", e); }
-
         const getEl = (id) => document.getElementById(id);
 
-        // === 2. CORE FUNCTIONS (Declared FIRST to avoid ReferenceError) ===
-        
+        // === 2. CORE FUNCTIONS (Hoist First) ===
         function doVibrate(ms) { if(isVibrationEnabled && navigator.vibrate) navigator.vibrate(ms); }
         
         function showToast(msg) {
@@ -388,29 +385,52 @@
             pendingRecords.push(record); renderLogItem(record);
             saveToLocal();
         }
-
         function renderLogItem(r) {
             let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
             let statusClass = (r.status === 'done') ? 'status-done' : (r.status === 'error' ? 'status-error' : 'status-pending');
             let statusText = (r.status === 'done') ? '已上傳' : (r.status === 'error' ? '失敗' : '待傳送');
-            div.innerHTML = `
-                <div class="log-info"><span class="log-time">${r.timeStr || ''}</span><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div>
-                <div class="log-status ${statusClass}" id="status-${r.id}">${statusText}</div>
-            `;
+            div.innerHTML = `<div class="log-info"><span class="log-time">${r.timeStr || ''}</span><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div><div class="log-status ${statusClass}" id="status-${r.id}">${statusText}</div>`;
             getEl('log-container').prepend(div);
         }
 
-        function logGameOnly() {
-            doVibrate(30);
-            if (pendingRecords.length > 0) {
-                const last = pendingRecords[pendingRecords.length - 1];
-                if (last.matchStr === `G${currentMatchIdx+1}` && last.sA === state.scoreA && last.sB === state.scoreB) {
-                    showToast("⚠️ 比分未變動 (已略過)"); return;
-                }
+        function saveSettings() { 
+            render(); saveToLocal(); syncToFirebase(); 
+            getEl('settings-panel').classList.remove('panel-visible'); 
+            showToast("✅ 設定已儲存"); 
+        }
+
+        function cancelSettings() {
+            if (settingsSnapshot) {
+                getEl('gform_link').value = settingsSnapshot.gform_link || "";
+                getEl('teamA_name').value = settingsSnapshot.teamA_name || ""; getEl('teamA_players').value = settingsSnapshot.teamA_players || "";
+                getEl('teamB_name').value = settingsSnapshot.teamB_name || ""; getEl('teamB_players').value = settingsSnapshot.teamB_players || "";
+                getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
+                getEl('switchMatchPoints').value = settingsSnapshot.switchMatchPoints || "";
+                getEl('resetScoreOnSwitch').checked = settingsSnapshot.resetScoreOnSwitch;
+                getEl('displayMode').value = settingsSnapshot.displayMode || "position";
             }
-            logGame(); 
-            const link = getEl('gform_link').value;
-            if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
+            getEl('settings-panel').classList.remove('panel-visible');
+            render(); 
+        }
+        
+        function openSettings() {
+            settingsSnapshot = {
+                gform_link: getEl('gform_link').value,
+                teamA_name: getEl('teamA_name').value, teamA_players: getEl('teamA_players').value,
+                teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
+                swapPoints: getEl('swapPoints').value, switchMatchPoints: getEl('switchMatchPoints').value,
+                resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked, displayMode: getEl('displayMode').value
+            };
+            getEl('history-panel').classList.remove('panel-visible');
+            getEl('settings-panel').classList.add('panel-visible');
+        }
+
+        function togglePanel(panelName) {
+            if(panelName === 'settings') openSettings();
+            if(panelName === 'history') {
+                getEl('settings-panel').classList.remove('panel-visible');
+                getEl('history-panel').classList.toggle('panel-visible');
+            }
         }
 
         function syncToFirebase() {
@@ -426,6 +446,17 @@
             });
         }
 
+        // === 3. Init ===
+        window.addEventListener('load', () => {
+            loadFromLocal();
+            setupLongPress(getEl('name-box-left'), () => editTeamName('left'));
+            setupLongPress(getEl('name-box-right'), () => editTeamName('right'));
+            bindClickPoint('area-left', 'left');
+            bindClickPoint('area-right', 'right');
+            render();
+        });
+
+        // ... [Functions: saveToLocal, loadFromLocal, formatTime] ...
         function saveToLocal() {
             const data = {
                 state, currentMatchIdx, historyStack, pendingRecords,
@@ -441,40 +472,6 @@
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
-
-        function togglePanel(panelName) {
-            const settings = getEl('settings-panel');
-            const history = getEl('history-panel');
-            const btnS = getEl('btn-settings'); const btnH = getEl('btn-history');  
-            if (panelName === 'settings') {
-                if (settings.classList.contains('panel-visible')) { cancelSettings(); btnS.classList.remove('active'); } 
-                else { history.classList.remove('panel-visible'); btnH.classList.remove('active'); openSettings(); btnS.classList.add('active'); }
-            } else if (panelName === 'history') {
-                if (history.classList.contains('panel-visible')) { history.classList.remove('panel-visible'); btnH.classList.remove('active'); } 
-                else { if(settings.classList.contains('panel-visible')) cancelSettings(); btnS.classList.remove('active'); history.classList.add('panel-visible'); btnH.classList.add('active'); }
-            }
-        }
-
-        function openSettings() {
-            settingsSnapshot = {
-                gform_link: getEl('gform_link').value,
-                teamA_name: getEl('teamA_name').value, teamA_players: getEl('teamA_players').value,
-                teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
-                swapPoints: getEl('swapPoints').value, switchMatchPoints: getEl('switchMatchPoints').value,
-                resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked, displayMode: getEl('displayMode').value
-            };
-            getEl('settings-panel').classList.add('panel-visible');
-        }
-
-        // === 3. Event Listeners & Init ===
-        window.addEventListener('load', () => {
-            loadFromLocal();
-            setupLongPress(getEl('name-box-left'), () => editTeamName('left'));
-            setupLongPress(getEl('name-box-right'), () => editTeamName('right'));
-            bindClickPoint('area-left', 'left');
-            bindClickPoint('area-right', 'right');
-            render();
-        });
 
         function loadFromLocal() {
             const raw = localStorage.getItem(STORAGE_KEY);
@@ -504,7 +501,7 @@
             } catch(e) { console.error("Load Error", e); }
         }
 
-        // === Other Functions ===
+        // ... [Functions: toggleFullScreen, toggleVibration, bindClickPoint, setupLongPress] ...
         function toggleFullScreen() {
             if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => showToast("無法全螢幕")); } 
             else { if (document.exitFullscreen) document.exitFullscreen(); }
@@ -527,6 +524,8 @@
             element.addEventListener('mouseup', cancel); element.addEventListener('touchend', cancel);
             element.addEventListener('touchcancel', cancel); element.addEventListener('mouseleave', cancel);
         }
+
+        // ... [Functions: edits, update, addPoint, etc.] ...
         function editUmpireName() { safePrompt("修改主審姓名", getEl('umpireName').value, (val) => { if(val !== null) { getEl('umpireName').value = val; saveToLocal(); syncToFirebase(); } }); }
         function editCourtNum() { safePrompt("修改場地編號", getEl('courtNum').value, (val) => { if(val) { getEl('courtNum').value = val; saveToLocal(); syncToFirebase(); } }); }
         function editTeamName(side) {
@@ -544,6 +543,7 @@
             if (team !== state.serverTeam) { state.serverTeam = team; if (team === 'A') state.serverIdxA = getNextIdx('A', state.serverIdxA); else state.serverIdxB = getNextIdx('B', state.serverIdxB); }
             checkSwap(); checkMatchPoint(); render();
         }
+
         function checkMatchPoint() {
             let pts = getEl('switchMatchPoints').value.split(/[,，]/).map(Number).filter(n => n > 0);
             let max = Math.max(state.scoreA, state.scoreB);
@@ -572,8 +572,10 @@
         function getNextIdx(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/); let len = arr.length || 1; return (i + 1) % len; }
         function getPlayerList(k) { return getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/).map(s => s.trim()).filter(s => s); }
         function getCurrentPlayersString(teamKey) { return getSegmentedData(`team${teamKey}_players`, currentMatchIdx); }
+
         function undoPoint() { if (historyStack.length) { state = historyStack.pop(); render(); } }
         function saveState() { let copy = JSON.parse(JSON.stringify(state)); historyStack.push(copy); if(historyStack.length>50) historyStack.shift(); }
+        
         function checkSwap() {
             let max = Math.max(state.scoreA, state.scoreB); let pts = getEl('swapPoints').value.split(/[,，]/).map(Number);
             if (pts.includes(max) && !state.swappedPoints.includes(max)) {
@@ -597,6 +599,19 @@
             let testUrl = link.replace('__COURT__', '1').replace('__UMPIRE__', 'TestUser').replace('__TEAMA__', 'TeamA').replace('__TEAMB__', 'TeamB').replace('__SCOREA__', '21').replace('__SCOREB__', '19').replace('__WINNER__', 'TeamA').replace('__MATCHSTR__', 'G1');
             window.open(testUrl, '_blank');
         }
+        function logGameOnly() {
+            if (pendingRecords.length > 0) {
+                const last = pendingRecords[pendingRecords.length - 1];
+                if (last.matchStr === `G${currentMatchIdx+1}` && last.sA === state.scoreA && last.sB === state.scoreB) {
+                    showToast("⚠️ 此比分已紀錄過"); return;
+                }
+            }
+            logGame(); 
+            const link = getEl('gform_link').value;
+            if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
+        }
+        function clearAllHistory() { safeConfirm("確定要清空本機的所有紀錄嗎？(無法復原)", () => { pendingRecords = []; getEl('log-container').innerHTML = ''; saveToLocal(); showToast("🗑️ 紀錄已清空"); }); }
+
         function render() {
             const mode = getEl('displayMode').value;
             let isA_Left = (state.leftTeam === 'A');
@@ -669,29 +684,27 @@
             let idx = Math.min(currentMatchIdx, parts.length - 1);
             parts[idx] = newNamesArray.join(','); input.value = parts.join(';'); saveToLocal(); showToast("順序已更新");
         }
-        function cancelSettings() {
-            if (settingsSnapshot) {
-                getEl('gform_link').value = settingsSnapshot.gform_link || "";
-                getEl('teamA_name').value = settingsSnapshot.teamA_name || ""; getEl('teamA_players').value = settingsSnapshot.teamA_players || "";
-                getEl('teamB_name').value = settingsSnapshot.teamB_name || ""; getEl('teamB_players').value = settingsSnapshot.teamB_players || "";
-                getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
-                getEl('switchMatchPoints').value = settingsSnapshot.switchMatchPoints || "";
-                getEl('resetScoreOnSwitch').checked = settingsSnapshot.resetScoreOnSwitch;
-                getEl('displayMode').value = settingsSnapshot.displayMode || "position";
+        function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
+        function handleLiveClick() {
+            if (isLive) { isLive = false; updateLiveUI(); } 
+            else {
+                safePrompt("請輸入場地編號", getEl('courtNum').value, (val) => {
+                    if(!val) { showToast('請輸入場地'); return; }
+                    getEl('courtNum').value = val;
+                    setTimeout(() => {
+                        safePrompt("請輸入主審姓名", getEl('umpireName').value, (uVal) => {
+                            getEl('umpireName').value = uVal || "城隍爺";
+                            isLive = true; updateLiveUI(); syncToFirebase();
+                        });
+                    }, 200);
+                });
             }
-            getEl('settings-panel').classList.remove('panel-visible'); render(); 
         }
-        function clearAllHistory() { safeConfirm("確定要清空本機的所有紀錄嗎？(無法復原)", () => { pendingRecords = []; getEl('log-container').innerHTML = ''; saveToLocal(); showToast("🗑️ 紀錄已清空"); }); }
-        function parseLinkAndGetIDs(link) {
-            if (!link.includes('docs.google.com')) return null;
-            const baseUrl = link.split('?')[0].replace('viewform', 'formResponse');
-            const params = new URLSearchParams(link.split('?')[1]);
-            const mapping = {};
-            const keys = { '__COURT__': 'court', '__UMPIRE__': 'umpire', '__TEAMA__': 'tA', '__TEAMB__': 'tB', '__SCOREA__': 'sA', '__SCOREB__': 'sB', '__WINNER__': 'winner', '__MATCHSTR__': 'matchStr' };
-            params.forEach((value, key) => { if (keys[value]) mapping[keys[value]] = key; });
-            return { baseUrl, mapping };
+        function updateLiveUI() {
+            const el = getEl('liveToggle'); const txt = getEl('liveText');
+            if (isLive) { el.classList.add('active'); txt.innerText = "直播中"; } 
+            else { el.classList.remove('active'); txt.innerText = "離線"; }
         }
-        function updateStatus(id, type, text) { const el = getEl(`status-${id}`); if (el) { el.className = `log-status status-${type}`; el.innerText = text; } }
         async function uploadAllPending() {
             const link = getEl('gform_link').value;
             if (!link) { showToast("請先貼上 Google Form 連結！"); return; }
@@ -715,7 +728,7 @@
                 showToast("上傳作業結束");
             });
         }
-        function toggleHistory() { getEl('settings-panel').classList.remove('panel-visible'); getEl('history-panel').classList.toggle('panel-visible'); }
+        function updateStatus(id, type, text) { const el = getEl(`status-${id}`); if (el) { el.className = `log-status status-${type}`; el.innerText = text; } }
     </script>
 </body>
 </html>
