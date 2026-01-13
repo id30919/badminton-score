@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V44 (完整修復版)</title>
+    <title>羽球主審 V45 (紀錄強化版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -36,9 +36,7 @@
             height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
             border-bottom: 1px solid #444; padding-left: 60px; 
         }
-        
-        .header-left { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-        .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .header-left, .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 
         .rainbow-input-group { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .rainbow-label { padding: 0 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
@@ -135,7 +133,6 @@
         .mode-position .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: white; }
         .mode-position .pos-item:last-child { border-right: none; }
         
-        /* 多人名單模式 (右至左) */
         .position-box.mode-roster { flex-direction: row-reverse; }
         .mode-roster .pos-item { 
             flex: 1; border-left: 1px solid rgba(255,255,255,0.5); border-right: none;
@@ -167,7 +164,7 @@
         .log-status { font-size: 12px; margin-left: 10px; padding: 3px 8px; border-radius: 4px; }
         .status-pending { background: #555; color: #ccc; }
         .status-sending { background: #ff9800; color: #000; }
-        .status-done { background: #4caf50; color: #fff; }
+        .status-done { background: #4caf50; color: #fff; } /* 綠色 */
         .status-error { background: #f44336; color: #fff; }
     </style>
 </head>
@@ -243,7 +240,9 @@
     <!-- Settings -->
     <div id="settings-panel">
         <h3>比賽設定</h3>
-        
+        <div class="row"><button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button></div>
+        <div class="row"><button class="btn-act" onclick="resetMatchCounter()" style="background:#ff9800; width:100%; border:1px solid #ffb74d;">🔄 重置回 G1</button></div>
+
         <div class="row" style="background:#444; padding:15px; border-radius:8px; display:flex; justify-content:space-around; align-items:center;">
             <div style="text-align:center;">
                 <div style="color:var(--color-left); font-weight:bold; margin-bottom:5px;">橘隊分數</div>
@@ -256,17 +255,9 @@
             </div>
         </div>
 
-        <div class="row">
-            <button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button>
-        </div>
-        
-        <div class="row">
-            <button class="btn-act" onclick="resetMatchCounter()" style="background:#ff9800; width:100%; border:1px solid #ffb74d;">🔄 重置回 G1</button>
-        </div>
-
         <div class="row" style="border:1px solid #7c4dff; padding:10px; border-radius:5px;">
             <label style="color:#b388ff; font-weight:bold;">🔄 自動換點 (Switch Point)</label>
-            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63 (分數達到即換點)" style="margin-top:5px;">
+            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63,84,105" style="margin-top:5px;">
             <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
                 <input type="checkbox" id="resetScoreOnSwitch" class="toggle-checkbox">
                 <label for="resetScoreOnSwitch" style="color:#ccc; margin:0;">換點後分數歸零？</label>
@@ -328,7 +319,7 @@
             </div>
         </div>
         <div id="log-container"></div>
-        <button class="btn-act" style="background:#555; margin-top:20px;" onclick="togglePanel('history')">關閉</button>
+        <button class="btn-act" style="background:#555; margin-top:20px;" onclick="toggleHistory()">關閉</button>
     </div>
 
     <script>
@@ -368,53 +359,60 @@
             render();
         });
 
-        // ================= V44: 補回遺失的核心函數 =================
-
+        // 核心功能：紀錄比分 (必須在全域定義)
         function logGame() {
             const record = {
-                id: Date.now(),
-                court: getEl('courtNum').value || "練習",
-                umpire: getEl('umpireName').value || "-",
-                tA: getTeamName('A'), tB: getTeamName('B'),
-                sA: state.scoreA, sB: state.scoreB,
-                winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
-                matchStr: `G${currentMatchIdx+1}`,
-                status: 'pending'
+                id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
+                tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
+                matchStr: `G${currentMatchIdx+1}`, status: 'pending'
             };
-            pendingRecords.push(record);
-            renderLogItem(record);
+            pendingRecords.push(record); renderLogItem(record);
             saveToLocal();
         }
 
         function renderLogItem(r) {
-            let div = document.createElement('div');
-            div.className = 'log-item';
-            div.id = `log-${r.id}`;
+            let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
+            let statusClass = (r.status === 'done') ? 'status-done' : (r.status === 'error' ? 'status-error' : 'status-pending');
+            let statusText = (r.status === 'done') ? '已上傳' : (r.status === 'error' ? '失敗' : '待傳送');
+            
             div.innerHTML = `
                 <div class="log-info"><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div>
-                <div class="log-status status-pending" id="status-${r.id}">待傳送</div>
+                <div class="log-status ${statusClass}" id="status-${r.id}">${statusText}</div>
             `;
             getEl('log-container').prepend(div);
         }
 
+        // 核心功能：按鈕點擊紀錄
+        function logGameOnly() {
+            doVibrate(30); // V45: 震動
+            // 防重覆
+            if (pendingRecords.length > 0) {
+                const last = pendingRecords[pendingRecords.length - 1];
+                if (last.matchStr === `G${currentMatchIdx+1}` && last.sA === state.scoreA && last.sB === state.scoreB) {
+                    showToast("⚠️ 比分未變動 (已略過)"); return;
+                }
+            }
+            logGame(); 
+            const link = getEl('gform_link').value;
+            if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
+        }
+
+        // 核心功能：上傳全部
         async function uploadAllPending() {
             const link = getEl('gform_link').value;
             if (!link) { showToast("請先貼上 Google Form 連結！"); return; }
             const config = parseLinkAndGetIDs(link);
             if (!config || Object.keys(config.mapping).length < 7) { showToast("連結格式錯誤！"); return; }
-            const targets = pendingRecords.filter(r => r.status === 'pending');
+            const targets = pendingRecords.filter(r => r.status === 'pending' || r.status === 'error');
             if (targets.length === 0) { showToast("沒有待傳送的紀錄"); return; }
             
             safeConfirm(`上傳 ${targets.length} 筆資料？`, async () => {
                 for (let r of targets) {
                     updateStatus(r.id, 'sending', '傳送中...');
                     const formData = new FormData();
-                    formData.append(config.mapping.court, r.court);
-                    formData.append(config.mapping.umpire, r.umpire);
-                    formData.append(config.mapping.tA, r.tA);
-                    formData.append(config.mapping.tB, r.tB);
-                    formData.append(config.mapping.sA, r.sA);
-                    formData.append(config.mapping.sB, r.sB);
+                    formData.append(config.mapping.court, r.court); formData.append(config.mapping.umpire, r.umpire);
+                    formData.append(config.mapping.tA, r.tA); formData.append(config.mapping.tB, r.tB);
+                    formData.append(config.mapping.sA, r.sA); formData.append(config.mapping.sB, r.sB);
                     formData.append(config.mapping.winner, r.winner);
                     if(config.mapping.matchStr) formData.append(config.mapping.matchStr, r.matchStr);
 
@@ -424,7 +422,7 @@
                     } catch (e) {
                         r.status = 'error'; updateStatus(r.id, 'error', '❌ 失敗');
                     }
-                    saveToLocal();
+                    saveToLocal(); // Update status
                     await new Promise(res => setTimeout(res, 500));
                 }
                 showToast("上傳作業結束");
@@ -448,45 +446,10 @@
 
         function updateStatus(id, type, text) { 
             const el = getEl(`status-${id}`); 
-            if (el) { el.className = `log-status status-${type}`; el.innerText = text; } 
-        }
-
-        // ==========================================================
-
-        function toggleServerByIndicator(sideClicked) {
-            event.stopPropagation();
-            doVibrate(30);
-            let teamOnClickedSide = (sideClicked === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
-            if (teamOnClickedSide === state.serverTeam) {
-                if (teamOnClickedSide === 'A') state.serverIdxA = getNextIdx('A', state.serverIdxA);
-                else state.serverIdxB = getNextIdx('B', state.serverIdxB);
-                showToast(`🔄 發球員輪轉`);
-            } else {
-                state.serverTeam = teamOnClickedSide;
-                showToast(`✅ 指定發球方：${getTeamName(teamOnClickedSide)}`);
-            }
-            render();
-        }
-
-        function togglePanel(panelName) {
-            const settings = getEl('settings-panel');
-            const history = getEl('history-panel');
-            if (panelName === 'settings') {
-                if (settings.classList.contains('panel-visible')) cancelSettings();
-                else { history.classList.remove('panel-visible'); openSettings(); }
-            } else if (panelName === 'history') {
-                if (history.classList.contains('panel-visible')) history.classList.remove('panel-visible');
-                else { if(settings.classList.contains('panel-visible')) cancelSettings(); history.classList.add('panel-visible'); }
-            }
-        }
-
-        function clearAllHistory() {
-            safeConfirm("確定要清空本機的所有紀錄嗎？(無法復原)", () => {
-                pendingRecords = [];
-                getEl('log-container').innerHTML = '';
-                saveToLocal();
-                showToast("🗑️ 紀錄已清空");
-            });
+            if (el) { 
+                el.className = `log-status status-${type}`; 
+                el.innerText = text; 
+            } 
         }
 
         function saveToLocal() {
@@ -608,7 +571,6 @@
         function checkMatchPoint() {
             let pts = getEl('switchMatchPoints').value.split(/[,，]/).map(Number).filter(n => n > 0);
             let max = Math.max(state.scoreA, state.scoreB);
-            
             if (pts.includes(max) && !state.switchedMatchPoints.includes(max)) {
                 safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => {
                     executeMatchSwitch(max);
@@ -879,6 +841,7 @@
                 resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
                 displayMode: getEl('displayMode').value
             };
+            getEl('history-panel').classList.remove('panel-visible'); // Close history
             getEl('settings-panel').classList.add('panel-visible');
         }
         function cancelSettings() {
