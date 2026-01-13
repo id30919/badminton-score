@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V42 (鏡像排序版)</title>
+    <title>羽球主審 V40 (終極修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -12,7 +12,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <!-- SortableJS -->
+    <!-- SortableJS (拖曳排序用) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
     <style>
@@ -50,7 +50,7 @@
         .theme-court .rainbow-input { background: #004d40; width: 40px; }
 
         .btn-icon { background: transparent; border: 1px solid #666; color: #ddd; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-        .btn-icon:active { background: #555; }
+        .btn-icon.active { background: #555; color: #fff; border-color: #fff; }
 
         .live-switch { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111; height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s; }
         .live-switch.active { background: rgba(0, 200, 0, 0.2); border-color: #00ff00; }
@@ -132,32 +132,19 @@
             backdrop-filter: blur(2px); margin-bottom: 20px; overflow: hidden;
         }
         
-        /* 傳統站位模式 (維持由左至右) */
         .mode-position .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: white; }
         .mode-position .pos-item:last-child { border-right: none; }
         
-        /* === V42 修改：多人名單模式 (由右至左排列) === */
-        .position-box.mode-roster {
-            flex-direction: row-reverse; /* 關鍵：反轉排列順序 */
-        }
-
+        /* 多人名單模式 (右至左) */
+        .position-box.mode-roster { flex-direction: row-reverse; }
         .mode-roster .pos-item { 
-            flex: 1; 
-            /* 邊框改為左邊，因為是反向排列 */
-            border-left: 1px solid rgba(255,255,255,0.5); 
-            border-right: none;
+            flex: 1; border-left: 1px solid rgba(255,255,255,0.5); border-right: none;
             display: flex; align-items: center; justify-content: center; 
             font-size: 14px; font-weight: bold; color: white; 
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
-            cursor: pointer; position: relative; 
+            overflow: hidden; white-space: nowrap; cursor: pointer; position: relative; 
         }
-        
-        /* 第一個元素 (DOM的1號，視覺上的右邊) 不要有左邊框 */
         .mode-roster .pos-item:first-child { border-left: none; }
-        
-        /* 避免 last-child 有線 */
         .mode-roster .pos-item:last-child { border-left: 1px solid rgba(255,255,255,0.5); }
-        
         .mode-roster .pos-item:active { background: rgba(255,255,255,0.2); }
         .pos-item.active { background: rgba(255,255,255,0.95); color: #000; font-size: 20px; text-shadow: none; }
         .drag-handle { color: rgba(255,255,255,0.5); margin-left: 5px; cursor: move; font-size: 12px; padding: 5px; }
@@ -165,14 +152,28 @@
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
 
-        #settings-panel, #history-panel { position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); background: #222; z-index: 2000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
+        /* Panels - 設定 z-index 和背景 */
+        #settings-panel, #history-panel { 
+            position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); 
+            background: #222; z-index: 2000; 
+            padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; 
+        }
         .panel-visible { display: block !important; }
+        
         .full-width { width: 100%; box-sizing: border-box; font-size: 16px; padding: 10px; margin-bottom: 10px; background: #444; border: 1px solid #666; color: white; }
         .row { margin-bottom: 15px; } label { display: block; color: #aaa; margin-bottom: 5px; }
         .switch-row { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; border-radius: 5px; border: 1px solid #555; margin-bottom: 15px; }
         .toggle-checkbox { width: 20px; height: 20px; cursor: pointer; }
         input[type=range] { width: 100%; margin: 10px 0; }
         .manual-score-input { width: 80px; font-size: 24px; font-weight: bold; text-align: center; background: #222; border: 2px solid #555; color: white; border-radius: 8px; padding: 5px; }
+
+        .log-item { background: #333; margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #555; display: flex; justify-content: space-between; align-items: center; }
+        .log-info { font-size: 14px; color: #ddd; }
+        .log-status { font-size: 12px; margin-left: 10px; padding: 3px 8px; border-radius: 4px; }
+        .status-pending { background: #555; color: #ccc; }
+        .status-sending { background: #ff9800; color: #000; }
+        .status-done { background: #4caf50; color: #fff; }
+        .status-error { background: #f44336; color: #fff; }
     </style>
 </head>
 <body>
@@ -210,8 +211,8 @@
             </div>
             <span id="match-counter" style="color:yellow; font-weight:bold; font-size:18px;">G1</span>
             <button class="btn-icon" onclick="toggleFullScreen()" title="全螢幕">⛶</button>
-            <button class="btn-icon" onclick="openSettings()">⚙</button>
-            <button class="btn-icon" onclick="toggleHistory()">📝</button>
+            <button id="btn-settings" class="btn-icon" onclick="togglePanel('settings')">⚙</button>
+            <button id="btn-history" class="btn-icon" onclick="togglePanel('history')">📝</button>
         </div>
     </div>
 
@@ -261,7 +262,7 @@
 
         <div class="row" style="border:1px solid #7c4dff; padding:10px; border-radius:5px;">
             <label style="color:#b388ff; font-weight:bold;">🔄 自動換點 (Switch Point)</label>
-            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63,84,105 (分數達到即換點)" style="margin-top:5px;">
+            <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63,84,105" style="margin-top:5px;">
             <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
                 <input type="checkbox" id="resetScoreOnSwitch" class="toggle-checkbox">
                 <label for="resetScoreOnSwitch" style="color:#ccc; margin:0;">換點後分數歸零？</label>
@@ -316,7 +317,7 @@
             </div>
         </div>
         <div id="log-container"></div>
-        <button class="btn-act" style="background:#555; margin-top:20px;" onclick="toggleHistory()">關閉</button>
+        <button class="btn-act" style="background:#555; margin-top:20px;" onclick="togglePanel('history')">關閉</button>
     </div>
 
     <script>
@@ -372,16 +373,51 @@
             render();
         }
 
+        // Panel Toggle Logic (Fix Overlap)
         function togglePanel(panelName) {
             const settings = getEl('settings-panel');
             const history = getEl('history-panel');
+            const btnS = getEl('btn-settings'); 
+            const btnH = getEl('btn-history');  
+
             if (panelName === 'settings') {
-                if (settings.classList.contains('panel-visible')) cancelSettings();
-                else { history.classList.remove('panel-visible'); openSettings(); }
+                if (settings.classList.contains('panel-visible')) {
+                    cancelSettings(); 
+                    btnS.classList.remove('active');
+                } else {
+                    history.classList.remove('panel-visible'); // Close history
+                    btnH.classList.remove('active');
+                    openSettings(); 
+                    btnS.classList.add('active');
+                }
             } else if (panelName === 'history') {
-                if (history.classList.contains('panel-visible')) history.classList.remove('panel-visible');
-                else { if(settings.classList.contains('panel-visible')) cancelSettings(); history.classList.add('panel-visible'); }
+                if (history.classList.contains('panel-visible')) {
+                    history.classList.remove('panel-visible');
+                    btnH.classList.remove('active');
+                } else {
+                    if(settings.classList.contains('panel-visible')) cancelSettings(); // Close settings
+                    btnS.classList.remove('active');
+                    history.classList.add('panel-visible');
+                    btnH.classList.add('active');
+                }
             }
+        }
+
+        // V40: 補回遺失的日誌功能
+        function logGame() {
+            const record = {
+                id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
+                tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
+                matchStr: `G${currentMatchIdx+1}`, status: 'pending'
+            };
+            pendingRecords.push(record); renderLogItem(record);
+            saveToLocal();
+        }
+
+        function renderLogItem(r) {
+            let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
+            div.innerHTML = `<div class="log-info"><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div><div class="log-status status-pending" id="status-${r.id}">待傳送</div>`;
+            getEl('log-container').prepend(div);
         }
 
         function clearAllHistory() {
