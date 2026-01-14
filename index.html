@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V45 (紀錄強化版)</title>
+    <title>羽球主審 V46 (拖曳改名版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -145,7 +145,18 @@
         .mode-roster .pos-item:last-child { border-left: 1px solid rgba(255,255,255,0.5); }
         .mode-roster .pos-item:active { background: rgba(255,255,255,0.2); }
         .pos-item.active { background: rgba(255,255,255,0.95); color: #000; font-size: 20px; text-shadow: none; }
-        .drag-handle { color: rgba(255,255,255,0.5); margin-left: 5px; cursor: move; font-size: 12px; padding: 5px; }
+        
+        /* 加大拖曳手把的觸控區域 */
+        .drag-handle { 
+            color: rgba(255,255,255,0.5); 
+            margin-left: 2px; 
+            cursor: move; 
+            font-size: 16px; 
+            padding: 10px 8px; /* 加大 Padding */
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
 
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
@@ -164,7 +175,7 @@
         .log-status { font-size: 12px; margin-left: 10px; padding: 3px 8px; border-radius: 4px; }
         .status-pending { background: #555; color: #ccc; }
         .status-sending { background: #ff9800; color: #000; }
-        .status-done { background: #4caf50; color: #fff; } /* 綠色 */
+        .status-done { background: #4caf50; color: #fff; }
         .status-error { background: #f44336; color: #fff; }
     </style>
 </head>
@@ -267,8 +278,8 @@
         <div class="row">
             <label style="color:#00e676; font-weight:bold;">📺 顯示模式</label>
             <select id="displayMode" class="full-width" onchange="render()">
-                <option value="position">🏸 傳統站位 (左右跳)</option>
                 <option value="roster">📋 固定名單 (多人制)</option>
+                <option value="position">🏸 傳統站位 (左右跳)</option>
             </select>
         </div>
 
@@ -314,7 +325,6 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3>歷史紀錄</h3>
             <div style="display:flex; gap:5px;">
-                <!-- 修正1：這裡的 onclick 對應的 clearAllHistory 函式已補上 -->
                 <button class="btn-act" style="background:#b71c1c; flex:none; width:auto; padding:0 10px; font-size:12px;" onclick="clearAllHistory()">🗑️ 清空</button>
                 <button class="btn-act" style="background:#009688; flex:none; width:auto; padding:0 15px;" onclick="uploadAllPending()">☁ 上傳全部</button>
             </div>
@@ -353,6 +363,7 @@
 
         window.addEventListener('load', () => {
             loadFromLocal();
+            // Setup generic long press for Team Names
             setupLongPress(getEl('name-box-left'), () => editTeamName('left'));
             setupLongPress(getEl('name-box-right'), () => editTeamName('right'));
             bindClickPoint('area-left', 'left');
@@ -360,7 +371,6 @@
             render();
         });
 
-        // 輔助函式：取得格式化的時間字串 MM/DD HH:MM
         function getFormattedTime() {
             const now = new Date();
             const MM = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -370,11 +380,10 @@
             return `${MM}/${DD} ${hh}:${mm}`;
         }
 
-        // 核心功能：紀錄比分 (修正2: 加入時間戳記)
         function logGame() {
             const record = {
                 id: Date.now(), 
-                timeStr: getFormattedTime(), // 加入時間字串
+                timeStr: getFormattedTime(),
                 court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
                 tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
                 matchStr: `G${currentMatchIdx+1}`, status: 'pending'
@@ -383,13 +392,11 @@
             saveToLocal();
         }
 
-        // 顯示單筆紀錄 (修正2: 顯示時間戳記)
         function renderLogItem(r) {
             let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
             let statusClass = (r.status === 'done') ? 'status-done' : (r.status === 'error' ? 'status-error' : 'status-pending');
             let statusText = (r.status === 'done') ? '已上傳' : (r.status === 'error' ? '失敗' : '待傳送');
             
-            // 這裡加入了 <span ...>${r.timeStr || ''}</span>
             div.innerHTML = `
                 <div class="log-info">
                     <b>${r.matchStr} (場${r.court}) <span style="font-size:12px; color:#aaa; margin-left:5px;">${r.timeStr || ''}</span></b><br>
@@ -400,10 +407,8 @@
             getEl('log-container').prepend(div);
         }
 
-        // 核心功能：按鈕點擊紀錄
         function logGameOnly() {
             doVibrate(30);
-            // 防重覆
             if (pendingRecords.length > 0) {
                 const last = pendingRecords[pendingRecords.length - 1];
                 if (last.matchStr === `G${currentMatchIdx+1}` && last.sA === state.scoreA && last.sB === state.scoreB) {
@@ -415,7 +420,6 @@
             if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
         }
 
-        // 修正1：補上清空歷史紀錄的功能
         function clearAllHistory() {
             safeConfirm("確定要清空所有歷史紀錄嗎？(無法復原)", () => {
                 pendingRecords = [];
@@ -425,7 +429,6 @@
             });
         }
 
-        // 核心功能：上傳全部
         async function uploadAllPending() {
             const link = getEl('gform_link').value;
             if (!link) { showToast("請先貼上 Google Form 連結！"); return; }
@@ -450,7 +453,7 @@
                     } catch (e) {
                         r.status = 'error'; updateStatus(r.id, 'error', '❌ 失敗');
                     }
-                    saveToLocal(); // Update status
+                    saveToLocal();
                     await new Promise(res => setTimeout(res, 500));
                 }
                 showToast("上傳作業結束");
@@ -474,10 +477,7 @@
 
         function updateStatus(id, type, text) { 
             const el = getEl(`status-${id}`); 
-            if (el) { 
-                el.className = `log-status status-${type}`; 
-                el.innerText = text; 
-            } 
+            if (el) { el.className = `log-status status-${type}`; el.innerText = text; } 
         }
 
         function saveToLocal() {
@@ -515,7 +515,7 @@
                     getEl('teamB_players').value = data.inputs.teamB_players || "張,林";
                     getEl('gform_link').value = data.inputs.gform_link || "";
                     getEl('swapPoints').value = data.inputs.swapPoints || "11";
-                    getEl('displayMode').value = data.inputs.displayMode || "position";
+                    getEl('displayMode').value = data.inputs.displayMode || "roster"; /* 預設改為 roster 以符合新功能 */
                     getEl('switchMatchPoints').value = data.inputs.switchMatchPoints || "";
                     getEl('resetScoreOnSwitch').checked = data.inputs.resetScoreOnSwitch || false;
                 }
@@ -555,15 +555,26 @@
             const el = getEl(elemId);
             el.addEventListener('click', (e) => {
                 if (e.target.closest('.btn-act') || e.target.closest('#controls-overlay') || e.target.closest('.position-box') || e.target.closest('.server-indicator')) return;
+                // Check if the side element itself was long-pressed
                 if (el.dataset.longPressHandled === "true") { el.dataset.longPressHandled = "false"; return; }
                 doVibrate(30); addPoint(side);
                 el.classList.remove('flash-active'); void el.offsetWidth; el.classList.add('flash-active');
             });
         }
 
+        // Updated Setup Long Press to mark the specific element
         function setupLongPress(element, callback) {
             let timer; const duration = 600;
-            const start = () => { timer = setTimeout(() => { doVibrate(50); const parentArea = element.closest('.side'); if(parentArea) parentArea.dataset.longPressHandled = "true"; callback(); }, duration); };
+            const start = () => { 
+                timer = setTimeout(() => { 
+                    doVibrate(50); 
+                    // Mark both the element and the parent side (to stop point addition)
+                    element.dataset.longPressHandled = "true";
+                    const parentArea = element.closest('.side'); 
+                    if(parentArea) parentArea.dataset.longPressHandled = "true"; 
+                    callback(); 
+                }, duration); 
+            };
             const cancel = () => { clearTimeout(timer); };
             element.addEventListener('mousedown', start); element.addEventListener('touchstart', start, {passive: true});
             element.addEventListener('mouseup', cancel); element.addEventListener('touchend', cancel);
@@ -575,6 +586,19 @@
         function editTeamName(side) {
             let key = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
             safePrompt(`修改 ${key} 隊名稱`, getTeamName(key), (val) => { if(val) { updateInputSegment(`team${key}_name`, val); render(); } });
+        }
+
+        // New function to edit specific player name from the roster
+        function editPlayerName(teamKey, idx) {
+            let players = getPlayerList(teamKey);
+            let oldName = players[idx];
+            safePrompt(`修改球員姓名`, oldName, (newVal) => {
+                if (newVal && newVal !== oldName) {
+                    players[idx] = newVal;
+                    // Update the string in the input
+                    updatePlayerListOrder(teamKey, players); 
+                }
+            });
         }
 
         function updateManualScore() {
@@ -789,8 +813,16 @@
                 handle.innerText = '⋮';
                 div.appendChild(handle);
                 
+                // Add Long Press for Renaming
+                setupLongPress(div, () => editPlayerName(teamKey, idx));
+
                 div.onclick = (e) => { 
                     if(e.target.classList.contains('drag-handle')) return;
+                    // Prevent Click if Long Press occurred
+                    if(div.dataset.longPressHandled === "true") { 
+                        div.dataset.longPressHandled = "false"; 
+                        return; 
+                    }
                     e.stopPropagation(); 
                     setServer(teamKey, idx); 
                 };
@@ -818,6 +850,7 @@
             parts[idx] = newNamesArray.join(',');
             input.value = parts.join(';');
             saveToLocal();
+            render(); // Re-render to update UI immediately
             showToast("順序已更新");
         }
 
@@ -880,7 +913,7 @@
                 getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
                 getEl('switchMatchPoints').value = settingsSnapshot.switchMatchPoints || "";
                 getEl('resetScoreOnSwitch').checked = settingsSnapshot.resetScoreOnSwitch;
-                getEl('displayMode').value = settingsSnapshot.displayMode || "position";
+                getEl('displayMode').value = settingsSnapshot.displayMode || "roster";
             }
             getEl('settings-panel').classList.remove('panel-visible');
             render(); 
