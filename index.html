@@ -314,6 +314,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3>歷史紀錄</h3>
             <div style="display:flex; gap:5px;">
+                <!-- 修正1：這裡的 onclick 對應的 clearAllHistory 函式已補上 -->
                 <button class="btn-act" style="background:#b71c1c; flex:none; width:auto; padding:0 10px; font-size:12px;" onclick="clearAllHistory()">🗑️ 清空</button>
                 <button class="btn-act" style="background:#009688; flex:none; width:auto; padding:0 15px;" onclick="uploadAllPending()">☁ 上傳全部</button>
             </div>
@@ -359,10 +360,22 @@
             render();
         });
 
-        // 核心功能：紀錄比分 (必須在全域定義)
+        // 輔助函式：取得格式化的時間字串 MM/DD HH:MM
+        function getFormattedTime() {
+            const now = new Date();
+            const MM = (now.getMonth() + 1).toString().padStart(2, '0');
+            const DD = now.getDate().toString().padStart(2, '0');
+            const hh = now.getHours().toString().padStart(2, '0');
+            const mm = now.getMinutes().toString().padStart(2, '0');
+            return `${MM}/${DD} ${hh}:${mm}`;
+        }
+
+        // 核心功能：紀錄比分 (修正2: 加入時間戳記)
         function logGame() {
             const record = {
-                id: Date.now(), court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
+                id: Date.now(), 
+                timeStr: getFormattedTime(), // 加入時間字串
+                court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
                 tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
                 matchStr: `G${currentMatchIdx+1}`, status: 'pending'
             };
@@ -370,13 +383,18 @@
             saveToLocal();
         }
 
+        // 顯示單筆紀錄 (修正2: 顯示時間戳記)
         function renderLogItem(r) {
             let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
             let statusClass = (r.status === 'done') ? 'status-done' : (r.status === 'error' ? 'status-error' : 'status-pending');
             let statusText = (r.status === 'done') ? '已上傳' : (r.status === 'error' ? '失敗' : '待傳送');
             
+            // 這裡加入了 <span ...>${r.timeStr || ''}</span>
             div.innerHTML = `
-                <div class="log-info"><b>${r.matchStr} (場${r.court})</b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div>
+                <div class="log-info">
+                    <b>${r.matchStr} (場${r.court}) <span style="font-size:12px; color:#aaa; margin-left:5px;">${r.timeStr || ''}</span></b><br>
+                    ${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}
+                </div>
                 <div class="log-status ${statusClass}" id="status-${r.id}">${statusText}</div>
             `;
             getEl('log-container').prepend(div);
@@ -384,7 +402,7 @@
 
         // 核心功能：按鈕點擊紀錄
         function logGameOnly() {
-            doVibrate(30); // V45: 震動
+            doVibrate(30);
             // 防重覆
             if (pendingRecords.length > 0) {
                 const last = pendingRecords[pendingRecords.length - 1];
@@ -395,6 +413,16 @@
             logGame(); 
             const link = getEl('gform_link').value;
             if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
+        }
+
+        // 修正1：補上清空歷史紀錄的功能
+        function clearAllHistory() {
+            safeConfirm("確定要清空所有歷史紀錄嗎？(無法復原)", () => {
+                pendingRecords = [];
+                document.getElementById('log-container').innerHTML = '';
+                saveToLocal();
+                showToast("🗑️ 紀錄已清空");
+            });
         }
 
         // 核心功能：上傳全部
