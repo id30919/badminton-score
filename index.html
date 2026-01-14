@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V47 (固定名單版)</title>
+    <title>羽球主審 V48 (補分重製版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -259,7 +259,15 @@
             </div>
         </div>
 
-        <!-- 顯示模式已移除，固定為名單制 -->
+        <!-- V48 New Feature: Catch Up Rules -->
+        <div class="row" style="border:1px solid #00bcd4; padding:10px; border-radius:5px; margin-top:15px;">
+            <label style="color:#00bcd4; font-weight:bold;">📈 落後補分規則 (Catch-up)</label>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                <input type="checkbox" id="catchUpToggle" class="toggle-checkbox">
+                <label for="catchUpToggle" style="color:#eee; margin:0;">啟用補分 (上一點未達標則補足)</label>
+            </div>
+            <input id="catchUpPoints" class="full-width" placeholder="預設: 10,20,30,40" value="10,20,30,40">
+        </div>
 
         <div class="switch-row">
             <label style="color:white; font-weight:bold; margin:0;">📳 震動回饋</label>
@@ -466,9 +474,11 @@
                     teamA_name: getEl('teamA_name').value, teamA_players: getEl('teamA_players').value,
                     teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
                     gform_link: getEl('gform_link').value, swapPoints: getEl('swapPoints').value,
-                    // displayMode removed, implied roster
                     switchMatchPoints: getEl('switchMatchPoints').value,
-                    resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked
+                    resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
+                    // V48 Save Catch Up Settings
+                    catchUpToggle: getEl('catchUpToggle').checked,
+                    catchUpPoints: getEl('catchUpPoints').value
                 }
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -493,9 +503,12 @@
                     getEl('teamB_players').value = data.inputs.teamB_players || "張,林";
                     getEl('gform_link').value = data.inputs.gform_link || "";
                     getEl('swapPoints').value = data.inputs.swapPoints || "11";
-                    // Ignore displayMode
                     getEl('switchMatchPoints').value = data.inputs.switchMatchPoints || "";
                     getEl('resetScoreOnSwitch').checked = data.inputs.resetScoreOnSwitch || false;
+                    
+                    // V48 Load Catch Up Settings
+                    if(data.inputs.catchUpToggle !== undefined) getEl('catchUpToggle').checked = data.inputs.catchUpToggle;
+                    if(data.inputs.catchUpPoints) getEl('catchUpPoints').value = data.inputs.catchUpPoints;
                 }
                 getEl('log-container').innerHTML = '';
                 pendingRecords.forEach(r => renderLogItem(r));
@@ -509,16 +522,31 @@
         }
 
         let onModalConfirm = null;
-        function showModal(title, msg, inputMode, callback, defaultValue = "") {
+        let onModalCancel = null;
+        function showModal(title, msg, inputMode, callback, defaultValue = "", cancelCallback = null) {
             getEl('u-modal-title').innerText = title; getEl('u-modal-msg').innerText = msg;
             const input = getEl('u-modal-input');
+            const confirmBtn = getEl('u-modal-confirm-btn');
+            // Hack to find cancel button since we didn't give it an ID, but it has a class
+            const cancelBtn = getEl('universal-modal').querySelector('.u-btn-cancel');
+
             if (inputMode) { input.style.display = 'block'; input.value = defaultValue; setTimeout(() => input.focus(), 300); } else { input.style.display = 'none'; }
+            
             onModalConfirm = () => { if (inputMode) callback(input.value); else callback(); closeUniversalModal(); };
-            getEl('u-modal-confirm-btn').onclick = onModalConfirm;
+            onModalCancel = () => { if (cancelCallback) cancelCallback(); closeUniversalModal(); };
+
+            confirmBtn.onclick = onModalConfirm;
+            cancelBtn.onclick = onModalCancel;
+
             getEl('universal-modal').style.display = 'flex';
         }
-        function closeUniversalModal() { getEl('universal-modal').style.display = 'none'; onModalConfirm = null; }
-        function safeConfirm(msg, yesCallback) { showModal("確認", msg, false, yesCallback); }
+        function closeUniversalModal() { 
+            getEl('universal-modal').style.display = 'none'; 
+            onModalConfirm = null; 
+            onModalCancel = null;
+        }
+        // V48: Added noCallback to safeConfirm
+        function safeConfirm(msg, yesCallback, noCallback) { showModal("確認", msg, false, yesCallback, "", noCallback); }
         function safePrompt(title, defaultValue, callback) { showModal("編輯", title, true, callback, defaultValue); }
 
         function toggleFullScreen() {
@@ -604,19 +632,71 @@
             if (pts.includes(max) && !state.switchedMatchPoints.includes(max)) {
                 safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => {
                     executeMatchSwitch(max);
+                }, () => {
+                    // Cancel callback: User chose NOT to switch yet.
+                    // Do nothing here.
                 });
                 state.switchedMatchPoints.push(max); 
             }
         }
 
+        // V48 Re-written Catch-up Logic
         function executeMatchSwitch(point) {
-            logGame(); 
-            currentMatchIdx++; 
-            if (getEl('resetScoreOnSwitch').checked) {
-                state.scoreA = 0; state.scoreB = 0;
-                state.serverIdxA = 0; state.serverIdxB = 0;
-            } 
-            saveToLocal(); render(); showToast(`✅ 已切換至第 ${currentMatchIdx+1} 點`);
+            // 1. Log CURRENT score before anything changes
+            logGame();
+
+            // 2. Determine Catch-up requirements
+            // Get user thresholds (default: 10,20,30,40)
+            let thresholds = getEl('catchUpPoints').value.split(/[,，、]/).map(Number);
+            // Current Match Index (e.g., 0 for G1) corresponds to index 0 in thresholds (10 points)
+            let target = thresholds[currentMatchIdx]; 
+            let catchUpOn = getEl('catchUpToggle').checked;
+
+            // This internal function handles the actual switch
+            // Accepts newScoreA/B as optional overrides if catch-up happened
+            let performSwitch = (overrideA, overrideB) => {
+                if(overrideA !== undefined) state.scoreA = overrideA;
+                if(overrideB !== undefined) state.scoreB = overrideB;
+                
+                // Move to next match
+                currentMatchIdx++;
+                
+                // Reset servers for new match (start from top of roster)
+                state.serverIdxA = 0;
+                state.serverIdxB = 0;
+
+                // Handle Reset Score Option (Conflicting with Catch-up? Usually mutually exclusive, but handle it)
+                if (getEl('resetScoreOnSwitch').checked) {
+                    state.scoreA = 0; state.scoreB = 0;
+                }
+                
+                saveToLocal(); render(); showToast(`✅ 已切換至第 ${currentMatchIdx+1} 點`);
+            };
+
+            // 3. Logic: Does it need catch-up?
+            let isALower = state.scoreA < state.scoreB;
+            let loserScore = isALower ? state.scoreA : state.scoreB;
+            
+            // Only trigger if enabled, threshold exists, and loser is BELOW threshold
+            if (catchUpOn && target !== undefined && !isNaN(target) && loserScore < target) {
+                 let loserName = isALower ? getTeamName('A') : getTeamName('B');
+                 
+                 // Show Modal
+                 safeConfirm(`📉 ${loserName} (${loserScore}分) 未達 ${target} 分\n是否補分至 ${target}？`, 
+                     () => {
+                         // YES: Apply Catch-up then Switch
+                         if(isALower) performSwitch(target, state.scoreB);
+                         else performSwitch(state.scoreA, target);
+                     }, 
+                     () => {
+                         // NO: Just Switch
+                         performSwitch();
+                     }
+                 );
+            } else {
+                // No Catch-up needed, just switch
+                performSwitch();
+            }
         }
 
         function setServer(teamKey, playerIdx) {
@@ -826,8 +906,10 @@
                 teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
                 swapPoints: getEl('swapPoints').value,
                 switchMatchPoints: getEl('switchMatchPoints').value,
-                resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked
-                // displayMode removed
+                resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
+                // V48 Save Snapshot
+                catchUpToggle: getEl('catchUpToggle').checked,
+                catchUpPoints: getEl('catchUpPoints').value
             };
             getEl('history-panel').classList.remove('panel-visible'); // Close history
             getEl('settings-panel').classList.add('panel-visible');
@@ -840,6 +922,9 @@
                 getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
                 getEl('switchMatchPoints').value = settingsSnapshot.switchMatchPoints || "";
                 getEl('resetScoreOnSwitch').checked = settingsSnapshot.resetScoreOnSwitch;
+                // V48 Cancel Snapshot
+                getEl('catchUpToggle').checked = settingsSnapshot.catchUpToggle;
+                getEl('catchUpPoints').value = settingsSnapshot.catchUpPoints || "10,20,30,40";
             }
             getEl('settings-panel').classList.remove('panel-visible');
             render(); 
