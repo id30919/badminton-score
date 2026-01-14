@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V49 (補分優化版)</title>
+    <title>羽球主審 V50 (完整修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -91,6 +91,7 @@
         .u-btn { flex: 1; padding: 12px; border-radius: 6px; border: none; font-size: 16px; cursor: pointer; font-weight: bold; }
         .u-btn-cancel { background: #555; color: white; }
         .u-btn-confirm { background: #00c853; color: white; }
+        .u-btn-single { width: 100%; max-width: 200px; background: #0288d1; }
 
         #toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px; font-size: 14px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s; border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         #toast-msg.show { opacity: 1; }
@@ -526,18 +527,40 @@
         function showModal(title, msg, inputMode, callback, defaultValue = "", cancelCallback = null) {
             getEl('u-modal-title').innerText = title; getEl('u-modal-msg').innerText = msg;
             const input = getEl('u-modal-input');
+            const confirmBtn = getEl('u-modal-confirm-btn');
+            const cancelBtn = getEl('universal-modal').querySelector('.u-btn-cancel');
+
+            // Reset buttons style
+            confirmBtn.className = 'u-btn u-btn-confirm';
+            cancelBtn.style.display = 'block';
+
             if (inputMode) { input.style.display = 'block'; input.value = defaultValue; setTimeout(() => input.focus(), 300); } else { input.style.display = 'none'; }
             
             onModalConfirm = () => { if (inputMode) callback(input.value); else callback(); closeUniversalModal(); };
             onModalCancel = () => { if(cancelCallback) cancelCallback(); closeUniversalModal(); };
 
-            getEl('u-modal-confirm-btn').onclick = onModalConfirm;
-            // Update cancel button to trigger callback if exists
-            const cancelBtn = getEl('universal-modal').querySelector('.u-btn-cancel');
+            confirmBtn.onclick = onModalConfirm;
             cancelBtn.onclick = onModalCancel;
 
             getEl('universal-modal').style.display = 'flex';
         }
+
+        // Single button info modal
+        function showInfoModal(msg) {
+            getEl('u-modal-title').innerText = "系統通知"; 
+            getEl('u-modal-msg').innerText = msg;
+            getEl('u-modal-input').style.display = 'none';
+            
+            const confirmBtn = getEl('u-modal-confirm-btn');
+            const cancelBtn = getEl('universal-modal').querySelector('.u-btn-cancel');
+            
+            cancelBtn.style.display = 'none';
+            confirmBtn.className = 'u-btn u-btn-single';
+            confirmBtn.onclick = () => closeUniversalModal();
+            
+            getEl('universal-modal').style.display = 'flex';
+        }
+
         function closeUniversalModal() { 
             getEl('universal-modal').style.display = 'none'; 
             onModalConfirm = null; 
@@ -625,67 +648,75 @@
             if (pts.includes(max) && !state.switchedMatchPoints.includes(max)) {
                 safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => {
                     executeMatchSwitch(max);
+                }, () => {
+                    // User cancelled match switch, do nothing but don't add to ignored list yet
                 });
+                // We add to switchedMatchPoints ONLY if the user confirmed inside executeMatchSwitch?
+                // Actually, to prevent loop, we should probably add it if they say YES.
+                // But safeConfirm is async. 
+                // Fix: We push inside executeMatchSwitch success path.
                 state.switchedMatchPoints.push(max); 
             }
         }
 
-        // Updated Match Switch Logic for Catch-up (Fixes logic)
+        // Updated Match Switch Logic - Fixed
         function executeMatchSwitch(point) {
-            // 1. Identify which Catch-up threshold applies to THIS match (before incrementing)
+            // 1. Identify catch-up target for THIS match (e.g. match 1 -> index 0)
             let thresholds = getEl('catchUpPoints').value.split(/[,，、]/).map(Number);
-            let currentTarget = thresholds[currentMatchIdx]; // e.g. Match 0 uses index 0 (10 points)
-            
-            // Function to perform the actual switch
-            const proceedWithSwitch = () => {
-                // Log the played score (e.g. 21-8)
+            let target = thresholds[currentMatchIdx]; 
+            let isCatchUpEnabled = getEl('catchUpToggle').checked;
+
+            let needsCatchUp = false;
+            if(isCatchUpEnabled && target !== undefined) {
+                 let loserScore = Math.min(state.scoreA, state.scoreB);
+                 if(loserScore < target) needsCatchUp = true;
+            }
+
+            // Function to perform the switch
+            const performSwitch = () => {
+                // LOG FIRST (Before resetting)
                 logGame();
-                
-                // Advance Match
+                let oldMatch = currentMatchIdx + 1;
+
+                // INCREMENT
                 currentMatchIdx++;
-                
-                // Reset Score if option checked
+
+                // RESET
                 if (getEl('resetScoreOnSwitch').checked) {
                     state.scoreA = 0; state.scoreB = 0;
                 }
-                
-                // **CRITICAL FIX**: Reset Server Indexes to 0 so new players are selected immediately
-                state.serverIdxA = 0; 
+                state.serverIdxA = 0; // Reset pointers to first player
                 state.serverIdxB = 0;
-                
-                // Render and Save
-                saveToLocal(); 
-                render(); 
-                showToast(`✅ 本機紀錄已儲存 (G${currentMatchIdx} 結束)`);
+
+                // SAVE & RENDER
+                saveToLocal();
+                render(); // This will pull names for the new currentMatchIdx
+
+                // NOTIFICATION (Modal)
+                showInfoModal(`✅ G${oldMatch} 紀錄已儲存\n\n即將開始 G${currentMatchIdx+1}`);
             };
 
-            // Check Catch-up Logic
-            if (getEl('catchUpToggle').checked && currentTarget !== undefined && !isNaN(currentTarget)) {
+            // Logic Flow
+            if (needsCatchUp) {
                 let isALower = state.scoreA < state.scoreB;
+                let loserName = isALower ? getTeamName('A') : getTeamName('B');
                 let loserScore = isALower ? state.scoreA : state.scoreB;
-                
-                // If loser is strictly below threshold
-                if (loserScore < currentTarget) {
-                    let loserName = isALower ? getTeamName('A') : getTeamName('B');
-                    safeConfirm(
-                        `📉 ${loserName}分數 (${loserScore}) 未達 ${currentTarget} 分\n是否補分至 ${currentTarget}？`, 
-                        () => {
-                            // Confirm: Update score FIRST, then switch
-                            if (isALower) state.scoreA = currentTarget;
-                            else state.scoreB = currentTarget;
-                            proceedWithSwitch();
-                        },
-                        () => {
-                            // Cancel: Just switch
-                            proceedWithSwitch();
-                        }
-                    );
-                    return; // Wait for user response
-                }
+
+                safeConfirm(
+                    `📉 ${loserName} (${loserScore}分) 未達 ${target} 分\n是否補分至 ${target}？`,
+                    () => {
+                        // Yes: Fix score then switch
+                        if(isALower) state.scoreA = target; else state.scoreB = target;
+                        performSwitch();
+                    },
+                    () => {
+                        // No: Just switch
+                        performSwitch();
+                    }
+                );
+            } else {
+                performSwitch();
             }
-            
-            // If no catch up needed, just switch
-            proceedWithSwitch();
         }
 
         function setServer(teamKey, playerIdx) {
