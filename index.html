@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V47 (固定名單版)</title>
+    <title>羽球主審 V48 (補分規則版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -259,7 +259,15 @@
             </div>
         </div>
 
-        <!-- 顯示模式已移除，固定為名單制 -->
+        <!-- 補分規則區塊 -->
+        <div class="row" style="border:1px solid #00bcd4; padding:10px; border-radius:5px; margin-top:15px;">
+            <label style="color:#00bcd4; font-weight:bold;">📈 落後補分規則 (Catch-up)</label>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                <input type="checkbox" id="catchUpToggle" class="toggle-checkbox">
+                <label for="catchUpToggle" style="color:#eee; margin:0;">啟用補分 (上一點未達標則補足)</label>
+            </div>
+            <input id="catchUpPoints" class="full-width" placeholder="預設: 10,20,30,40" value="10,20,30,40">
+        </div>
 
         <div class="switch-row">
             <label style="color:white; font-weight:bold; margin:0;">📳 震動回饋</label>
@@ -466,9 +474,11 @@
                     teamA_name: getEl('teamA_name').value, teamA_players: getEl('teamA_players').value,
                     teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
                     gform_link: getEl('gform_link').value, swapPoints: getEl('swapPoints').value,
-                    // displayMode removed, implied roster
                     switchMatchPoints: getEl('switchMatchPoints').value,
-                    resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked
+                    resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
+                    // New fields for Catch-up
+                    catchUpToggle: getEl('catchUpToggle').checked,
+                    catchUpPoints: getEl('catchUpPoints').value
                 }
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -493,9 +503,12 @@
                     getEl('teamB_players').value = data.inputs.teamB_players || "張,林";
                     getEl('gform_link').value = data.inputs.gform_link || "";
                     getEl('swapPoints').value = data.inputs.swapPoints || "11";
-                    // Ignore displayMode
                     getEl('switchMatchPoints').value = data.inputs.switchMatchPoints || "";
                     getEl('resetScoreOnSwitch').checked = data.inputs.resetScoreOnSwitch || false;
+                    
+                    // Load Catch-up inputs
+                    if (data.inputs.catchUpToggle !== undefined) getEl('catchUpToggle').checked = data.inputs.catchUpToggle;
+                    if (data.inputs.catchUpPoints) getEl('catchUpPoints').value = data.inputs.catchUpPoints;
                 }
                 getEl('log-container').innerHTML = '';
                 pendingRecords.forEach(r => renderLogItem(r));
@@ -509,16 +522,28 @@
         }
 
         let onModalConfirm = null;
-        function showModal(title, msg, inputMode, callback, defaultValue = "") {
+        let onModalCancel = null;
+        function showModal(title, msg, inputMode, callback, defaultValue = "", cancelCallback = null) {
             getEl('u-modal-title').innerText = title; getEl('u-modal-msg').innerText = msg;
             const input = getEl('u-modal-input');
             if (inputMode) { input.style.display = 'block'; input.value = defaultValue; setTimeout(() => input.focus(), 300); } else { input.style.display = 'none'; }
+            
             onModalConfirm = () => { if (inputMode) callback(input.value); else callback(); closeUniversalModal(); };
+            onModalCancel = () => { if(cancelCallback) cancelCallback(); closeUniversalModal(); };
+
             getEl('u-modal-confirm-btn').onclick = onModalConfirm;
+            // Update cancel button to trigger callback if exists
+            const cancelBtn = getEl('universal-modal').querySelector('.u-btn-cancel');
+            cancelBtn.onclick = onModalCancel;
+
             getEl('universal-modal').style.display = 'flex';
         }
-        function closeUniversalModal() { getEl('universal-modal').style.display = 'none'; onModalConfirm = null; }
-        function safeConfirm(msg, yesCallback) { showModal("確認", msg, false, yesCallback); }
+        function closeUniversalModal() { 
+            getEl('universal-modal').style.display = 'none'; 
+            onModalConfirm = null; 
+            onModalCancel = null;
+        }
+        function safeConfirm(msg, yesCallback, noCallback) { showModal("確認", msg, false, yesCallback, "", noCallback); }
         function safePrompt(title, defaultValue, callback) { showModal("編輯", title, true, callback, defaultValue); }
 
         function toggleFullScreen() {
@@ -540,13 +565,11 @@
             });
         }
 
-        // Updated Setup Long Press to mark the specific element
         function setupLongPress(element, callback) {
             let timer; const duration = 600;
             const start = () => { 
                 timer = setTimeout(() => { 
                     doVibrate(50); 
-                    // Mark both the element and the parent side (to stop point addition)
                     element.dataset.longPressHandled = "true";
                     const parentArea = element.closest('.side'); 
                     if(parentArea) parentArea.dataset.longPressHandled = "true"; 
@@ -566,14 +589,12 @@
             safePrompt(`修改 ${key} 隊名稱`, getTeamName(key), (val) => { if(val) { updateInputSegment(`team${key}_name`, val); render(); } });
         }
 
-        // New function to edit specific player name from the roster
         function editPlayerName(teamKey, idx) {
             let players = getPlayerList(teamKey);
             let oldName = players[idx];
             safePrompt(`修改球員姓名`, oldName, (newVal) => {
                 if (newVal && newVal !== oldName) {
                     players[idx] = newVal;
-                    // Update the string in the input
                     updatePlayerListOrder(teamKey, players); 
                 }
             });
@@ -609,14 +630,65 @@
             }
         }
 
+        // Updated Match Switch Logic for Catch-up
         function executeMatchSwitch(point) {
-            logGame(); 
+            // 1. Log the current state
+            logGame();
+            
+            // 2. Advance Match Index
             currentMatchIdx++; 
-            if (getEl('resetScoreOnSwitch').checked) {
-                state.scoreA = 0; state.scoreB = 0;
-                state.serverIdxA = 0; state.serverIdxB = 0;
-            } 
-            saveToLocal(); render(); showToast(`✅ 已切換至第 ${currentMatchIdx+1} 點`);
+
+            // Function to finalize
+            const finishSwitch = () => {
+                if (getEl('resetScoreOnSwitch').checked) {
+                    state.scoreA = 0; state.scoreB = 0;
+                    state.serverIdxA = 0; state.serverIdxB = 0;
+                }
+                saveToLocal(); render(); 
+                showToast(`✅ 已切換至第 ${currentMatchIdx+1} 點`);
+            };
+
+            // 3. Check Catch-up Rule
+            if (getEl('catchUpToggle').checked) {
+                // Parse thresholds: "10,20,30,40"
+                let thresholds = getEl('catchUpPoints').value.split(/[,，、]/).map(Number);
+                // currentMatchIdx is now 1 (for match 2), so we look at thresholds[0] (value 10)
+                // because we just finished match 1.
+                let tIndex = currentMatchIdx - 1;
+                
+                if (thresholds[tIndex] !== undefined && !isNaN(thresholds[tIndex])) {
+                    let target = thresholds[tIndex];
+                    let isALower = state.scoreA < state.scoreB;
+                    let loserScore = isALower ? state.scoreA : state.scoreB;
+                    let winnerScore = isALower ? state.scoreB : state.scoreA;
+
+                    // Condition: Loser score is LESS than target
+                    // Note: We only prompt if it makes sense (e.g. Winner is already >= target, 
+                    // otherwise both might need catchup? Rules usually say loser catches up).
+                    // We assume valid flow: Winner hits 21 (switch point), Loser is 8. Target is 10.
+                    
+                    if (loserScore < target) {
+                        let loserName = isALower ? getTeamName('A') : getTeamName('B');
+                        safeConfirm(
+                            `📉 ${loserName}分數 (${loserScore}) 未達 ${target} 分\n是否補分至 ${target}？`, 
+                            () => {
+                                // Yes Callback
+                                if (isALower) state.scoreA = target;
+                                else state.scoreB = target;
+                                finishSwitch();
+                            },
+                            () => {
+                                // No Callback
+                                finishSwitch();
+                            }
+                        );
+                        return; // Stop here, wait for callback
+                    }
+                }
+            }
+
+            // If no catch-up triggered
+            finishSwitch();
         }
 
         function setServer(teamKey, playerIdx) {
@@ -753,11 +825,9 @@
                 div.className = 'pos-item';
                 div.innerText = p;
 
-                // Add Long Press for Renaming
                 setupLongPress(div, () => editPlayerName(teamKey, idx));
 
                 div.onclick = (e) => { 
-                    // Prevent Click if Long Press occurred
                     if(div.dataset.longPressHandled === "true") { 
                         div.dataset.longPressHandled = "false"; 
                         return; 
@@ -826,8 +896,9 @@
                 teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
                 swapPoints: getEl('swapPoints').value,
                 switchMatchPoints: getEl('switchMatchPoints').value,
-                resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked
-                // displayMode removed
+                resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
+                catchUpToggle: getEl('catchUpToggle').checked,
+                catchUpPoints: getEl('catchUpPoints').value
             };
             getEl('history-panel').classList.remove('panel-visible'); // Close history
             getEl('settings-panel').classList.add('panel-visible');
@@ -840,6 +911,8 @@
                 getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
                 getEl('switchMatchPoints').value = settingsSnapshot.switchMatchPoints || "";
                 getEl('resetScoreOnSwitch').checked = settingsSnapshot.resetScoreOnSwitch;
+                getEl('catchUpToggle').checked = settingsSnapshot.catchUpToggle;
+                getEl('catchUpPoints').value = settingsSnapshot.catchUpPoints || "10,20,30,40";
             }
             getEl('settings-panel').classList.remove('panel-visible');
             render(); 
