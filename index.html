@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V46 (拖曳改名版)</title>
+    <title>羽球主審 V47 (固定名單版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -12,8 +12,6 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <!-- SortableJS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
     <style>
         :root { 
@@ -130,34 +128,20 @@
             backdrop-filter: blur(2px); margin-bottom: 20px; overflow: hidden;
         }
         
-        .mode-position .pos-item { flex: 1; border-right: 1px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: white; }
-        .mode-position .pos-item:last-child { border-right: none; }
-        
-        .position-box.mode-roster { flex-direction: row-reverse; }
-        .mode-roster .pos-item { 
+        /* 固定名單模式樣式 (強制) */
+        .position-box { flex-direction: row-reverse; }
+        .pos-item { 
             flex: 1; border-left: 1px solid rgba(255,255,255,0.5); border-right: none;
             display: flex; align-items: center; justify-content: center; 
             font-size: 14px; font-weight: bold; color: white; 
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
             cursor: pointer; position: relative; 
         }
-        .mode-roster .pos-item:first-child { border-left: none; }
-        .mode-roster .pos-item:last-child { border-left: 1px solid rgba(255,255,255,0.5); }
-        .mode-roster .pos-item:active { background: rgba(255,255,255,0.2); }
+        .pos-item:first-child { border-left: none; }
+        .pos-item:last-child { border-left: 1px solid rgba(255,255,255,0.5); }
+        .pos-item:active { background: rgba(255,255,255,0.2); }
         .pos-item.active { background: rgba(255,255,255,0.95); color: #000; font-size: 20px; text-shadow: none; }
         
-        /* 加大拖曳手把的觸控區域 */
-        .drag-handle { 
-            color: rgba(255,255,255,0.5); 
-            margin-left: 2px; 
-            cursor: move; 
-            font-size: 16px; 
-            padding: 10px 8px; /* 加大 Padding */
-            height: 100%;
-            display: flex;
-            align-items: center;
-        }
-
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
 
@@ -275,13 +259,7 @@
             </div>
         </div>
 
-        <div class="row">
-            <label style="color:#00e676; font-weight:bold;">📺 顯示模式</label>
-            <select id="displayMode" class="full-width" onchange="render()">
-                <option value="roster">📋 固定名單 (多人制)</option>
-                <option value="position">🏸 傳統站位 (左右跳)</option>
-            </select>
-        </div>
+        <!-- 顯示模式已移除，固定為名單制 -->
 
         <div class="switch-row">
             <label style="color:white; font-weight:bold; margin:0;">📳 震動回饋</label>
@@ -488,7 +466,7 @@
                     teamA_name: getEl('teamA_name').value, teamA_players: getEl('teamA_players').value,
                     teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
                     gform_link: getEl('gform_link').value, swapPoints: getEl('swapPoints').value,
-                    displayMode: getEl('displayMode').value,
+                    // displayMode removed, implied roster
                     switchMatchPoints: getEl('switchMatchPoints').value,
                     resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked
                 }
@@ -515,7 +493,7 @@
                     getEl('teamB_players').value = data.inputs.teamB_players || "張,林";
                     getEl('gform_link').value = data.inputs.gform_link || "";
                     getEl('swapPoints').value = data.inputs.swapPoints || "11";
-                    getEl('displayMode').value = data.inputs.displayMode || "roster"; /* 預設改為 roster 以符合新功能 */
+                    // Ignore displayMode
                     getEl('switchMatchPoints').value = data.inputs.switchMatchPoints || "";
                     getEl('resetScoreOnSwitch').checked = data.inputs.resetScoreOnSwitch || false;
                 }
@@ -715,7 +693,6 @@
         }
 
         function render() {
-            const mode = getEl('displayMode').value;
             let isA_Left = (state.leftTeam === 'A');
             getEl('name-box-left').innerText = getTeamName(isA_Left?'A':'B');
             getEl('name-box-right').innerText = getTeamName(isA_Left?'B':'A');
@@ -737,26 +714,15 @@
 
             const boxL = getEl('pos-box-left'); const boxR = getEl('pos-box-right');
             boxL.innerHTML = ''; boxR.innerHTML = '';
-            boxL.className = `position-box mode-${mode}`; boxR.className = `position-box mode-${mode}`;
+            boxL.className = `position-box`; boxR.className = `position-box`;
 
-            if (mode === 'position') {
-                renderPositionMode(boxL, isA_Left ? 'A' : 'B');
-                renderPositionMode(boxR, isA_Left ? 'B' : 'A');
-            } else {
-                renderRosterMode(boxL, isA_Left ? 'A' : 'B');
-                renderRosterMode(boxR, isA_Left ? 'B' : 'A');
-            }
+            // Always render Roster Mode
+            renderRosterMode(boxL, isA_Left ? 'A' : 'B');
+            renderRosterMode(boxR, isA_Left ? 'B' : 'A');
 
             let activeTeamSide = (state.serverTeam === state.leftTeam) ? 'left' : 'right';
-            let activeScore = (state.serverTeam === 'A') ? state.scoreA : state.scoreB;
-            let targetId = "";
-            
-            if (mode === 'position') {
-                 targetId = (activeTeamSide === 'left') ? ((activeScore % 2 === 0) ? 'pos-r-left' : 'pos-l-left') : ((activeTeamSide === 'right') ? ((activeScore % 2 === 0) ? 'pos-r-right' : 'pos-l-right') : '');
-            } else {
-                 let currentIdx = (state.serverTeam === 'A') ? state.serverIdxA : state.serverIdxB;
-                 targetId = (activeTeamSide === 'left') ? `pos-box-left-${currentIdx}` : `pos-box-right-${currentIdx}`;
-            }
+            let currentIdx = (state.serverTeam === 'A') ? state.serverIdxA : state.serverIdxB;
+            let targetId = (activeTeamSide === 'left') ? `pos-box-left-${currentIdx}` : `pos-box-right-${currentIdx}`;
 
             const targetEl = document.getElementById(targetId);
             if (targetEl) targetEl.classList.add('active'); 
@@ -776,23 +742,6 @@
             }
         }
 
-        function renderPositionMode(container, teamKey) {
-            let serverIdx = (teamKey === 'A') ? state.serverIdxA : state.serverIdxB;
-            let serverName = getPlayerName(teamKey, serverIdx);
-            let partnerName = getPlayerName(teamKey, getNextIdx(teamKey, serverIdx));
-            let score = (teamKey === 'A') ? state.scoreA : state.scoreB;
-            let totalPlayers = getPlayerList(teamKey).length;
-            
-            let sideSuffix = (container.id === 'pos-box-left') ? 'left' : 'right';
-            let idL = `pos-l-${sideSuffix}`;
-            let idR = `pos-r-${sideSuffix}`;
-            
-            let txtL = (score % 2 !== 0) ? serverName : (totalPlayers > 1 ? partnerName : "");
-            let txtR = (score % 2 === 0) ? serverName : (totalPlayers > 1 ? partnerName : "");
-
-            container.innerHTML = `<div id="${idL}" class="pos-item">${txtL || '左區'}</div><div id="${idR}" class="pos-item">${txtR || '右區'}</div>`;
-        }
-
         function renderRosterMode(container, teamKey) {
             const players = getPlayerList(teamKey);
             const sideSuffix = (container.id === 'pos-box-left') ? 'left' : 'right';
@@ -802,22 +751,12 @@
                 const div = document.createElement('div');
                 div.id = `pos-box-${sideSuffix}-${idx}`;
                 div.className = 'pos-item';
-                
-                const nameSpan = document.createElement('span');
-                nameSpan.className = 'name-text';
-                nameSpan.innerText = p;
-                div.appendChild(nameSpan);
+                div.innerText = p;
 
-                const handle = document.createElement('span');
-                handle.className = 'drag-handle';
-                handle.innerText = '⋮';
-                div.appendChild(handle);
-                
                 // Add Long Press for Renaming
                 setupLongPress(div, () => editPlayerName(teamKey, idx));
 
                 div.onclick = (e) => { 
-                    if(e.target.classList.contains('drag-handle')) return;
                     // Prevent Click if Long Press occurred
                     if(div.dataset.longPressHandled === "true") { 
                         div.dataset.longPressHandled = "false"; 
@@ -827,18 +766,6 @@
                     setServer(teamKey, idx); 
                 };
                 container.appendChild(div);
-            });
-            initSortable(container, teamKey);
-        }
-
-        function initSortable(container, teamKey) {
-            new Sortable(container, {
-                animation: 150,
-                handle: '.drag-handle',
-                onEnd: function (evt) {
-                    const newOrderNames = Array.from(container.children).map(el => el.querySelector('.name-text').innerText);
-                    updatePlayerListOrder(teamKey, newOrderNames);
-                }
             });
         }
 
@@ -850,7 +777,7 @@
             parts[idx] = newNamesArray.join(',');
             input.value = parts.join(';');
             saveToLocal();
-            render(); // Re-render to update UI immediately
+            render(); 
             showToast("順序已更新");
         }
 
@@ -899,8 +826,8 @@
                 teamB_name: getEl('teamB_name').value, teamB_players: getEl('teamB_players').value,
                 swapPoints: getEl('swapPoints').value,
                 switchMatchPoints: getEl('switchMatchPoints').value,
-                resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
-                displayMode: getEl('displayMode').value
+                resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked
+                // displayMode removed
             };
             getEl('history-panel').classList.remove('panel-visible'); // Close history
             getEl('settings-panel').classList.add('panel-visible');
@@ -913,7 +840,6 @@
                 getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
                 getEl('switchMatchPoints').value = settingsSnapshot.switchMatchPoints || "";
                 getEl('resetScoreOnSwitch').checked = settingsSnapshot.resetScoreOnSwitch;
-                getEl('displayMode').value = settingsSnapshot.displayMode || "roster";
             }
             getEl('settings-panel').classList.remove('panel-visible');
             render(); 
