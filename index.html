@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V48 (補分重製版)</title>
+    <title>羽球主審 V51 (視窗修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -91,6 +91,7 @@
         .u-btn { flex: 1; padding: 12px; border-radius: 6px; border: none; font-size: 16px; cursor: pointer; font-weight: bold; }
         .u-btn-cancel { background: #555; color: white; }
         .u-btn-confirm { background: #00c853; color: white; }
+        .u-btn-single { width: 100%; max-width: 200px; background: #0288d1; }
 
         #toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px; font-size: 14px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s; border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         #toast-msg.show { opacity: 1; }
@@ -259,7 +260,7 @@
             </div>
         </div>
 
-        <!-- V48 New Feature: Catch Up Rules -->
+        <!-- 補分規則區塊 -->
         <div class="row" style="border:1px solid #00bcd4; padding:10px; border-radius:5px; margin-top:15px;">
             <label style="color:#00bcd4; font-weight:bold;">📈 落後補分規則 (Catch-up)</label>
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
@@ -476,7 +477,7 @@
                     gform_link: getEl('gform_link').value, swapPoints: getEl('swapPoints').value,
                     switchMatchPoints: getEl('switchMatchPoints').value,
                     resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
-                    // V48 Save Catch Up Settings
+                    // New fields for Catch-up
                     catchUpToggle: getEl('catchUpToggle').checked,
                     catchUpPoints: getEl('catchUpPoints').value
                 }
@@ -506,9 +507,9 @@
                     getEl('switchMatchPoints').value = data.inputs.switchMatchPoints || "";
                     getEl('resetScoreOnSwitch').checked = data.inputs.resetScoreOnSwitch || false;
                     
-                    // V48 Load Catch Up Settings
-                    if(data.inputs.catchUpToggle !== undefined) getEl('catchUpToggle').checked = data.inputs.catchUpToggle;
-                    if(data.inputs.catchUpPoints) getEl('catchUpPoints').value = data.inputs.catchUpPoints;
+                    // Load Catch-up inputs
+                    if (data.inputs.catchUpToggle !== undefined) getEl('catchUpToggle').checked = data.inputs.catchUpToggle;
+                    if (data.inputs.catchUpPoints) getEl('catchUpPoints').value = data.inputs.catchUpPoints;
                 }
                 getEl('log-container').innerHTML = '';
                 pendingRecords.forEach(r => renderLogItem(r));
@@ -527,25 +528,52 @@
             getEl('u-modal-title').innerText = title; getEl('u-modal-msg').innerText = msg;
             const input = getEl('u-modal-input');
             const confirmBtn = getEl('u-modal-confirm-btn');
-            // Hack to find cancel button since we didn't give it an ID, but it has a class
             const cancelBtn = getEl('universal-modal').querySelector('.u-btn-cancel');
+
+            // Reset buttons style
+            confirmBtn.className = 'u-btn u-btn-confirm';
+            cancelBtn.style.display = 'block';
 
             if (inputMode) { input.style.display = 'block'; input.value = defaultValue; setTimeout(() => input.focus(), 300); } else { input.style.display = 'none'; }
             
-            onModalConfirm = () => { if (inputMode) callback(input.value); else callback(); closeUniversalModal(); };
-            onModalCancel = () => { if (cancelCallback) cancelCallback(); closeUniversalModal(); };
+            // KEY FIX: Close modal FIRST, then execute callback to allow next modal to open
+            onModalConfirm = () => { 
+                closeUniversalModal(); 
+                // Small delay to ensure DOM update
+                setTimeout(() => { if (inputMode) callback(input.value); else callback(); }, 50);
+            };
+            onModalCancel = () => { 
+                closeUniversalModal();
+                if(cancelCallback) setTimeout(() => cancelCallback(), 50);
+            };
 
             confirmBtn.onclick = onModalConfirm;
             cancelBtn.onclick = onModalCancel;
 
             getEl('universal-modal').style.display = 'flex';
         }
+
+        // Single button info modal
+        function showInfoModal(msg) {
+            getEl('u-modal-title').innerText = "系統通知"; 
+            getEl('u-modal-msg').innerText = msg;
+            getEl('u-modal-input').style.display = 'none';
+            
+            const confirmBtn = getEl('u-modal-confirm-btn');
+            const cancelBtn = getEl('universal-modal').querySelector('.u-btn-cancel');
+            
+            cancelBtn.style.display = 'none';
+            confirmBtn.className = 'u-btn u-btn-single';
+            confirmBtn.onclick = () => closeUniversalModal();
+            
+            getEl('universal-modal').style.display = 'flex';
+        }
+
         function closeUniversalModal() { 
             getEl('universal-modal').style.display = 'none'; 
             onModalConfirm = null; 
             onModalCancel = null;
         }
-        // V48: Added noCallback to safeConfirm
         function safeConfirm(msg, yesCallback, noCallback) { showModal("確認", msg, false, yesCallback, "", noCallback); }
         function safePrompt(title, defaultValue, callback) { showModal("編輯", title, true, callback, defaultValue); }
 
@@ -568,13 +596,11 @@
             });
         }
 
-        // Updated Setup Long Press to mark the specific element
         function setupLongPress(element, callback) {
             let timer; const duration = 600;
             const start = () => { 
                 timer = setTimeout(() => { 
                     doVibrate(50); 
-                    // Mark both the element and the parent side (to stop point addition)
                     element.dataset.longPressHandled = "true";
                     const parentArea = element.closest('.side'); 
                     if(parentArea) parentArea.dataset.longPressHandled = "true"; 
@@ -594,14 +620,12 @@
             safePrompt(`修改 ${key} 隊名稱`, getTeamName(key), (val) => { if(val) { updateInputSegment(`team${key}_name`, val); render(); } });
         }
 
-        // New function to edit specific player name from the roster
         function editPlayerName(teamKey, idx) {
             let players = getPlayerList(teamKey);
             let oldName = players[idx];
             safePrompt(`修改球員姓名`, oldName, (newVal) => {
                 if (newVal && newVal !== oldName) {
                     players[idx] = newVal;
-                    // Update the string in the input
                     updatePlayerListOrder(teamKey, players); 
                 }
             });
@@ -633,68 +657,70 @@
                 safeConfirm(`🚩 達到 ${max} 分！是否換下一點球員？`, () => {
                     executeMatchSwitch(max);
                 }, () => {
-                    // Cancel callback: User chose NOT to switch yet.
-                    // Do nothing here.
+                    // User cancelled match switch, do nothing but don't add to ignored list yet
                 });
                 state.switchedMatchPoints.push(max); 
             }
         }
 
-        // V48 Re-written Catch-up Logic
+        // Updated Match Switch Logic - Fixed
         function executeMatchSwitch(point) {
-            // 1. Log CURRENT score before anything changes
-            logGame();
-
-            // 2. Determine Catch-up requirements
-            // Get user thresholds (default: 10,20,30,40)
+            // 1. Identify catch-up target for THIS match (e.g. match 1 -> index 0)
             let thresholds = getEl('catchUpPoints').value.split(/[,，、]/).map(Number);
-            // Current Match Index (e.g., 0 for G1) corresponds to index 0 in thresholds (10 points)
             let target = thresholds[currentMatchIdx]; 
-            let catchUpOn = getEl('catchUpToggle').checked;
+            let isCatchUpEnabled = getEl('catchUpToggle').checked;
 
-            // This internal function handles the actual switch
-            // Accepts newScoreA/B as optional overrides if catch-up happened
-            let performSwitch = (overrideA, overrideB) => {
-                if(overrideA !== undefined) state.scoreA = overrideA;
-                if(overrideB !== undefined) state.scoreB = overrideB;
-                
-                // Move to next match
+            let needsCatchUp = false;
+            if(isCatchUpEnabled && target !== undefined) {
+                 let loserScore = Math.min(state.scoreA, state.scoreB);
+                 if(loserScore < target) needsCatchUp = true;
+            }
+
+            // Function to perform the switch
+            const performSwitch = () => {
+                // LOG FIRST (Before resetting)
+                logGame();
+                let oldMatch = currentMatchIdx + 1;
+                let finalScoreA = state.scoreA;
+                let finalScoreB = state.scoreB;
+
+                // INCREMENT
                 currentMatchIdx++;
-                
-                // Reset servers for new match (start from top of roster)
-                state.serverIdxA = 0;
-                state.serverIdxB = 0;
 
-                // Handle Reset Score Option (Conflicting with Catch-up? Usually mutually exclusive, but handle it)
+                // RESET
                 if (getEl('resetScoreOnSwitch').checked) {
                     state.scoreA = 0; state.scoreB = 0;
                 }
-                
-                saveToLocal(); render(); showToast(`✅ 已切換至第 ${currentMatchIdx+1} 點`);
+                state.serverIdxA = 0; // Reset pointers to first player
+                state.serverIdxB = 0;
+
+                // SAVE & RENDER
+                saveToLocal();
+                render(); // This will pull names for the new currentMatchIdx
+
+                // NOTIFICATION (Modal)
+                showInfoModal(`✅ G${oldMatch} 紀錄已儲存 (${finalScoreA}:${finalScoreB})\n\n即將開始 G${currentMatchIdx+1}`);
             };
 
-            // 3. Logic: Does it need catch-up?
-            let isALower = state.scoreA < state.scoreB;
-            let loserScore = isALower ? state.scoreA : state.scoreB;
-            
-            // Only trigger if enabled, threshold exists, and loser is BELOW threshold
-            if (catchUpOn && target !== undefined && !isNaN(target) && loserScore < target) {
-                 let loserName = isALower ? getTeamName('A') : getTeamName('B');
-                 
-                 // Show Modal
-                 safeConfirm(`📉 ${loserName} (${loserScore}分) 未達 ${target} 分\n是否補分至 ${target}？`, 
-                     () => {
-                         // YES: Apply Catch-up then Switch
-                         if(isALower) performSwitch(target, state.scoreB);
-                         else performSwitch(state.scoreA, target);
-                     }, 
-                     () => {
-                         // NO: Just Switch
-                         performSwitch();
-                     }
-                 );
+            // Logic Flow
+            if (needsCatchUp) {
+                let isALower = state.scoreA < state.scoreB;
+                let loserName = isALower ? getTeamName('A') : getTeamName('B');
+                let loserScore = isALower ? state.scoreA : state.scoreB;
+
+                safeConfirm(
+                    `📉 ${loserName} (${loserScore}分) 未達 ${target} 分\n是否補分至 ${target}？`,
+                    () => {
+                        // Yes: Fix score then switch
+                        if(isALower) state.scoreA = target; else state.scoreB = target;
+                        performSwitch();
+                    },
+                    () => {
+                        // No: Just switch
+                        performSwitch();
+                    }
+                );
             } else {
-                // No Catch-up needed, just switch
                 performSwitch();
             }
         }
@@ -833,11 +859,9 @@
                 div.className = 'pos-item';
                 div.innerText = p;
 
-                // Add Long Press for Renaming
                 setupLongPress(div, () => editPlayerName(teamKey, idx));
 
                 div.onclick = (e) => { 
-                    // Prevent Click if Long Press occurred
                     if(div.dataset.longPressHandled === "true") { 
                         div.dataset.longPressHandled = "false"; 
                         return; 
@@ -907,7 +931,6 @@
                 swapPoints: getEl('swapPoints').value,
                 switchMatchPoints: getEl('switchMatchPoints').value,
                 resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
-                // V48 Save Snapshot
                 catchUpToggle: getEl('catchUpToggle').checked,
                 catchUpPoints: getEl('catchUpPoints').value
             };
@@ -922,7 +945,6 @@
                 getEl('swapPoints').value = settingsSnapshot.swapPoints || "";
                 getEl('switchMatchPoints').value = settingsSnapshot.switchMatchPoints || "";
                 getEl('resetScoreOnSwitch').checked = settingsSnapshot.resetScoreOnSwitch;
-                // V48 Cancel Snapshot
                 getEl('catchUpToggle').checked = settingsSnapshot.catchUpToggle;
                 getEl('catchUpPoints').value = settingsSnapshot.catchUpPoints || "10,20,30,40";
             }
