@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V48 (補分規則版)</title>
+    <title>羽球主審 V49 (補分優化版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -630,65 +630,62 @@
             }
         }
 
-        // Updated Match Switch Logic for Catch-up
+        // Updated Match Switch Logic for Catch-up (Fixes logic)
         function executeMatchSwitch(point) {
-            // 1. Log the current state
-            logGame();
+            // 1. Identify which Catch-up threshold applies to THIS match (before incrementing)
+            let thresholds = getEl('catchUpPoints').value.split(/[,，、]/).map(Number);
+            let currentTarget = thresholds[currentMatchIdx]; // e.g. Match 0 uses index 0 (10 points)
             
-            // 2. Advance Match Index
-            currentMatchIdx++; 
-
-            // Function to finalize
-            const finishSwitch = () => {
+            // Function to perform the actual switch
+            const proceedWithSwitch = () => {
+                // Log the played score (e.g. 21-8)
+                logGame();
+                
+                // Advance Match
+                currentMatchIdx++;
+                
+                // Reset Score if option checked
                 if (getEl('resetScoreOnSwitch').checked) {
                     state.scoreA = 0; state.scoreB = 0;
-                    state.serverIdxA = 0; state.serverIdxB = 0;
                 }
-                saveToLocal(); render(); 
-                showToast(`✅ 已切換至第 ${currentMatchIdx+1} 點`);
+                
+                // **CRITICAL FIX**: Reset Server Indexes to 0 so new players are selected immediately
+                state.serverIdxA = 0; 
+                state.serverIdxB = 0;
+                
+                // Render and Save
+                saveToLocal(); 
+                render(); 
+                showToast(`✅ 本機紀錄已儲存 (G${currentMatchIdx} 結束)`);
             };
 
-            // 3. Check Catch-up Rule
-            if (getEl('catchUpToggle').checked) {
-                // Parse thresholds: "10,20,30,40"
-                let thresholds = getEl('catchUpPoints').value.split(/[,，、]/).map(Number);
-                // currentMatchIdx is now 1 (for match 2), so we look at thresholds[0] (value 10)
-                // because we just finished match 1.
-                let tIndex = currentMatchIdx - 1;
+            // Check Catch-up Logic
+            if (getEl('catchUpToggle').checked && currentTarget !== undefined && !isNaN(currentTarget)) {
+                let isALower = state.scoreA < state.scoreB;
+                let loserScore = isALower ? state.scoreA : state.scoreB;
                 
-                if (thresholds[tIndex] !== undefined && !isNaN(thresholds[tIndex])) {
-                    let target = thresholds[tIndex];
-                    let isALower = state.scoreA < state.scoreB;
-                    let loserScore = isALower ? state.scoreA : state.scoreB;
-                    let winnerScore = isALower ? state.scoreB : state.scoreA;
-
-                    // Condition: Loser score is LESS than target
-                    // Note: We only prompt if it makes sense (e.g. Winner is already >= target, 
-                    // otherwise both might need catchup? Rules usually say loser catches up).
-                    // We assume valid flow: Winner hits 21 (switch point), Loser is 8. Target is 10.
-                    
-                    if (loserScore < target) {
-                        let loserName = isALower ? getTeamName('A') : getTeamName('B');
-                        safeConfirm(
-                            `📉 ${loserName}分數 (${loserScore}) 未達 ${target} 分\n是否補分至 ${target}？`, 
-                            () => {
-                                // Yes Callback
-                                if (isALower) state.scoreA = target;
-                                else state.scoreB = target;
-                                finishSwitch();
-                            },
-                            () => {
-                                // No Callback
-                                finishSwitch();
-                            }
-                        );
-                        return; // Stop here, wait for callback
-                    }
+                // If loser is strictly below threshold
+                if (loserScore < currentTarget) {
+                    let loserName = isALower ? getTeamName('A') : getTeamName('B');
+                    safeConfirm(
+                        `📉 ${loserName}分數 (${loserScore}) 未達 ${currentTarget} 分\n是否補分至 ${currentTarget}？`, 
+                        () => {
+                            // Confirm: Update score FIRST, then switch
+                            if (isALower) state.scoreA = currentTarget;
+                            else state.scoreB = currentTarget;
+                            proceedWithSwitch();
+                        },
+                        () => {
+                            // Cancel: Just switch
+                            proceedWithSwitch();
+                        }
+                    );
+                    return; // Wait for user response
                 }
             }
-
-            // If no catch-up triggered
-            finishSwitch();
+            
+            // If no catch up needed, just switch
+            proceedWithSwitch();
         }
 
         function setServer(teamKey, playerIdx) {
