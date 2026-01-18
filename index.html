@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V58 (訊息格式化版)</title>
+    <title>羽球主審 V57 (直播控制優化版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -29,12 +29,23 @@
             display: flex; flex-direction: column; overflow: hidden; 
         }
         
-        /* Header */
+        /* Header - Modified for Scrolling */
         #header { 
-            height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
-            border-bottom: 1px solid #444; padding-left: 60px; 
+            height: var(--header-height); 
+            background: #333; 
+            display: flex; 
+            align-items: center; 
+            padding: 0 10px; 
+            flex-shrink: 0; 
+            z-index: 100; 
+            border-bottom: 1px solid #444; 
+            justify-content: space-between; 
+            overflow: hidden;
         }
-        .header-left, .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+
+        .header-left, .header-right { 
+            display: flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; 
+        }
 
         .rainbow-input-group { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .rainbow-label { padding: 0 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
@@ -57,6 +68,7 @@
         .live-text { font-size: 12px; color: #aaa; font-weight: bold; white-space: nowrap; }
         .live-switch.active .live-text { color: #fff; }
 
+        /* Mobile Optimization for Header Scrolling */
         @media (max-width: 480px) {
             #header {
                 justify-content: flex-start;
@@ -98,7 +110,7 @@
         #universal-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .u-modal-box { background: #333; padding: 25px; border-radius: 12px; border: 1px solid #555; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .u-modal-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #ffeb3b; }
-        .u-modal-msg { font-size: 16px; color: #ddd; margin-bottom: 20px; line-height: 1.5; white-space: pre-wrap; text-align: center; } /* <-- CENTERING TEXT */
+        .u-modal-msg { font-size: 16px; color: #ddd; margin-bottom: 20px; line-height: 1.5; white-space: pre-wrap; }
         .u-modal-input { width: 100%; padding: 10px; margin-bottom: 20px; font-size: 18px; background: #222; color: white; border: 1px solid #666; border-radius: 5px; text-align: center; box-sizing: border-box; display: none; }
         .u-btn-group { display: flex; gap: 10px; justify-content: center; }
         .u-btn { flex: 1; padding: 12px; border-radius: 6px; border: none; font-size: 16px; cursor: pointer; font-weight: bold; }
@@ -322,8 +334,9 @@
         <div class="row"><label>A隊員 (例如: 王,李; 陳,林)</label><input id="teamA_players" class="full-width" value="王,李"></div>
         <div class="row"><label>B隊名稱 (。分下一點)</label><input id="teamB_name" class="full-width" value="藍隊;藍二隊"></div>
         <div class="row"><label>B隊員 (例如: 張,林; 趙,錢)</label><input id="teamB_players" class="full-width" value="張,林"></div>
-        <div class="row"><label>換邊分數</label><input id="swapPoints" class="full-width" value="11"></div>
-        <div class="row"><label>發球方</label><select id="initServer" class="full-width" onchange="updateInitServer(this.value)"><option value="A">A隊先發</option><option value="B">B隊先發</option></select></div>
+        
+        <!-- 發球方 (邏輯已修改為不重置) -->
+        <div class="row"><label>發球方 (僅切換球權，不歸零)</label><select id="initServer" class="full-width" onchange="updateInitServer(this.value)"><option value="A">A隊先發</option><option value="B">B隊先發</option></select></div>
         
         <div class="row" style="border-top:1px solid #555; margin-top:15px; padding-top:15px;">
             <button class="btn-act" onclick="clearCourtData()" style="background:#b71c1c; border:1px solid #ff5252; width:100%;">🗑️ 清除此場地 (直播下線)</button>
@@ -347,22 +360,6 @@
         <button class="btn-act" style="background:#555; margin-top:20px;" onclick="toggleHistory()">關閉</button>
     </div>
 
-    <!-- === LIVE VIEWER SECTION === -->
-    <div id="app-live" class="app-section">
-        <div class="admin-banner">⚠️ 管理員模式開啟：點擊卡片右上角 [X] 可強制下架場地</div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-top: 10px;">
-             <h1 style="font-size: 24px; flex-grow: 1; text-align: center;">📡 Live Scores</h1>
-             <button class="admin-toggle" id="adminToggle" onclick="toggleAdmin()">
-                <div class="toggle-dot"></div>
-                <div class="toggle-text">管理模式</div>
-            </button>
-        </div>
-        <div id="grid-container">
-            <div class="no-data">連線中... / 等待比賽開始</div>
-        </div>
-    </div>
-
-
     <script>
         const firebaseConfig = {
           apiKey: "AIzaSyAq-sTArXeGDVpdjnbLEzh5WpQ5mkmsyoA",
@@ -381,6 +378,7 @@
 
         const STORAGE_KEY = 'badminton_v23_state';
         let currentMatchIdx = 0;
+        let currentScoreSize = 250;
         let state = { 
             leftTeam: 'A', scoreA: 0, scoreB: 0, serverTeam: 'A', 
             serverIdxA: 0, serverIdxB: 0, 
@@ -392,51 +390,41 @@
         const getEl = (id) => document.getElementById(id);
 
         window.addEventListener('load', () => {
-            // Check URL for mode switch
-            const params = new URLSearchParams(window.location.search);
-            if(params.get('mode') === 'live') {
-                switchMode('live');
-                if(params.get('admin') === 'true') document.getElementById('adminToggle').click(); // Auto-enter admin mode
-            } else {
-                switchMode('home'); // Default to home screen
-            }
-        });
-
-        // === MAIN ROUTING ===
-        function switchMode(mode) {
-            document.querySelectorAll('.app-section').forEach(el => el.classList.remove('active'));
-            if(mode === 'umpire') {
-                document.getElementById('app-umpire').classList.add('active');
-                initUmpire();
-            } else if (mode === 'live') {
-                document.getElementById('app-live').classList.add('active');
-                initLive();
-            } else {
-                document.getElementById('app-home').classList.add('active');
-            }
-        }
-        
-        // === UMPIRE FUNCTIONS ===
-        function initUmpire() {
             loadFromLocal();
-            if(!getEl('name-box-left').dataset.inited) {
-                setupLongPress(getEl('name-box-left'), () => editTeamName('left'));
-                setupLongPress(getEl('name-box-right'), () => editTeamName('right'));
-                bindClickPoint('area-left', 'left');
-                bindClickPoint('area-right', 'right');
-                getEl('name-box-left').dataset.inited = "true";
-            }
+            // Setup generic long press for Team Names
+            setupLongPress(getEl('name-box-left'), () => editTeamName('left'));
+            setupLongPress(getEl('name-box-right'), () => editTeamName('right'));
+            bindClickPoint('area-left', 'left');
+            bindClickPoint('area-right', 'right');
             render();
-        }
+        });
 
         function getFormattedTime() {
             const now = new Date();
-            return `${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+            const MM = (now.getMonth() + 1).toString().padStart(2, '0');
+            const DD = now.getDate().toString().padStart(2, '0');
+            const hh = now.getHours().toString().padStart(2, '0');
+            const mm = now.getMinutes().toString().padStart(2, '0');
+            return `${MM}/${DD} ${hh}:${mm}`;
+        }
+
+        // Feature: High Contrast Toggle
+        function toggleContrast() {
+            document.body.classList.toggle('high-contrast');
+        }
+
+        // Feature: Direct Score Size Adjustment
+        function adjustScoreSize(delta) {
+            currentScoreSize = Math.max(100, Math.min(600, currentScoreSize + delta));
+            changeScoreSize(currentScoreSize);
+            // Sync slider in settings
+            document.querySelector('input[type=range]').value = currentScoreSize;
         }
 
         function logGame() {
             const record = {
-                id: Date.now(), timeStr: getFormattedTime(),
+                id: Date.now(), 
+                timeStr: getFormattedTime(),
                 court: getEl('courtNum').value || "練習", umpire: getEl('umpireName').value || "-",
                 tA: getTeamName('A'), tB: getTeamName('B'), sA: state.scoreA, sB: state.scoreB, winner: state.scoreA > state.scoreB ? getTeamName('A') : getTeamName('B'),
                 matchStr: `G${currentMatchIdx+1}`, status: 'pending'
@@ -449,7 +437,14 @@
             let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
             let statusClass = (r.status === 'done') ? 'status-done' : (r.status === 'error' ? 'status-error' : 'status-pending');
             let statusText = (r.status === 'done') ? '已上傳' : (r.status === 'error' ? '失敗' : '待傳送');
-            div.innerHTML = `<div class="log-info"><b>${r.matchStr} (場${r.court}) <span style="font-size:12px; color:#aaa; margin-left:5px;">${r.timeStr || ''}</span></b><br>${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}</div><div class="log-status ${statusClass}" id="status-${r.id}">${statusText}</div>`;
+            
+            div.innerHTML = `
+                <div class="log-info">
+                    <b>${r.matchStr} (場${r.court}) <span style="font-size:12px; color:#aaa; margin-left:5px;">${r.timeStr || ''}</span></b><br>
+                    ${r.tA} ${r.sA}:${r.sB} ${r.tB}<br>勝: ${r.winner}
+                </div>
+                <div class="log-status ${statusClass}" id="status-${r.id}">${statusText}</div>
+            `;
             getEl('log-container').prepend(div);
         }
 
@@ -468,7 +463,10 @@
 
         function clearAllHistory() {
             safeConfirm("確定要清空所有歷史紀錄嗎？(無法復原)", () => {
-                pendingRecords = []; getEl('log-container').innerHTML = ''; saveToLocal(); showToast("🗑️ 紀錄已清空");
+                pendingRecords = [];
+                document.getElementById('log-container').innerHTML = '';
+                saveToLocal();
+                showToast("🗑️ 紀錄已清空");
             });
         }
 
@@ -489,8 +487,15 @@
                     formData.append(config.mapping.sA, r.sA); formData.append(config.mapping.sB, r.sB);
                     formData.append(config.mapping.winner, r.winner);
                     if(config.mapping.matchStr) formData.append(config.mapping.matchStr, r.matchStr);
-                    try { await fetch(config.baseUrl, { method: 'POST', mode: 'no-cors', body: formData }); r.status = 'done'; updateStatus(r.id, 'done', '✅ 已上傳'); } catch (e) { r.status = 'error'; updateStatus(r.id, 'error', '❌ 失敗'); }
-                    saveToLocal(); await new Promise(res => setTimeout(res, 500));
+
+                    try {
+                        await fetch(config.baseUrl, { method: 'POST', mode: 'no-cors', body: formData });
+                        r.status = 'done'; updateStatus(r.id, 'done', '✅ 已上傳');
+                    } catch (e) {
+                        r.status = 'error'; updateStatus(r.id, 'error', '❌ 失敗');
+                    }
+                    saveToLocal();
+                    await new Promise(res => setTimeout(res, 500));
                 }
                 showToast("上傳作業結束");
             });
@@ -501,12 +506,20 @@
             const baseUrl = link.split('?')[0].replace('viewform', 'formResponse');
             const params = new URLSearchParams(link.split('?')[1]);
             const mapping = {};
-            const keys = { '__COURT__': 'court', '__UMPIRE__': 'umpire', '__TEAMA__': 'tA', '__TEAMB__': 'tB', '__SCOREA__': 'sA', '__SCOREB__': 'sB', '__WINNER__': 'winner', '__MATCHSTR__': 'matchStr' };
+            const keys = { 
+                '__COURT__': 'court', '__UMPIRE__': 'umpire', 
+                '__TEAMA__': 'tA', '__TEAMB__': 'tB', 
+                '__SCOREA__': 'sA', '__SCOREB__': 'sB', 
+                '__WINNER__': 'winner', '__MATCHSTR__': 'matchStr'
+            };
             params.forEach((value, key) => { if (keys[value]) mapping[keys[value]] = key; });
             return { baseUrl, mapping };
         }
 
-        function updateStatus(id, type, text) { const el = getEl(`status-${id}`); if (el) { el.className = `log-status status-${type}`; el.innerText = text; } }
+        function updateStatus(id, type, text) { 
+            const el = getEl(`status-${id}`); 
+            if (el) { el.className = `log-status status-${type}`; el.innerText = text; } 
+        }
 
         function saveToLocal() {
             const data = {
@@ -569,6 +582,7 @@
             const confirmBtn = getEl('u-modal-confirm-btn');
             const cancelBtn = getEl('universal-modal').querySelector('.u-btn-cancel');
 
+            // Reset buttons style
             confirmBtn.className = 'u-btn u-btn-confirm';
             cancelBtn.style.display = 'block';
 
@@ -589,6 +603,7 @@
             getEl('universal-modal').style.display = 'flex';
         }
 
+        // Single button info modal
         function showInfoModal(msg) {
             getEl('u-modal-title').innerText = "系統通知"; 
             getEl('u-modal-msg').innerText = msg;
@@ -751,9 +766,11 @@
         }
 
         function setServer(teamKey, playerIdx) {
+            // FIX V55: Update the server team AND index
             if (teamKey === 'A') state.serverIdxA = playerIdx; 
             else state.serverIdxB = playerIdx;
             
+            // Force server team switch to ensure highlight moves
             state.serverTeam = teamKey;
 
             doVibrate(30); 
@@ -931,8 +948,10 @@
 
         function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
         
+        // V57: Live Toggle Logic
         function handleLiveClick() {
             if (isLive) {
+                // Confirm Disconnect
                 safeConfirm("正在直播中！請確認是否要讓目前的直播分數下架？", () => {
                     const cNum = getEl('courtNum').value;
                     if(db && cNum) {
@@ -943,6 +962,7 @@
                     showToast("🗑️ 直播已下架");
                 });
             } else {
+                // Connect with "直播設定" title
                 safePrompt("請輸入場地編號", getEl('courtNum').value, (val) => {
                     if(!val) { showToast('請輸入場地'); return; }
                     getEl('courtNum').value = val;
@@ -1016,51 +1036,6 @@
             let parts = raw.split(/[;；.。]/);
             let idx = Math.min(currentMatchIdx, parts.length - 1);
             return parts[idx] ? parts[idx].trim() : "";
-        }
-    </script>
-
-    <script>
-        // === LIVE VIEWER LOGIC (V40 Admin) ===
-        function initLive() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const isAdmin = urlParams.get('admin') === 'true';
-            if(isAdmin) document.getElementById('adminToggle').click();
-
-            const container = document.getElementById('grid-container');
-            db.ref('courts').on('value', (snapshot) => {
-                const data = snapshot.val(); container.innerHTML = ""; 
-                if (!data) { container.innerHTML = "<div class='no-data'>目前沒有進行中的比賽</div>"; return; }
-                const matches = Object.keys(data).map(key => { return { dbKey: key, ...data[key] }; });
-                const now = Date.now();
-                const activeMatches = matches.filter(m => (now - m.timestamp) < 43200000); 
-
-                if (activeMatches.length === 0) { container.innerHTML = "<div class='no-data'>目前沒有進行中的比賽</div>"; return; }
-                activeMatches.sort((a, b) => parseInt(a.court) - parseInt(b.court));
-                activeMatches.forEach(m => { container.appendChild(createCard(m)); });
-            });
-        }
-
-        function createCard(m) {
-            const iconA = m.serverTeam === 'A' ? '<span class="server-icon">🏸</span>' : '';
-            const iconB = m.serverTeam === 'B' ? '<span class="server-icon">🏸</span>' : '';
-            const div = document.createElement('div'); div.className = 'court-card';
-            div.innerHTML = `
-                <button class="btn-delete" onclick="forceRemove('${m.dbKey}', '${m.court}')" title="強制下架">X</button>
-                <div class="card-header"><span class="court-badge">場地 ${m.court}</span><span class="match-info">${m.match}</span></div>
-                <div class="teams-row"><div class="team-box"><div class="t-name color-a">${m.teamA} ${iconA}</div><div class="t-score color-a">${m.scoreA}</div><div class="t-players">${m.playersA || ''}</div></div><div class="vs">VS</div><div class="team-box"><div class="t-name color-b">${m.teamB} ${iconB}</div><div class="t-score color-b">${m.scoreB}</div><div class="t-players">${m.playersB || ''}</div></div></div>
-                <div class="footer-info">主審: ${m.umpire || '-'}</div>
-            `;
-            return div;
-        }
-
-        window.forceRemove = function(dbKey, courtNum) {
-            if(confirm(`⚠️ 確定要強制刪除【場地 ${courtNum}】的資料嗎？`)) {
-                db.ref('courts/' + dbKey).remove()
-                    .then(() => {
-                        // No toast needed, GUI update handles it instantly
-                    })
-                    .catch(err => alert("刪除失敗: " + err));
-            }
         }
     </script>
 </body>
