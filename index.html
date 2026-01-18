@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V57 (直播控制優化版)</title>
+    <title>羽球主審 V58 (語音報分版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -29,23 +29,11 @@
             display: flex; flex-direction: column; overflow: hidden; 
         }
         
-        /* Header - Modified for Scrolling */
+        /* Header */
         #header { 
-            height: var(--header-height); 
-            background: #333; 
-            display: flex; 
-            align-items: center; 
-            padding: 0 10px; 
-            flex-shrink: 0; 
-            z-index: 100; 
-            border-bottom: 1px solid #444; 
-            justify-content: space-between; 
-            overflow: hidden;
+            height: var(--header-height); background: #333; display: flex; align-items: center; padding: 0 10px; flex-shrink: 0; z-index: 100; border-bottom: 1px solid #444; justify-content: space-between; overflow: hidden;
         }
-
-        .header-left, .header-right { 
-            display: flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; 
-        }
+        .header-left, .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
 
         .rainbow-input-group { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .rainbow-label { padding: 0 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
@@ -58,7 +46,6 @@
 
         .btn-icon { background: transparent; border: 1px solid #666; color: #ddd; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .btn-icon:active { background: #555; }
-        
         .btn-font { width: 32px; height: 32px; font-size: 14px; font-weight: bold; border-radius: 4px; }
 
         .live-switch { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111; height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s; flex-shrink: 0; }
@@ -68,110 +55,49 @@
         .live-text { font-size: 12px; color: #aaa; font-weight: bold; white-space: nowrap; }
         .live-switch.active .live-text { color: #fff; }
 
-        /* Mobile Optimization for Header Scrolling */
         @media (max-width: 480px) {
-            #header {
-                justify-content: flex-start;
-                overflow-x: auto;
-                overflow-y: hidden;
-                -webkit-overflow-scrolling: touch;
-                gap: 15px;
-                padding-left: 10px;
-                padding-right: 10px;
-            }
-            #header::-webkit-scrollbar { display: none; }
-            #header { -ms-overflow-style: none; scrollbar-width: none; }
-
-            .header-left { gap: 5px; }
-            .header-right { gap: 5px; }
+            #header { justify-content: flex-start; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; gap: 15px; padding-left: 10px; padding-right: 10px; }
+            #header::-webkit-scrollbar { display: none; } #header { -ms-overflow-style: none; scrollbar-width: none; }
+            .header-left { gap: 5px; } .header-right { gap: 5px; }
             .rainbow-label { padding: 0 5px; font-size: 12px; }
-            .theme-umpire .rainbow-input { width: 50px; font-size: 13px; }
-            .theme-court .rainbow-input { width: 30px; font-size: 13px; }
-            .live-text { display: block; } 
-            .live-switch { padding: 0 8px; }
+            .theme-umpire .rainbow-input { width: 50px; font-size: 13px; } .theme-court .rainbow-input { width: 30px; font-size: 13px; }
+            .live-text { display: block; } .live-switch { padding: 0 8px; }
             .btn-icon { width: 32px; height: 32px; font-size: 14px; }
             #match-counter { font-size: 14px !important; margin-right: 0; white-space: nowrap; }
         }
 
-        /* Action Bar */
         #action-bar { height: 60px; background: #222; display: flex; justify-content: space-between; align-items: center; padding: 0 2px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .btn-act { 
-            flex: 1; margin: 0 3px; height: 44px; border-radius: 6px; border: none; 
-            color: white; font-weight: bold; font-size: 15px; 
-            cursor: pointer; display: flex; align-items: center; justify-content: center; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-        .btn-undo { background: #546e7a; }
-        .btn-swap { background: #f57c00; } 
-        .btn-log  { background: #43a047; }
-        .btn-end  { background: #d32f2f; border: 1px solid #ff8a80; }
+        .btn-act { flex: 1; margin: 0 3px; height: 44px; border-radius: 6px; border: none; color: white; font-weight: bold; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .btn-undo { background: #546e7a; } .btn-swap { background: #f57c00; } .btn-log  { background: #43a047; } .btn-end  { background: #d32f2f; border: 1px solid #ff8a80; }
 
-        /* Modal & Toast */
         #universal-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .u-modal-box { background: #333; padding: 25px; border-radius: 12px; border: 1px solid #555; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .u-modal-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #ffeb3b; }
-        .u-modal-msg { font-size: 16px; color: #ddd; margin-bottom: 20px; line-height: 1.5; white-space: pre-wrap; }
+        .u-modal-msg { font-size: 16px; color: #ddd; margin-bottom: 20px; line-height: 1.5; white-space: pre-wrap; text-align: center; }
         .u-modal-input { width: 100%; padding: 10px; margin-bottom: 20px; font-size: 18px; background: #222; color: white; border: 1px solid #666; border-radius: 5px; text-align: center; box-sizing: border-box; display: none; }
         .u-btn-group { display: flex; gap: 10px; justify-content: center; }
         .u-btn { flex: 1; padding: 12px; border-radius: 6px; border: none; font-size: 16px; cursor: pointer; font-weight: bold; }
-        .u-btn-cancel { background: #555; color: white; }
-        .u-btn-confirm { background: #00c853; color: white; }
-        .u-btn-single { width: 100%; max-width: 200px; background: #0288d1; }
+        .u-btn-cancel { background: #555; color: white; } .u-btn-confirm { background: #00c853; color: white; } .u-btn-single { width: 100%; max-width: 200px; background: #0288d1; }
 
         #toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px; font-size: 14px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s; border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         #toast-msg.show { opacity: 1; }
 
-        /* Court Area */
         #court { flex: 1; display: flex; position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .side { 
-            flex: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center;
-            position: relative; cursor: pointer; user-select: none; 
-            transition: background-color 0.2s; padding: 15px 0; overflow: hidden; min-height: 300px;
-        }
-        .side.team-a { background-color: var(--color-left); } 
-        .side.team-b { background-color: var(--color-right); }
-        
-        /* High Contrast Mode Styles */
-        body.high-contrast .side.team-a { background-color: #222 !important; border-right: 1px solid #555; }
-        body.high-contrast .side.team-b { background-color: #555 !important; }
-        
+        .side { flex: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative; cursor: pointer; user-select: none; transition: background-color 0.2s; padding: 15px 0; overflow: hidden; min-height: 300px; }
+        .side.team-a { background-color: var(--color-left); } .side.team-b { background-color: var(--color-right); }
+        body.high-contrast .side.team-a { background-color: #222 !important; border-right: 1px solid #555; } body.high-contrast .side.team-b { background-color: #555 !important; }
         .score-bg-layer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; width: 100%; text-align: center; opacity: 0.6; }
         .score { font-size: var(--score-size); font-weight: bold; line-height: 1; pointer-events: none; transition: font-size 0.2s; text-shadow: 0 0 20px rgba(0,0,0,0.3); }
-        
         .team-name-wrapper { width: 100%; text-align: center; z-index: 10; min-height: 50px; }
         .team-name { font-size: 32px; font-weight: bold; pointer-events: auto; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
-        
         .bottom-info-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; z-index: 10; min-height: 100px; justify-content: flex-end; }
-        
-        .server-indicator { 
-            font-size: 16px; padding: 6px 15px; border-radius: 20px; margin-bottom: 8px; 
-            pointer-events: auto; backdrop-filter: blur(2px); transition: all 0.2s; 
-            font-weight: bold; border: 1px solid rgba(255,255,255,0.3);
-            display: block; opacity: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
+        .server-indicator { font-size: 16px; padding: 6px 15px; border-radius: 20px; margin-bottom: 8px; pointer-events: auto; backdrop-filter: blur(2px); transition: all 0.2s; font-weight: bold; border: 1px solid rgba(255,255,255,0.3); display: block; opacity: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .side.serving .server-indicator { background: rgba(255,255,255,0.9); color: #000; transform: scale(1.05); border-color: white; }
         .side:not(.serving) .server-indicator { background: rgba(0,0,0,0.5); color: #aaa; border-color: #555; }
-
-        .position-box { 
-            width: 92%; height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); 
-            background: rgba(0,0,0,0.4); pointer-events: auto; flex-shrink: 0;
-            backdrop-filter: blur(2px); margin-bottom: 20px; overflow: hidden;
-        }
-        
-        /* 固定名單模式樣式 (強制) */
-        .position-box { flex-direction: row-reverse; }
-        .pos-item { 
-            flex: 1; border-left: 1px solid rgba(255,255,255,0.5); border-right: none;
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 14px; font-weight: bold; color: white; 
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
-            cursor: pointer; position: relative; 
-        }
-        .pos-item:first-child { border-left: none; }
-        .pos-item:last-child { border-left: 1px solid rgba(255,255,255,0.5); }
-        .pos-item:active { background: rgba(255,255,255,0.2); }
-        .pos-item.active { background: rgba(255,255,255,0.95); color: #000; font-size: 20px; text-shadow: none; border: 2px solid #fff; box-sizing: border-box; }
-        
+        .position-box { width: 92%; height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); background: rgba(0,0,0,0.4); pointer-events: auto; flex-shrink: 0; backdrop-filter: blur(2px); margin-bottom: 20px; overflow: hidden; flex-direction: row-reverse; }
+        .pos-item { flex: 1; border-left: 1px solid rgba(255,255,255,0.5); border-right: none; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; position: relative; }
+        .pos-item:first-child { border-left: none; } .pos-item:last-child { border-left: 1px solid rgba(255,255,255,0.5); }
+        .pos-item:active { background: rgba(255,255,255,0.2); } .pos-item.active { background: rgba(255,255,255,0.95); color: #000; font-size: 20px; text-shadow: none; border: 2px solid #fff; box-sizing: border-box; }
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
 
@@ -183,14 +109,10 @@
         .toggle-checkbox { width: 20px; height: 20px; cursor: pointer; }
         input[type=range] { width: 100%; margin: 10px 0; }
         .manual-score-input { width: 80px; font-size: 24px; font-weight: bold; text-align: center; background: #222; border: 2px solid #555; color: white; border-radius: 8px; padding: 5px; }
-
         .log-item { background: #333; margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #555; display: flex; justify-content: space-between; align-items: center; }
         .log-info { font-size: 14px; color: #ddd; }
         .log-status { font-size: 12px; margin-left: 10px; padding: 3px 8px; border-radius: 4px; }
-        .status-pending { background: #555; color: #ccc; }
-        .status-sending { background: #ff9800; color: #000; }
-        .status-done { background: #4caf50; color: #fff; }
-        .status-error { background: #f44336; color: #fff; }
+        .status-pending { background: #555; color: #ccc; } .status-sending { background: #ff9800; color: #000; } .status-done { background: #4caf50; color: #fff; } .status-error { background: #f44336; color: #fff; }
     </style>
 </head>
 <body>
@@ -220,7 +142,6 @@
                 <div class="rainbow-label">場地</div>
                 <input type="number" id="courtNum" class="rainbow-input" value="1" readonly>
             </div>
-            <!-- 黑白對比按鈕 -->
             <button class="btn-icon" onclick="toggleContrast()" title="黑白高對比" style="margin-left:5px;">🌗</button>
         </div>
         
@@ -231,9 +152,11 @@
             </div>
             <span id="match-counter" style="color:yellow; font-weight:bold; font-size:18px;">G1</span>
             
-            <!-- 分數大小調整按鈕 -->
             <button class="btn-icon btn-font" onclick="adjustScoreSize(10)">A+</button>
             <button class="btn-icon btn-font" onclick="adjustScoreSize(-10)">A-</button>
+            
+            <!-- V58: Manual Voice Button -->
+            <button class="btn-icon" onclick="speakCurrentScore()" title="語音報分">🔊</button>
 
             <button class="btn-icon" onclick="toggleFullScreen()" title="全螢幕">⛶</button>
             <button class="btn-icon" onclick="openSettings()">⚙</button>
@@ -287,6 +210,39 @@
             </div>
         </div>
 
+        <!-- V58 Voice Settings -->
+        <div class="row" style="border:1px solid #76ff03; padding:10px; border-radius:5px; margin-bottom:15px;">
+            <label style="color:#76ff03; font-weight:bold;">🔊 語音報分設定</label>
+            <div class="switch-row">
+                <label style="color:white; margin:0;">啟用自動語音</label>
+                <input type="checkbox" id="voiceToggle" class="toggle-checkbox" onchange="saveSettings()">
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <div style="flex:1;">
+                    <label>語言</label>
+                    <select id="voiceLang" class="full-width" onchange="populateVoiceList(); saveSettings();">
+                        <option value="zh-TW">中文 (台灣)</option>
+                        <option value="en-US">English (US)</option>
+                    </select>
+                </div>
+                <div style="flex:1;">
+                    <label>口音/聲源</label>
+                    <select id="voiceURI" class="full-width" onchange="saveSettings()"></select>
+                </div>
+            </div>
+
+            <div style="margin-top:10px;">
+                <label>語速: <span id="voiceSpeedVal">1.0</span>x</label>
+                <input type="range" id="voiceSpeed" min="0.5" max="2.0" step="0.1" value="1.0" oninput="document.getElementById('voiceSpeedVal').innerText=this.value; saveSettings();">
+            </div>
+
+            <div class="switch-row">
+                <label style="color:#ccc; font-size:14px; margin:0;">唸出發球員姓名</label>
+                <input type="checkbox" id="voiceServerName" class="toggle-checkbox" checked onchange="saveSettings()">
+            </div>
+        </div>
+
         <div class="row" style="border:1px solid #7c4dff; padding:10px; border-radius:5px;">
             <label style="color:#b388ff; font-weight:bold;">🔄 自動換點 (Switch Point)</label>
             <input id="switchMatchPoints" class="full-width" placeholder="例如: 21,42,63,84,105" style="margin-top:5px;">
@@ -296,7 +252,6 @@
             </div>
         </div>
 
-        <!-- 補分規則區塊 -->
         <div class="row" style="border:1px solid #00bcd4; padding:10px; border-radius:5px; margin-top:15px;">
             <label style="color:#00bcd4; font-weight:bold;">📈 落後補分規則 (Catch-up)</label>
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
@@ -306,7 +261,6 @@
             <input id="catchUpPoints" class="full-width" placeholder="預設: 10,20,30,40" value="10,20,30,40">
         </div>
 
-        <!-- 換邊分數 (移到這裡) -->
         <div class="row"><label>換邊分數</label><input id="swapPoints" class="full-width" value="11"></div>
 
         <div class="switch-row">
@@ -335,7 +289,6 @@
         <div class="row"><label>B隊名稱 (。分下一點)</label><input id="teamB_name" class="full-width" value="藍隊;藍二隊"></div>
         <div class="row"><label>B隊員 (例如: 張,林; 趙,錢)</label><input id="teamB_players" class="full-width" value="張,林"></div>
         
-        <!-- 發球方 (邏輯已修改為不重置) -->
         <div class="row"><label>發球方 (僅切換球權，不歸零)</label><select id="initServer" class="full-width" onchange="updateInitServer(this.value)"><option value="A">A隊先發</option><option value="B">B隊先發</option></select></div>
         
         <div class="row" style="border-top:1px solid #555; margin-top:15px; padding-top:15px;">
@@ -386,6 +339,11 @@
         };
         let historyStack = []; let pendingRecords = []; 
         let isVibrationEnabled = true;
+        
+        // V58 Voice Variables
+        let debounceTimer = null;
+        let synth = window.speechSynthesis;
+        let voices = [];
 
         const getEl = (id) => document.getElementById(id);
 
@@ -396,8 +354,96 @@
             setupLongPress(getEl('name-box-right'), () => editTeamName('right'));
             bindClickPoint('area-left', 'left');
             bindClickPoint('area-right', 'right');
+            initVoice(); // Initialize Voice
             render();
         });
+
+        // V58 Voice Functions
+        function initVoice() {
+            if (!synth) return;
+            populateVoiceList();
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = populateVoiceList;
+            }
+        }
+
+        function populateVoiceList() {
+            voices = synth.getVoices();
+            const lang = getEl('voiceLang').value;
+            const select = getEl('voiceURI');
+            const savedURI = select.dataset.saved; // Get saved value if any
+            
+            select.innerHTML = '';
+            
+            const filteredVoices = voices.filter(v => v.lang.includes(lang.replace('_', '-')));
+            
+            filteredVoices.forEach(v => {
+                const option = document.createElement('option');
+                option.textContent = `${v.name} (${v.lang})`;
+                option.value = v.voiceURI;
+                select.appendChild(option);
+            });
+
+            // Restore selection if exists
+            if (savedURI && filteredVoices.some(v => v.voiceURI === savedURI)) {
+                select.value = savedURI;
+            }
+        }
+
+        function speakCurrentScore() {
+            if (!synth) return;
+            
+            // Cancel current speech
+            synth.cancel();
+
+            // Logic: Server Score First
+            let isAServer = state.serverTeam === 'A';
+            let serverScore = isAServer ? state.scoreA : state.scoreB;
+            let receiverScore = isAServer ? state.scoreB : state.scoreA;
+            
+            // Get Server Name
+            let serverIdx = isAServer ? state.serverIdxA : state.serverIdxB;
+            let serverName = getPlayerName(state.serverTeam, serverIdx);
+            
+            let lang = getEl('voiceLang').value;
+            let text = "";
+
+            if (lang === 'zh-TW') {
+                text = `${serverScore} 比 ${receiverScore}`;
+                if (getEl('voiceServerName').checked && serverName) {
+                    text += `, ${serverName} 發球`;
+                }
+            } else {
+                text = `${serverScore} ${receiverScore}`;
+                if (getEl('voiceServerName').checked && serverName) {
+                    text += `, ${serverName} to serve`;
+                }
+            }
+
+            let utterance = new SpeechSynthesisUtterance(text);
+            
+            // Apply Settings
+            let selectedURI = getEl('voiceURI').value;
+            let selectedVoice = voices.find(v => v.voiceURI === selectedURI);
+            if (selectedVoice) utterance.voice = selectedVoice;
+            
+            utterance.rate = parseFloat(getEl('voiceSpeed').value);
+            
+            synth.speak(utterance);
+        }
+
+        function scheduleAnnouncement() {
+            if (!getEl('voiceToggle').checked) return;
+            
+            // Cancel any pending announcement
+            clearTimeout(debounceTimer);
+            synth.cancel(); 
+
+            // Wait 1 second (1000ms) after last interaction
+            debounceTimer = setTimeout(() => {
+                speakCurrentScore();
+            }, 1000);
+        }
 
         function getFormattedTime() {
             const now = new Date();
@@ -532,7 +578,13 @@
                     switchMatchPoints: getEl('switchMatchPoints').value,
                     resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
                     catchUpToggle: getEl('catchUpToggle').checked,
-                    catchUpPoints: getEl('catchUpPoints').value
+                    catchUpPoints: getEl('catchUpPoints').value,
+                    // V58 Voice Settings
+                    voiceToggle: getEl('voiceToggle').checked,
+                    voiceLang: getEl('voiceLang').value,
+                    voiceURI: getEl('voiceURI').value,
+                    voiceSpeed: getEl('voiceSpeed').value,
+                    voiceServerName: getEl('voiceServerName').checked
                 }
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -562,6 +614,18 @@
                     
                     if (data.inputs.catchUpToggle !== undefined) getEl('catchUpToggle').checked = data.inputs.catchUpToggle;
                     if (data.inputs.catchUpPoints) getEl('catchUpPoints').value = data.inputs.catchUpPoints;
+
+                    // V58 Load Voice Settings
+                    if(data.inputs.voiceToggle !== undefined) getEl('voiceToggle').checked = data.inputs.voiceToggle;
+                    if(data.inputs.voiceLang) getEl('voiceLang').value = data.inputs.voiceLang;
+                    if(data.inputs.voiceSpeed) {
+                        getEl('voiceSpeed').value = data.inputs.voiceSpeed;
+                        getEl('voiceSpeedVal').innerText = data.inputs.voiceSpeed;
+                    }
+                    if(data.inputs.voiceServerName !== undefined) getEl('voiceServerName').checked = data.inputs.voiceServerName;
+                    
+                    // Voice URI needs to be set after voices load, so save it to dataset for now
+                    if(data.inputs.voiceURI) getEl('voiceURI').dataset.saved = data.inputs.voiceURI;
                 }
                 getEl('log-container').innerHTML = '';
                 pendingRecords.forEach(r => renderLogItem(r));
@@ -699,6 +763,8 @@
             checkSwap(); 
             checkMatchPoint();
             render();
+            // V58 Schedule Announcement
+            scheduleAnnouncement();
         }
 
         function checkMatchPoint() {
@@ -799,7 +865,15 @@
         function getPlayerList(k) { return getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/).map(s => s.trim()).filter(s => s); }
         function getCurrentPlayersString(teamKey) { return getSegmentedData(`team${teamKey}_players`, currentMatchIdx); }
 
-        function undoPoint() { if (historyStack.length) { state = historyStack.pop(); render(); } }
+        function undoPoint() { 
+            if (historyStack.length) { 
+                state = historyStack.pop(); 
+                render(); 
+                // Cancel any pending speech if undo is clicked
+                if(synth) synth.cancel();
+                clearTimeout(debounceTimer);
+            } 
+        }
         function saveState() { let copy = JSON.parse(JSON.stringify(state)); historyStack.push(copy); if(historyStack.length>50) historyStack.shift(); }
         
         function checkSwap() {
@@ -821,6 +895,7 @@
                 swappedPoints: [], switchedMatchPoints: []
             }; 
             historyStack = []; render(); saveToLocal(); 
+            if(synth) synth.cancel(); // Stop speaking
         }
 
         function resetMatchCounter() {
@@ -948,11 +1023,11 @@
 
         function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
         
-        // V57: Live Toggle Logic
+        // V57: Live Toggle Logic (Split lines in confirmation)
         function handleLiveClick() {
             if (isLive) {
-                // Confirm Disconnect
-                safeConfirm("正在直播中！請確認是否要讓目前的直播分數下架？", () => {
+                // Confirm Disconnect with two lines centered
+                safeConfirm("正在直播中！\n請確認是否要讓目前的直播分數下架？", () => {
                     const cNum = getEl('courtNum').value;
                     if(db && cNum) {
                         db.ref('courts/court_' + cNum).remove();
@@ -1007,7 +1082,13 @@
                 switchMatchPoints: getEl('switchMatchPoints').value,
                 resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
                 catchUpToggle: getEl('catchUpToggle').checked,
-                catchUpPoints: getEl('catchUpPoints').value
+                catchUpPoints: getEl('catchUpPoints').value,
+                // V58 Save Snapshot
+                voiceToggle: getEl('voiceToggle').checked,
+                voiceLang: getEl('voiceLang').value,
+                voiceURI: getEl('voiceURI').value,
+                voiceSpeed: getEl('voiceSpeed').value,
+                voiceServerName: getEl('voiceServerName').checked
             };
             getEl('history-panel').classList.remove('panel-visible'); // Close history
             getEl('settings-panel').classList.add('panel-visible');
@@ -1022,6 +1103,13 @@
                 getEl('resetScoreOnSwitch').checked = settingsSnapshot.resetScoreOnSwitch;
                 getEl('catchUpToggle').checked = settingsSnapshot.catchUpToggle;
                 getEl('catchUpPoints').value = settingsSnapshot.catchUpPoints || "10,20,30,40";
+                
+                // V58 Cancel Snapshot
+                getEl('voiceToggle').checked = settingsSnapshot.voiceToggle;
+                getEl('voiceLang').value = settingsSnapshot.voiceLang;
+                getEl('voiceURI').value = settingsSnapshot.voiceURI;
+                getEl('voiceSpeed').value = settingsSnapshot.voiceSpeed;
+                getEl('voiceServerName').checked = settingsSnapshot.voiceServerName;
             }
             getEl('settings-panel').classList.remove('panel-visible');
             render(); 
