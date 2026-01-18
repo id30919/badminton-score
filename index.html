@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V60 (語音修正版)</title>
+    <title>羽球主審 V61 (滑桿修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -345,7 +345,8 @@
         
         <div class="row" style="background:#333; padding:10px; border-radius:5px; border:1px solid #555;">
             <label style="color:#ffeb3b; font-weight:bold;">🔠 分數大小: <span id="size-val">250</span>px</label>
-            <input type="range" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
+            <!-- Fixed ID for font size slider -->
+            <input type="range" id="fontSizeSlider" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
         
         <div class="row">
@@ -540,10 +541,12 @@
             document.body.classList.toggle('high-contrast');
         }
 
+        // V61: Fix slider conflict by ID
         function adjustScoreSize(delta) {
             currentScoreSize = Math.max(100, Math.min(600, currentScoreSize + delta));
             changeScoreSize(currentScoreSize);
-            document.querySelector('input[type=range]').value = currentScoreSize;
+            const slider = document.getElementById('fontSizeSlider');
+            if(slider) slider.value = currentScoreSize;
         }
 
         function logGame() {
@@ -909,9 +912,11 @@
         }
 
         function setServer(teamKey, playerIdx) {
+            // FIX V55: Update the server team AND index
             if (teamKey === 'A') state.serverIdxA = playerIdx; 
             else state.serverIdxB = playerIdx;
             
+            // Force server team switch to ensure highlight moves
             state.serverTeam = teamKey;
 
             doVibrate(30); 
@@ -919,6 +924,7 @@
             showToast(`已指定發球：${getPlayerName(teamKey, playerIdx)}`);
         }
 
+        // Feature: Init Server Change (No Reset)
         function updateInitServer(val) {
             state.serverTeam = val;
             saveToLocal();
@@ -1096,6 +1102,14 @@
 
         function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
         
+        // V61: Fix slider conflict by ID
+        function adjustScoreSize(delta) {
+            currentScoreSize = Math.max(100, Math.min(600, currentScoreSize + delta));
+            changeScoreSize(currentScoreSize);
+            const slider = document.getElementById('fontSizeSlider');
+            if(slider) slider.value = currentScoreSize;
+        }
+
         function handleLiveClick() {
             if (isLive) {
                 // Confirm Disconnect with two lines centered
