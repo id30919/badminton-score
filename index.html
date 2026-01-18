@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V59 (語音優化版)</title>
+    <title>羽球主審 V60 (語音修正版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -278,7 +278,7 @@
             </div>
         </div>
 
-        <!-- V59 Voice Settings (Fixed Interactions) -->
+        <!-- V60 Voice Settings (Removed auto-save to fix UX) -->
         <div class="row" style="border:1px solid #76ff03; padding:10px; border-radius:5px; margin-bottom:15px;">
             <label style="color:#76ff03; font-weight:bold;">🔊 語音報分設定</label>
             <div class="switch-row">
@@ -305,7 +305,7 @@
                     <label>語速: <span id="voiceSpeedVal">1.0</span>x</label>
                     <input type="range" id="voiceSpeed" min="0.5" max="2.0" step="0.1" value="1.0" oninput="document.getElementById('voiceSpeedVal').innerText=this.value;">
                 </div>
-                <!-- V59 Test Button -->
+                <!-- V60 Test Button -->
                 <button onclick="testVoice()" style="background:#0288d1; border:none; color:white; border-radius:4px; padding:5px 12px; height:36px; font-weight:bold; cursor:pointer;">🔊 測試</button>
             </div>
 
@@ -420,25 +420,24 @@
 
         window.addEventListener('load', () => {
             loadFromLocal();
-            // Setup generic long press for Team Names
             setupLongPress(getEl('name-box-left'), () => editTeamName('left'));
             setupLongPress(getEl('name-box-right'), () => editTeamName('right'));
             bindClickPoint('area-left', 'left');
             bindClickPoint('area-right', 'right');
-            initVoice(); 
+            
+            // Fix V60: Ensure voices load on some browsers
+            if (synth.onvoiceschanged !== undefined) {
+                synth.onvoiceschanged = populateVoiceList;
+            }
+            // Try immediately too
+            setTimeout(populateVoiceList, 100);
+            
             render();
         });
 
-        // V59 Voice Functions
-        function initVoice() {
-            if (!synth) return;
-            populateVoiceList();
-            if (speechSynthesis.onvoiceschanged !== undefined) {
-                speechSynthesis.onvoiceschanged = populateVoiceList;
-            }
-        }
-
+        // V60 Voice Functions
         function populateVoiceList() {
+            if(!synth) return;
             voices = synth.getVoices();
             const lang = getEl('voiceLang').value;
             const select = getEl('voiceURI');
@@ -446,6 +445,7 @@
             
             select.innerHTML = '';
             
+            // Normalize lang code (zh-TW, en-US)
             const filteredVoices = voices.filter(v => v.lang.includes(lang.replace('_', '-')));
             
             filteredVoices.forEach(v => {
@@ -468,7 +468,8 @@
             let text = (lang === 'zh-TW') ? "語音測試，目前比分 10 比 8" : "Voice check, score 21 19";
             
             let utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang; // Fix V59: Explicitly set lang
+            // Fix V60: Force language tag to fix numbers
+            utterance.lang = lang; 
             
             let selectedURI = getEl('voiceURI').value;
             let selectedVoice = voices.find(v => v.voiceURI === selectedURI);
@@ -498,7 +499,6 @@
                     text += `, ${serverName} 發球`;
                 }
             } else {
-                // Fix V59: Ensure distinct numbers for English
                 text = `Score ${serverScore} ${receiverScore}`;
                 if (getEl('voiceServerName').checked && serverName) {
                     text += `, ${serverName} to serve`;
@@ -506,7 +506,8 @@
             }
 
             let utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang; // Fix V59
+            // Fix V60: Force language tag
+            utterance.lang = lang;
             
             let selectedURI = getEl('voiceURI').value;
             let selectedVoice = voices.find(v => v.voiceURI === selectedURI);
@@ -657,7 +658,7 @@
                     resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
                     catchUpToggle: getEl('catchUpToggle').checked,
                     catchUpPoints: getEl('catchUpPoints').value,
-                    // V59 Voice Settings
+                    // V60 Voice Settings
                     voiceToggle: getEl('voiceToggle').checked,
                     voiceLang: getEl('voiceLang').value,
                     voiceURI: getEl('voiceURI').value,
@@ -693,7 +694,7 @@
                     if (data.inputs.catchUpToggle !== undefined) getEl('catchUpToggle').checked = data.inputs.catchUpToggle;
                     if (data.inputs.catchUpPoints) getEl('catchUpPoints').value = data.inputs.catchUpPoints;
 
-                    // V59 Load Voice Settings
+                    // V60 Load Voice Settings
                     if(data.inputs.voiceToggle !== undefined) getEl('voiceToggle').checked = data.inputs.voiceToggle;
                     if(data.inputs.voiceLang) getEl('voiceLang').value = data.inputs.voiceLang;
                     if(data.inputs.voiceSpeed) {
@@ -723,6 +724,7 @@
             const confirmBtn = getEl('u-modal-confirm-btn');
             const cancelBtn = getEl('universal-modal').querySelector('.u-btn-cancel');
 
+            // Reset buttons style
             confirmBtn.className = 'u-btn u-btn-confirm';
             cancelBtn.style.display = 'block';
 
@@ -743,6 +745,7 @@
             getEl('universal-modal').style.display = 'flex';
         }
 
+        // Single button info modal
         function showInfoModal(msg) {
             getEl('u-modal-title').innerText = "系統通知"; 
             getEl('u-modal-msg').innerText = msg;
@@ -1028,11 +1031,13 @@
             renderRosterMode(boxR, isA_Left ? 'B' : 'A');
 
             // Feature: Precise Player Highlight
+            // Remove all active states first
             document.querySelectorAll('.pos-item').forEach(el => el.classList.remove('active'));
             
             let activeTeamSide = (state.serverTeam === state.leftTeam) ? 'left' : 'right';
             let currentIdx = (state.serverTeam === 'A') ? state.serverIdxA : state.serverIdxB;
             
+            // Reconstruct the ID based on renderRosterMode logic
             let targetId = `pos-box-${activeTeamSide}-${currentIdx}`;
             const targetEl = document.getElementById(targetId);
             if (targetEl) targetEl.classList.add('active'); 
@@ -1093,6 +1098,7 @@
         
         function handleLiveClick() {
             if (isLive) {
+                // Confirm Disconnect with two lines centered
                 safeConfirm("正在直播中！\n請確認是否要讓目前的直播分數下架？", () => {
                     const cNum = getEl('courtNum').value;
                     if(db && cNum) {
@@ -1103,6 +1109,7 @@
                     showToast("🗑️ 直播已下架");
                 });
             } else {
+                // Connect with "直播設定" title
                 safePrompt("請輸入場地編號", getEl('courtNum').value, (val) => {
                     if(!val) { showToast('請輸入場地'); return; }
                     getEl('courtNum').value = val;
@@ -1148,6 +1155,7 @@
                 resetScoreOnSwitch: getEl('resetScoreOnSwitch').checked,
                 catchUpToggle: getEl('catchUpToggle').checked,
                 catchUpPoints: getEl('catchUpPoints').value,
+                // V60 Save Snapshot
                 voiceToggle: getEl('voiceToggle').checked,
                 voiceLang: getEl('voiceLang').value,
                 voiceURI: getEl('voiceURI').value,
@@ -1168,6 +1176,7 @@
                 getEl('catchUpToggle').checked = settingsSnapshot.catchUpToggle;
                 getEl('catchUpPoints').value = settingsSnapshot.catchUpPoints || "10,20,30,40";
                 
+                // V60 Cancel Snapshot
                 getEl('voiceToggle').checked = settingsSnapshot.voiceToggle;
                 getEl('voiceLang').value = settingsSnapshot.voiceLang;
                 getEl('voiceURI').value = settingsSnapshot.voiceURI;
