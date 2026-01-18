@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V56 (滑動優化版)</title>
+    <title>羽球主審 V57 (直播控制優化版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -39,18 +39,12 @@
             flex-shrink: 0; 
             z-index: 100; 
             border-bottom: 1px solid #444; 
-            
-            /* Desktop default */
             justify-content: space-between; 
             overflow: hidden;
         }
 
         .header-left, .header-right { 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            white-space: nowrap; 
-            flex-shrink: 0; /* Prevent shrinking */
+            display: flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; 
         }
 
         .rainbow-input-group { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
@@ -77,32 +71,22 @@
         /* Mobile Optimization for Header Scrolling */
         @media (max-width: 480px) {
             #header {
-                justify-content: flex-start; /* Start from left */
-                overflow-x: auto;          /* Enable horizontal scroll */
-                overflow-y: hidden;        /* Disable vertical scroll */
-                -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
-                gap: 15px;                 /* Space between left and right groups */
+                justify-content: flex-start;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                gap: 15px;
                 padding-left: 10px;
                 padding-right: 10px;
             }
-            
-            /* Hide scrollbar for Chrome/Safari/Opera */
-            #header::-webkit-scrollbar {
-                display: none;
-            }
-            
-            /* Hide scrollbar for IE, Edge and Firefox */
-            #header {
-                -ms-overflow-style: none;  /* IE and Edge */
-                scrollbar-width: none;  /* Firefox */
-            }
+            #header::-webkit-scrollbar { display: none; }
+            #header { -ms-overflow-style: none; scrollbar-width: none; }
 
             .header-left { gap: 5px; }
             .header-right { gap: 5px; }
             .rainbow-label { padding: 0 5px; font-size: 12px; }
             .theme-umpire .rainbow-input { width: 50px; font-size: 13px; }
             .theme-court .rainbow-input { width: 30px; font-size: 13px; }
-            /* Show live text even on mobile if scrolled */
             .live-text { display: block; } 
             .live-switch { padding: 0 8px; }
             .btn-icon { width: 32px; height: 32px; font-size: 14px; }
@@ -641,7 +625,9 @@
             onModalCancel = null;
         }
         function safeConfirm(msg, yesCallback, noCallback) { showModal("確認", msg, false, yesCallback, "", noCallback); }
-        function safePrompt(title, defaultValue, callback) { showModal("編輯", title, true, callback, defaultValue); }
+        function safePrompt(title, defaultValue, callback, mainTitle = "編輯") { 
+            showModal(mainTitle, title, true, callback, defaultValue); 
+        }
 
         function toggleFullScreen() {
             if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => showToast("無法全螢幕")); } 
@@ -962,19 +948,33 @@
 
         function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
         
+        // V57: Live Toggle Logic
         function handleLiveClick() {
-            if (isLive) { isLive = false; updateLiveUI(); } 
-            else {
+            if (isLive) {
+                // Confirm Disconnect
+                safeConfirm("正在直播中！請確認是否要讓目前的直播分數下架？", () => {
+                    const cNum = getEl('courtNum').value;
+                    if(db && cNum) {
+                        db.ref('courts/court_' + cNum).remove();
+                    }
+                    isLive = false;
+                    updateLiveUI();
+                    showToast("🗑️ 直播已下架");
+                });
+            } else {
+                // Connect with "直播設定" title
                 safePrompt("請輸入場地編號", getEl('courtNum').value, (val) => {
                     if(!val) { showToast('請輸入場地'); return; }
                     getEl('courtNum').value = val;
                     setTimeout(() => {
                         safePrompt("請輸入主審姓名", getEl('umpireName').value, (uVal) => {
                             getEl('umpireName').value = uVal || "城隍爺";
-                            isLive = true; updateLiveUI(); syncToFirebase();
-                        });
+                            isLive = true;
+                            updateLiveUI();
+                            syncToFirebase();
+                        }, "直播設定");
                     }, 200);
-                });
+                }, "直播設定");
             }
         }
         
