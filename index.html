@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V62 (高對比配色版)</title>
+    <title>羽球主審 V63 (視覺優化版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
     <meta name="apple-mobile-web-app-title" content="羽球計分">
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -24,33 +23,45 @@
         }
 
         body { 
-            margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; 
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; 
             height: 100dvh; 
-            display: flex; flex-direction: column; overflow: hidden; 
+            display: flex; flex-direction: column; overflow: hidden;
         }
         
         /* Header */
         #header { 
-            height: var(--header-height); background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
-            border-bottom: 1px solid #444; padding-left: 60px; 
+            height: var(--header-height);
+            background: #333; display: flex; justify-content: space-between; align-items: center; padding: 0 5px; flex-shrink: 0; z-index: 100; 
+            border-bottom: 1px solid #444;
+            padding-left: 60px; 
         }
         .header-left, .header-right { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 
-        .rainbow-input-group { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .rainbow-label { padding: 0 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-        .rainbow-input { border: none; color: white; padding: 0; height: 100%; text-align: center; font-weight: bold; font-size: 14px; outline: none; cursor: pointer; font-family: 'Segoe UI', sans-serif; user-select: none; }
+        .rainbow-input-group { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden;
+            height: var(--ui-element-height); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .rainbow-label { padding: 0 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .rainbow-input { border: none; color: white; padding: 0; height: 100%; text-align: center;
+            font-weight: bold; font-size: 14px; outline: none; cursor: pointer; font-family: 'Segoe UI', sans-serif; user-select: none;
+        }
         
         .theme-umpire .rainbow-label { background: #7b1fa2; }
         .theme-umpire .rainbow-input { background: #4a148c; width: 70px; }
         .theme-court .rainbow-label { background: #00796b; }
         .theme-court .rainbow-input { background: #004d40; width: 40px; }
 
-        .btn-icon { background: transparent; border: 1px solid #666; color: #ddd; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .btn-icon { background: transparent; border: 1px solid #666; color: #ddd; width: 36px;
+            height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
         .btn-icon:active { background: #555; }
         
         .btn-font { width: 32px; height: 32px; font-size: 14px; font-weight: bold; border-radius: 4px; }
 
-        .live-switch { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111; height: var(--ui-element-height); box-sizing: border-box; transition: all 0.3s; flex-shrink: 0; }
+        .live-switch { display: flex;
+            align-items: center; gap: 6px; cursor: pointer; padding: 0 10px; border-radius: 20px; border: 1px solid #555; background: #111; height: var(--ui-element-height);
+            box-sizing: border-box; transition: all 0.3s; flex-shrink: 0; }
         .live-switch.active { background: rgba(0, 200, 0, 0.2); border-color: #00ff00; }
         .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; transition: all 0.3s; }
         .live-switch.active .live-dot { background: #00ff00; box-shadow: 0 0 5px #00ff00; }
@@ -82,11 +93,15 @@
         }
 
         /* Action Bar */
-        #action-bar { height: 60px; background: #222; display: flex; justify-content: space-between; align-items: center; padding: 0 2px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        #action-bar { height: 60px;
+            background: #222; display: flex; justify-content: space-between; align-items: center; padding: 0 2px; flex-shrink: 0; z-index: 100; border-bottom: 2px solid #444;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .btn-act { 
-            flex: 1; margin: 0 3px; height: 44px; border-radius: 6px; border: none; 
+            flex: 1;
+            margin: 0 3px; height: 44px; border-radius: 6px; border: none; 
             color: white; font-weight: bold; font-size: 15px; 
-            cursor: pointer; display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; display: flex;
+            align-items: center; justify-content: center; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         .btn-undo { background: #546e7a; }
@@ -95,109 +110,168 @@
         .btn-end  { background: #d32f2f; border: 1px solid #ff8a80; }
 
         /* Modal & Toast */
-        #universal-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .u-modal-box { background: #333; padding: 25px; border-radius: 12px; border: 1px solid #555; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #universal-modal { position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .u-modal-box { background: #333; padding: 25px; border-radius: 12px; border: 1px solid #555;
+            width: 85%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
         .u-modal-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #ffeb3b; }
         .u-modal-msg { font-size: 16px; color: #ddd; margin-bottom: 20px; line-height: 1.5; white-space: pre-wrap; text-align: center; }
-        .u-modal-input { width: 100%; padding: 10px; margin-bottom: 20px; font-size: 18px; background: #222; color: white; border: 1px solid #666; border-radius: 5px; text-align: center; box-sizing: border-box; display: none; }
+        .u-modal-input { width: 100%; padding: 10px; margin-bottom: 20px; font-size: 18px;
+            background: #222; color: white; border: 1px solid #666; border-radius: 5px; text-align: center; box-sizing: border-box; display: none;
+        }
         .u-btn-group { display: flex; gap: 10px; justify-content: center; }
         .u-btn { flex: 1; padding: 12px; border-radius: 6px; border: none; font-size: 16px; cursor: pointer; font-weight: bold; }
         .u-btn-cancel { background: #555; color: white; }
         .u-btn-confirm { background: #00c853; color: white; }
         .u-btn-single { width: 100%; max-width: 200px; background: #0288d1; }
 
-        #toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px; font-size: 14px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s; border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        #toast-msg { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8);
+            color: white; padding: 10px 20px; border-radius: 50px; font-size: 14px; z-index: 4000; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            border: 1px solid #555; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         #toast-msg.show { opacity: 1; }
 
         /* Court Area */
         #court { flex: 1; display: flex; position: relative; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .side { 
-            flex: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+            flex: 1;
+            display: flex; flex-direction: column; justify-content: space-between; align-items: center;
             position: relative; cursor: pointer; user-select: none; 
-            transition: background-color 0.2s; padding: 15px 0; overflow: hidden; min-height: 300px;
+            transition: background-color 0.2s; padding: 15px 0;
+            overflow: hidden; min-height: 300px;
         }
         .side.team-a { background-color: var(--color-left); } 
         .side.team-b { background-color: var(--color-right); }
         
-        /* === V62 High Contrast Mode Styles Updated === */
+        /* === V63 High Contrast Mode Styles === */
+        /* 黑白對比 - 背景全黑/深灰 */
         body.high-contrast .side.team-a { 
-            background-color: #000000 !important; 
+            background-color: #000000 !important;
             border-right: 1px solid #444; 
         }
         body.high-contrast .side.team-a .score, 
         body.high-contrast .side.team-a .team-name,
         body.high-contrast .side.team-a .pos-item { 
-            color: #ffff00 !important; /* Bright Yellow */
+            color: #ffff00 !important; /* Bright Yellow Text */
+            opacity: 1 !important; /* Force high visibility */
         }
         
         body.high-contrast .side.team-b { 
-            background-color: #222222 !important; /* Dark Grey Black */
+            background-color: #222222 !important;
         }
         body.high-contrast .side.team-b .score,
         body.high-contrast .side.team-b .team-name,
         body.high-contrast .side.team-b .pos-item { 
-            color: #00e5ff !important; /* Bright Blue */
+            color: #00e5ff !important; /* Bright Blue Text */
+            opacity: 1 !important;
         }
 
-        /* High Contrast Server Indicators */
-        body.high-contrast .side.team-a.serving .server-indicator {
-            background: #ffff00 !important; color: #000 !important; border-color: #ffff00;
-        }
+        /* === V63 Change: High Contrast Server Indicators === */
+        /* 使用鮮豔綠色作為發球指示，解決白色不清楚的問題 */
+        body.high-contrast .side.team-a.serving .server-indicator,
         body.high-contrast .side.team-b.serving .server-indicator {
-            background: #00e5ff !important; color: #000 !important; border-color: #00e5ff;
+            background: #00e676 !important; /* Vivid Green */
+            color: #000 !important;         /* Black Text */
+            border-color: #00e676 !important;
+            box-shadow: 0 0 10px rgba(0, 230, 118, 0.6);
         }
         /* ============================================= */
         
-        .score-bg-layer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; width: 100%; text-align: center; opacity: 0.6; }
-        .score { font-size: var(--score-size); font-weight: bold; line-height: 1; pointer-events: none; transition: font-size 0.2s; text-shadow: 0 0 20px rgba(0,0,0,0.3); }
+        /* === V63 Change: Score Visibility Hierarchy === */
+        .score-bg-layer { position: absolute;
+            top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; width: 100%; text-align: center;
+            opacity: 1; /* Was 0.6 - Now FULLY VISIBLE */
+        }
+        .score { 
+            font-size: var(--score-size); font-weight: bold; line-height: 1; pointer-events: none;
+            transition: font-size 0.2s; 
+            color: #ffffff;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.6); /* Stronger shadow to pop */
+        }
         
         .team-name-wrapper { width: 100%; text-align: center; z-index: 10; min-height: 50px; }
-        .team-name { font-size: 32px; font-weight: bold; pointer-events: auto; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
         
-        .bottom-info-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; z-index: 10; min-height: 100px; justify-content: flex-end; }
+        /* V63: Team Name Fainter */
+        .team-name { 
+            font-size: 32px; font-weight: bold;
+            pointer-events: auto; 
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            color: rgba(255, 255, 255, 0.75); /* Fainter */
+        }
+        
+        .bottom-info-wrapper { width: 100%;
+            display: flex; flex-direction: column; align-items: center; z-index: 10; min-height: 100px; justify-content: flex-end;
+        }
         
         .server-indicator { 
-            font-size: 16px; padding: 6px 15px; border-radius: 20px; margin-bottom: 8px; 
+            font-size: 16px;
+            padding: 6px 15px; border-radius: 20px; margin-bottom: 8px; 
             pointer-events: auto; backdrop-filter: blur(2px); transition: all 0.2s; 
             font-weight: bold; border: 1px solid rgba(255,255,255,0.3);
             display: block; opacity: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
-        .side.serving .server-indicator { background: rgba(255,255,255,0.9); color: #000; transform: scale(1.05); border-color: white; }
-        .side:not(.serving) .server-indicator { background: rgba(0,0,0,0.5); color: #aaa; border-color: #555; }
+        .side.serving .server-indicator { background: rgba(255,255,255,0.9);
+            color: #000; transform: scale(1.05); border-color: white; }
+        .side:not(.serving) .server-indicator { background: rgba(0,0,0,0.5);
+            color: #aaa; border-color: #555; }
 
         .position-box { 
-            width: 92%; height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); 
-            background: rgba(0,0,0,0.4); pointer-events: auto; flex-shrink: 0;
+            width: 92%;
+            height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); 
+            background: rgba(0,0,0,0.2); /* More transparent */
+            pointer-events: auto; flex-shrink: 0;
             backdrop-filter: blur(2px); margin-bottom: 20px; overflow: hidden;
+            flex-direction: row-reverse;
         }
         
-        /* 固定名單模式樣式 (強制) */
-        .position-box { flex-direction: row-reverse; }
         .pos-item { 
-            flex: 1; border-left: 1px solid rgba(255,255,255,0.5); border-right: none;
+            flex: 1;
+            border-left: 1px solid rgba(255,255,255,0.5); border-right: none;
             display: flex; align-items: center; justify-content: center; 
-            font-size: 14px; font-weight: bold; color: white; 
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
+            font-size: 14px; font-weight: bold; 
+            
+            /* V63: Player Name Fainter */
+            color: rgba(255, 255, 255, 0.7); 
+            
+            overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap; 
             cursor: pointer; position: relative; 
         }
         .pos-item:first-child { border-left: none; }
         .pos-item:last-child { border-left: 1px solid rgba(255,255,255,0.5); }
         .pos-item:active { background: rgba(255,255,255,0.2); }
-        .pos-item.active { background: rgba(255,255,255,0.95); color: #000; font-size: 20px; text-shadow: none; border: 2px solid #fff; box-sizing: border-box; }
+        
+        /* Active player remains bright */
+        .pos-item.active { 
+            background: rgba(255,255,255,0.95); 
+            color: #000; /* Black text for active player */
+            font-size: 20px; text-shadow: none;
+            border: 2px solid #fff; box-sizing: border-box; 
+        }
         
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
 
-        #settings-panel, #history-panel { position: absolute; top: 115px; left: 0; width: 100%; height: calc(100% - 115px); background: #222; z-index: 2000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
+        #settings-panel, #history-panel { position: absolute; top: 115px; left: 0; width: 100%;
+            height: calc(100% - 115px); background: #222; z-index: 2000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto;
+        }
         .panel-visible { display: block !important; }
-        .full-width { width: 100%; box-sizing: border-box; font-size: 16px; padding: 10px; margin-bottom: 10px; background: #444; border: 1px solid #666; color: white; }
+        .full-width { width: 100%; box-sizing: border-box; font-size: 16px; padding: 10px; margin-bottom: 10px;
+            background: #444; border: 1px solid #666; color: white; }
         .row { margin-bottom: 15px; } label { display: block; color: #aaa; margin-bottom: 5px; }
-        .switch-row { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; border-radius: 5px; border: 1px solid #555; margin-bottom: 15px; }
+        .switch-row { display: flex;
+            justify-content: space-between; align-items: center; background: #333; padding: 10px; border-radius: 5px; border: 1px solid #555; margin-bottom: 15px;
+        }
         .toggle-checkbox { width: 20px; height: 20px; cursor: pointer; }
         input[type=range] { width: 100%; margin: 10px 0; }
-        .manual-score-input { width: 80px; font-size: 24px; font-weight: bold; text-align: center; background: #222; border: 2px solid #555; color: white; border-radius: 8px; padding: 5px; }
+        .manual-score-input { width: 80px; font-size: 24px; font-weight: bold; text-align: center; background: #222;
+            border: 2px solid #555; color: white; border-radius: 8px; padding: 5px;
+        }
 
-        .log-item { background: #333; margin-bottom: 10px; padding: 10px; border-radius: 5px; border: 1px solid #555; display: flex; justify-content: space-between; align-items: center; }
+        .log-item { background: #333; margin-bottom: 10px; padding: 10px; border-radius: 5px;
+            border: 1px solid #555; display: flex; justify-content: space-between; align-items: center;
+        }
         .log-info { font-size: 14px; color: #ddd; }
         .log-status { font-size: 12px; margin-left: 10px; padding: 3px 8px; border-radius: 4px; }
         .status-pending { background: #555; color: #ccc; }
@@ -222,7 +296,6 @@
         </div>
     </div>
 
-    <!-- Header -->
     <div id="header">
         <div class="header-left">
             <div class="rainbow-input-group theme-umpire" onclick="editUmpireName()">
@@ -233,7 +306,6 @@
                 <div class="rainbow-label">場地</div>
                 <input type="number" id="courtNum" class="rainbow-input" value="1" readonly>
             </div>
-            <!-- 黑白對比按鈕 -->
             <button class="btn-icon" onclick="toggleContrast()" title="黑白高對比" style="margin-left:5px;">🌗</button>
         </div>
         
@@ -244,11 +316,9 @@
             </div>
             <span id="match-counter" style="color:yellow; font-weight:bold; font-size:18px;">G1</span>
             
-            <!-- 分數大小調整按鈕 -->
             <button class="btn-icon btn-font" onclick="adjustScoreSize(10)">A+</button>
             <button class="btn-icon btn-font" onclick="adjustScoreSize(-10)">A-</button>
             
-            <!-- 手動報分按鈕 -->
             <button class="btn-icon" onclick="speakCurrentScore()" title="語音報分">🔊</button>
 
             <button class="btn-icon" onclick="toggleFullScreen()" title="全螢幕">⛶</button>
@@ -257,7 +327,6 @@
         </div>
     </div>
 
-    <!-- Action Bar -->
     <div id="action-bar">
         <button class="btn-act btn-undo" onclick="undoPoint()">↩ 復原</button>
         <button class="btn-act btn-swap" onclick="swapSidesManual()">⇄ 換邊</button>
@@ -285,7 +354,6 @@
         </div>
     </div>
 
-    <!-- Settings -->
     <div id="settings-panel">
         <h3>比賽設定</h3>
         <div class="row"><button class="btn-act" onclick="safeConfirm('確定要將比分歸零嗎？', resetGame)" style="background:#d32f2f; width:100%;">⚠️ 歸零重置</button></div>
@@ -303,7 +371,6 @@
             </div>
         </div>
 
-        <!-- V60 Voice Settings (Removed auto-save to fix UX) -->
         <div class="row" style="border:1px solid #76ff03; padding:10px; border-radius:5px; margin-bottom:15px;">
             <label style="color:#76ff03; font-weight:bold;">🔊 語音報分設定</label>
             <div class="switch-row">
@@ -330,7 +397,6 @@
                     <label>語速: <span id="voiceSpeedVal">1.0</span>x</label>
                     <input type="range" id="voiceSpeed" min="0.5" max="2.0" step="0.1" value="1.0" oninput="document.getElementById('voiceSpeedVal').innerText=this.value;">
                 </div>
-                <!-- V60 Test Button -->
                 <button onclick="testVoice()" style="background:#0288d1; border:none; color:white; border-radius:4px; padding:5px 12px; height:36px; font-weight:bold; cursor:pointer;">🔊 測試</button>
             </div>
 
@@ -370,7 +436,6 @@
         
         <div class="row" style="background:#333; padding:10px; border-radius:5px; border:1px solid #555;">
             <label style="color:#ffeb3b; font-weight:bold;">🔠 分數大小: <span id="size-val">250</span>px</label>
-            <!-- Fixed ID for font size slider -->
             <input type="range" id="fontSizeSlider" min="100" max="600" value="250" oninput="changeScoreSize(this.value)">
         </div>
         
@@ -443,7 +508,6 @@
         let voices = [];
 
         const getEl = (id) => document.getElementById(id);
-
         window.addEventListener('load', () => {
             loadFromLocal();
             setupLongPress(getEl('name-box-left'), () => editTeamName('left'));
@@ -451,17 +515,14 @@
             bindClickPoint('area-left', 'left');
             bindClickPoint('area-right', 'right');
             
-            // Fix V60: Ensure voices load on some browsers
             if (synth.onvoiceschanged !== undefined) {
                 synth.onvoiceschanged = populateVoiceList;
             }
-            // Try immediately too
             setTimeout(populateVoiceList, 100);
             
             render();
         });
 
-        // V60 Voice Functions
         function populateVoiceList() {
             if(!synth) return;
             voices = synth.getVoices();
@@ -470,17 +531,13 @@
             const savedURI = select.dataset.saved; 
             
             select.innerHTML = '';
-            
-            // Normalize lang code (zh-TW, en-US)
             const filteredVoices = voices.filter(v => v.lang.includes(lang.replace('_', '-')));
-            
             filteredVoices.forEach(v => {
                 const option = document.createElement('option');
                 option.textContent = `${v.name} (${v.lang})`;
                 option.value = v.voiceURI;
                 select.appendChild(option);
             });
-
             if (savedURI && filteredVoices.some(v => v.voiceURI === savedURI)) {
                 select.value = savedURI;
             }
@@ -494,9 +551,7 @@
             let text = (lang === 'zh-TW') ? "語音測試，目前比分 10 比 8" : "Voice check, score 21 19";
             
             let utterance = new SpeechSynthesisUtterance(text);
-            // Fix V60: Force language tag to fix numbers
-            utterance.lang = lang; 
-            
+            utterance.lang = lang;
             let selectedURI = getEl('voiceURI').value;
             let selectedVoice = voices.find(v => v.voiceURI === selectedURI);
             if (selectedVoice) utterance.voice = selectedVoice;
@@ -532,15 +587,12 @@
             }
 
             let utterance = new SpeechSynthesisUtterance(text);
-            // Fix V60: Force language tag
             utterance.lang = lang;
-            
             let selectedURI = getEl('voiceURI').value;
             let selectedVoice = voices.find(v => v.voiceURI === selectedURI);
             if (selectedVoice) utterance.voice = selectedVoice;
             
             utterance.rate = parseFloat(getEl('voiceSpeed').value);
-            
             synth.speak(utterance);
         }
 
@@ -587,7 +639,8 @@
         }
 
         function renderLogItem(r) {
-            let div = document.createElement('div'); div.className = 'log-item'; div.id = `log-${r.id}`;
+            let div = document.createElement('div');
+            div.className = 'log-item'; div.id = `log-${r.id}`;
             let statusClass = (r.status === 'done') ? 'status-done' : (r.status === 'error' ? 'status-error' : 'status-pending');
             let statusText = (r.status === 'done') ? '已上傳' : (r.status === 'error' ? '失敗' : '待傳送');
             
@@ -606,10 +659,11 @@
             if (pendingRecords.length > 0) {
                 const last = pendingRecords[pendingRecords.length - 1];
                 if (last.matchStr === `G${currentMatchIdx+1}` && last.sA === state.scoreA && last.sB === state.scoreB) {
-                    showToast("⚠️ 比分未變動 (已略過)"); return;
+                    showToast("⚠️ 比分未變動 (已略過)");
+                    return;
                 }
             }
-            logGame(); 
+            logGame();
             const link = getEl('gform_link').value;
             if (!link) showToast("⚠️ 已存本機 (未設定連結)"); else showToast("✅ 已紀錄比分");
         }
@@ -634,6 +688,7 @@
             safeConfirm(`上傳 ${targets.length} 筆資料？`, async () => {
                 for (let r of targets) {
                     updateStatus(r.id, 'sending', '傳送中...');
+                    
                     const formData = new FormData();
                     formData.append(config.mapping.court, r.court); formData.append(config.mapping.umpire, r.umpire);
                     formData.append(config.mapping.tA, r.tA); formData.append(config.mapping.tB, r.tB);
@@ -645,7 +700,8 @@
                         await fetch(config.baseUrl, { method: 'POST', mode: 'no-cors', body: formData });
                         r.status = 'done'; updateStatus(r.id, 'done', '✅ 已上傳');
                     } catch (e) {
-                        r.status = 'error'; updateStatus(r.id, 'error', '❌ 失敗');
+                        r.status = 'error';
+                        updateStatus(r.id, 'error', '❌ 失敗');
                     }
                     saveToLocal();
                     await new Promise(res => setTimeout(res, 500));
@@ -670,8 +726,9 @@
         }
 
         function updateStatus(id, type, text) { 
-            const el = getEl(`status-${id}`); 
-            if (el) { el.className = `log-status status-${type}`; el.innerText = text; } 
+            const el = getEl(`status-${id}`);
+            if (el) { el.className = `log-status status-${type}`; el.innerText = text;
+            } 
         }
 
         function saveToLocal() {
@@ -721,7 +778,6 @@
                     
                     if (data.inputs.catchUpToggle !== undefined) getEl('catchUpToggle').checked = data.inputs.catchUpToggle;
                     if (data.inputs.catchUpPoints) getEl('catchUpPoints').value = data.inputs.catchUpPoints;
-
                     // V60 Load Voice Settings
                     if(data.inputs.voiceToggle !== undefined) getEl('voiceToggle').checked = data.inputs.voiceToggle;
                     if(data.inputs.voiceLang) getEl('voiceLang').value = data.inputs.voiceLang;
@@ -730,7 +786,6 @@
                         getEl('voiceSpeedVal').innerText = data.inputs.voiceSpeed;
                     }
                     if(data.inputs.voiceServerName !== undefined) getEl('voiceServerName').checked = data.inputs.voiceServerName;
-                    
                     if(data.inputs.voiceURI) getEl('voiceURI').dataset.saved = data.inputs.voiceURI;
                 }
                 getEl('log-container').innerHTML = '';
@@ -740,26 +795,28 @@
 
         let toastTimer;
         function showToast(msg) {
-            const el = getEl('toast-msg'); el.innerHTML = msg; el.classList.add('show');
+            const el = getEl('toast-msg');
+            el.innerHTML = msg; el.classList.add('show');
             clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
         }
 
         let onModalConfirm = null;
         let onModalCancel = null;
         function showModal(title, msg, inputMode, callback, defaultValue = "", cancelCallback = null) {
-            getEl('u-modal-title').innerText = title; getEl('u-modal-msg').innerText = msg;
+            getEl('u-modal-title').innerText = title;
+            getEl('u-modal-msg').innerText = msg;
             const input = getEl('u-modal-input');
             const confirmBtn = getEl('u-modal-confirm-btn');
             const cancelBtn = getEl('universal-modal').querySelector('.u-btn-cancel');
-
             // Reset buttons style
             confirmBtn.className = 'u-btn u-btn-confirm';
             cancelBtn.style.display = 'block';
 
-            if (inputMode) { input.style.display = 'block'; input.value = defaultValue; setTimeout(() => input.focus(), 300); } else { input.style.display = 'none'; }
+            if (inputMode) { input.style.display = 'block'; input.value = defaultValue; setTimeout(() => input.focus(), 300);
+            } else { input.style.display = 'none'; }
             
             onModalConfirm = () => { 
-                closeUniversalModal(); 
+                closeUniversalModal();
                 setTimeout(() => { if (inputMode) callback(input.value); else callback(); }, 50);
             };
             onModalCancel = () => { 
@@ -775,7 +832,7 @@
 
         // Single button info modal
         function showInfoModal(msg) {
-            getEl('u-modal-title').innerText = "系統通知"; 
+            getEl('u-modal-title').innerText = "系統通知";
             getEl('u-modal-msg').innerText = msg;
             getEl('u-modal-input').style.display = 'none';
             
@@ -790,22 +847,27 @@
         }
 
         function closeUniversalModal() { 
-            getEl('universal-modal').style.display = 'none'; 
+            getEl('universal-modal').style.display = 'none';
             onModalConfirm = null; 
             onModalCancel = null;
         }
-        function safeConfirm(msg, yesCallback, noCallback) { showModal("確認", msg, false, yesCallback, "", noCallback); }
+        function safeConfirm(msg, yesCallback, noCallback) { showModal("確認", msg, false, yesCallback, "", noCallback);
+        }
         function safePrompt(title, defaultValue, callback, mainTitle = "編輯") { 
-            showModal(mainTitle, title, true, callback, defaultValue); 
+            showModal(mainTitle, title, true, callback, defaultValue);
         }
 
         function toggleFullScreen() {
-            if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => showToast("無法全螢幕")); } 
-            else { if (document.exitFullscreen) document.exitFullscreen(); }
+            if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => showToast("無法全螢幕"));
+            } 
+            else { if (document.exitFullscreen) document.exitFullscreen();
+            }
         }
 
-        function toggleVibration(checked) { isVibrationEnabled = checked; if(checked) doVibrate(50); }
-        function doVibrate(ms) { if(isVibrationEnabled && navigator.vibrate) navigator.vibrate(ms); }
+        function toggleVibration(checked) { isVibrationEnabled = checked;
+            if(checked) doVibrate(50); }
+        function doVibrate(ms) { if(isVibrationEnabled && navigator.vibrate) navigator.vibrate(ms);
+        }
 
         function bindClickPoint(elemId, side) {
             const el = getEl(elemId);
@@ -818,7 +880,8 @@
         }
 
         function setupLongPress(element, callback) {
-            let timer; const duration = 600;
+            let timer;
+            const duration = 600;
             const start = () => { 
                 timer = setTimeout(() => { 
                     doVibrate(50); 
@@ -826,7 +889,7 @@
                     const parentArea = element.closest('.side'); 
                     if(parentArea) parentArea.dataset.longPressHandled = "true"; 
                     callback(); 
-                }, duration); 
+                }, duration);
             };
             const cancel = () => { clearTimeout(timer); };
             element.addEventListener('mousedown', start); element.addEventListener('touchstart', start, {passive: true});
@@ -834,10 +897,13 @@
             element.addEventListener('touchcancel', cancel); element.addEventListener('mouseleave', cancel);
         }
 
-        function editUmpireName() { safePrompt("修改主審姓名", getEl('umpireName').value, (val) => { if(val !== null) { getEl('umpireName').value = val; saveToLocal(); syncToFirebase(); } }); }
-        function editCourtNum() { safePrompt("修改場地編號", getEl('courtNum').value, (val) => { if(val) { getEl('courtNum').value = val; saveToLocal(); syncToFirebase(); } }); }
+        function editUmpireName() { safePrompt("修改主審姓名", getEl('umpireName').value, (val) => { if(val !== null) { getEl('umpireName').value = val; saveToLocal(); syncToFirebase(); } });
+        }
+        function editCourtNum() { safePrompt("修改場地編號", getEl('courtNum').value, (val) => { if(val) { getEl('courtNum').value = val; saveToLocal(); syncToFirebase(); } });
+        }
         function editTeamName(side) {
-            let key = (side === 'left') ? state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
+            let key = (side === 'left') ?
+            state.leftTeam : (state.leftTeam === 'A' ? 'B' : 'A');
             safePrompt(`修改 ${key} 隊名稱`, getTeamName(key), (val) => { if(val) { updateInputSegment(`team${key}_name`, val); render(); } });
         }
 
@@ -881,7 +947,7 @@
                 }, () => {
                     // Cancel callback: User chose NOT to switch yet.
                 });
-                state.switchedMatchPoints.push(max); 
+                state.switchedMatchPoints.push(max);
             }
         }
 
@@ -903,11 +969,11 @@
                 let finalScoreB = state.scoreB;
 
                 currentMatchIdx++;
-
                 if (getEl('resetScoreOnSwitch').checked) {
-                    state.scoreA = 0; state.scoreB = 0;
+                    state.scoreA = 0;
+                    state.scoreB = 0;
                 }
-                state.serverIdxA = 0; 
+                state.serverIdxA = 0;
                 state.serverIdxB = 0;
 
                 saveToLocal();
@@ -915,12 +981,10 @@
 
                 showInfoModal(`✅ G${oldMatch} 紀錄已儲存 (${finalScoreA}:${finalScoreB})\n\n即將開始 G${currentMatchIdx+1}`);
             };
-
             if (needsCatchUp) {
                 let isALower = state.scoreA < state.scoreB;
                 let loserName = isALower ? getTeamName('A') : getTeamName('B');
                 let loserScore = isALower ? state.scoreA : state.scoreB;
-
                 safeConfirm(
                     `📉 ${loserName} (${loserScore}分) 未達 ${target} 分\n是否補分至 ${target}？`,
                     () => {
@@ -938,12 +1002,11 @@
 
         function setServer(teamKey, playerIdx) {
             // FIX V55: Update the server team AND index
-            if (teamKey === 'A') state.serverIdxA = playerIdx; 
+            if (teamKey === 'A') state.serverIdxA = playerIdx;
             else state.serverIdxB = playerIdx;
             
             // Force server team switch to ensure highlight moves
             state.serverTeam = teamKey;
-
             doVibrate(30); 
             render(); 
             showToast(`已指定發球：${getPlayerName(teamKey, playerIdx)}`);
@@ -958,38 +1021,48 @@
         }
 
         function updateInputSegment(id, newVal) {
-            let input = getEl(id); let parts = input.value.split(/[;；.。]/);
+            let input = getEl(id);
+            let parts = input.value.split(/[;；.。]/);
             let safeIdx = Math.min(currentMatchIdx, parts.length - 1);
             parts[safeIdx] = newVal; input.value = parts.join(';'); saveToLocal();
         }
 
-        function getSegmentedData(id, idx) { let val = getEl(id).value.split(/[;；.。]/); return val[idx % val.length]?.trim() || ""; }
-        function getTeamName(k) { return getSegmentedData(`team${k}_name`, currentMatchIdx) || `隊${k}`; }
-        function getPlayerName(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/); return arr.length ? arr[i % arr.length].trim() : ""; }
-        function getNextIdx(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/); let len = arr.length || 1; return (i + 1) % len; }
-        function getPlayerList(k) { return getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/).map(s => s.trim()).filter(s => s); }
-        function getCurrentPlayersString(teamKey) { return getSegmentedData(`team${teamKey}_players`, currentMatchIdx); }
+        function getSegmentedData(id, idx) { let val = getEl(id).value.split(/[;；.。]/);
+            return val[idx % val.length]?.trim() || ""; }
+        function getTeamName(k) { return getSegmentedData(`team${k}_name`, currentMatchIdx) ||
+            `隊${k}`; }
+        function getPlayerName(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/);
+            return arr.length ? arr[i % arr.length].trim() : ""; }
+        function getNextIdx(k, i) { let arr = getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/);
+            let len = arr.length || 1; return (i + 1) % len;
+        }
+        function getPlayerList(k) { return getSegmentedData(`team${k}_players`, currentMatchIdx).split(/[,，、]/).map(s => s.trim()).filter(s => s);
+        }
+        function getCurrentPlayersString(teamKey) { return getSegmentedData(`team${teamKey}_players`, currentMatchIdx);
+        }
 
         function undoPoint() { 
             if (historyStack.length) { 
-                state = historyStack.pop(); 
+                state = historyStack.pop();
                 render(); 
                 if(synth) synth.cancel();
                 clearTimeout(debounceTimer);
             } 
         }
-        function saveState() { let copy = JSON.parse(JSON.stringify(state)); historyStack.push(copy); if(historyStack.length>50) historyStack.shift(); }
+        function saveState() { let copy = JSON.parse(JSON.stringify(state));
+            historyStack.push(copy); if(historyStack.length>50) historyStack.shift(); }
         
         function checkSwap() {
             let max = Math.max(state.scoreA, state.scoreB);
             let pts = getEl('swapPoints').value.split(/[,，]/).map(Number);
             if (pts.includes(max) && !state.swappedPoints.includes(max)) {
-                state.swappedPoints.push(max); 
+                state.swappedPoints.push(max);
                 safeConfirm(`分數 ${state.scoreA}:${state.scoreB} 換邊？`, () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); });
             }
         }
         
-        function swapSidesManual() { safeConfirm("確認手動交換場地？", () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); }); }
+        function swapSidesManual() { safeConfirm("確認手動交換場地？", () => { state.leftTeam = (state.leftTeam==='A')?'B':'A'; render(); });
+        }
         
         function resetGame() { 
             state = { 
@@ -997,7 +1070,7 @@
                 serverTeam: getEl('initServer').value, 
                 serverIdxA: 0, serverIdxB: 0, 
                 swappedPoints: [], switchedMatchPoints: []
-            }; 
+            };
             historyStack = []; render(); saveToLocal(); 
             if(synth) synth.cancel(); 
         }
@@ -1019,7 +1092,8 @@
             });
         }
         function clearCourtData() {
-            if(!isLive) { showToast("⚠️ 請先開啟直播連線"); return; }
+            if(!isLive) { showToast("⚠️ 請先開啟直播連線");
+            return; }
             const cNum = getEl('courtNum').value;
             safeConfirm(`確定要清除【場地 ${cNum}】的直播資料嗎？`, () => {
                 db.ref('courts/court_' + cNum).remove().then(() => showToast("🗑️ 場地已下線")).catch(e => showToast("❌ 清除失敗"));
@@ -1044,19 +1118,17 @@
             getEl('manualScoreA').value = state.scoreA;
             getEl('manualScoreB').value = state.scoreB;
 
-            getEl('area-left').className = isA_Left ? "side team-a" : "side team-b"; 
+            getEl('area-left').className = isA_Left ? "side team-a" : "side team-b";
             getEl('area-right').className = isA_Left ? "side team-b" : "side team-a";
             
             getEl('area-left').classList.remove('serving'); getEl('area-right').classList.remove('serving');
             if (state.serverTeam === state.leftTeam) getEl('area-left').classList.add('serving'); else getEl('area-right').classList.add('serving');
-            
             updateServerIndicator('left', isA_Left ? 'A' : 'B');
             updateServerIndicator('right', isA_Left ? 'B' : 'A');
 
             const boxL = getEl('pos-box-left'); const boxR = getEl('pos-box-right');
             boxL.innerHTML = ''; boxR.innerHTML = '';
             boxL.className = `position-box`; boxR.className = `position-box`;
-
             // Always render Roster Mode
             renderRosterMode(boxL, isA_Left ? 'A' : 'B');
             renderRosterMode(boxR, isA_Left ? 'B' : 'A');
@@ -1064,10 +1136,8 @@
             // Feature: Precise Player Highlight
             // Remove all active states first
             document.querySelectorAll('.pos-item').forEach(el => el.classList.remove('active'));
-            
             let activeTeamSide = (state.serverTeam === state.leftTeam) ? 'left' : 'right';
             let currentIdx = (state.serverTeam === 'A') ? state.serverIdxA : state.serverIdxB;
-            
             // Reconstruct the ID based on renderRosterMode logic
             let targetId = `pos-box-${activeTeamSide}-${currentIdx}`;
             const targetEl = document.getElementById(targetId);
@@ -1092,7 +1162,8 @@
             const players = getPlayerList(teamKey);
             const sideSuffix = (container.id === 'pos-box-left') ? 'left' : 'right';
 
-            if (players.length === 0) { container.innerHTML = '<div class="pos-item">無名單</div>'; return; }
+            if (players.length === 0) { container.innerHTML = '<div class="pos-item">無名單</div>'; return;
+            }
             players.forEach((p, idx) => {
                 const div = document.createElement('div');
                 div.id = `pos-box-${sideSuffix}-${idx}`;
@@ -1109,6 +1180,7 @@
                     e.stopPropagation(); 
                     setServer(teamKey, idx); 
                 };
+                
                 container.appendChild(div);
             });
         }
@@ -1125,7 +1197,8 @@
             showToast("順序已更新");
         }
 
-        function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val; }
+        function changeScoreSize(val) { document.documentElement.style.setProperty('--score-size', val + 'px'); getEl('size-val').innerText = val;
+        }
         
         // V61: Fix slider conflict by ID
         function adjustScoreSize(delta) {
@@ -1165,9 +1238,12 @@
         }
         
         function updateLiveUI() {
-            const el = getEl('liveToggle'); const txt = getEl('liveText');
-            if (isLive) { el.classList.add('active'); txt.innerText = "直播中"; } 
-            else { el.classList.remove('active'); txt.innerText = "離線"; }
+            const el = getEl('liveToggle');
+            const txt = getEl('liveText');
+            if (isLive) { el.classList.add('active'); txt.innerText = "直播中";
+            } 
+            else { el.classList.remove('active'); txt.innerText = "離線";
+            }
         }
         function syncToFirebase() {
             if (!isLive || !db) return;
@@ -1223,12 +1299,14 @@
                 getEl('voiceServerName').checked = settingsSnapshot.voiceServerName;
             }
             getEl('settings-panel').classList.remove('panel-visible');
-            render(); 
+            render();
         }
-        function saveSettings() { render(); saveToLocal(); syncToFirebase(); getEl('settings-panel').classList.remove('panel-visible'); showToast("✅ 設定已儲存"); }
+        function saveSettings() { render(); saveToLocal(); syncToFirebase(); getEl('settings-panel').classList.remove('panel-visible'); showToast("✅ 設定已儲存");
+        }
         function toggleHistory() { 
-            getEl('settings-panel').classList.remove('panel-visible'); // Close settings
-            getEl('history-panel').classList.toggle('panel-visible'); 
+            getEl('settings-panel').classList.remove('panel-visible');
+            // Close settings
+            getEl('history-panel').classList.toggle('panel-visible');
         }
         function getCurrentPlayersString(teamKey) {
             let raw = getEl(`team${teamKey}_players`).value;
