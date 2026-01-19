@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>羽球主審 V63 (視覺優化版)</title>
+    <title>羽球主審 V64 (高對比優化版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23333%22/><text x=%2250%22 y=%2255%22 font-size=%2270%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>📋</text></svg>">
@@ -144,7 +144,7 @@
         .side.team-a { background-color: var(--color-left); } 
         .side.team-b { background-color: var(--color-right); }
         
-        /* === V63 High Contrast Mode Styles === */
+        /* === V64 High Contrast Mode Styles Updated === */
         /* 黑白對比 - 背景全黑/深灰 */
         body.high-contrast .side.team-a { 
             background-color: #000000 !important;
@@ -167,8 +167,7 @@
             opacity: 1 !important;
         }
 
-        /* === V63 Change: High Contrast Server Indicators === */
-        /* 使用鮮豔綠色作為發球指示，解決白色不清楚的問題 */
+        /* Server Indicators - High Contrast Green */
         body.high-contrast .side.team-a.serving .server-indicator,
         body.high-contrast .side.team-b.serving .server-indicator {
             background: #00e676 !important; /* Vivid Green */
@@ -178,21 +177,19 @@
         }
         /* ============================================= */
         
-        /* === V63 Change: Score Visibility Hierarchy === */
         .score-bg-layer { position: absolute;
             top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 0; width: 100%; text-align: center;
-            opacity: 1; /* Was 0.6 - Now FULLY VISIBLE */
+            opacity: 1; 
         }
         .score { 
             font-size: var(--score-size); font-weight: bold; line-height: 1; pointer-events: none;
             transition: font-size 0.2s; 
             color: #ffffff;
-            text-shadow: 0 4px 15px rgba(0,0,0,0.6); /* Stronger shadow to pop */
+            text-shadow: 0 4px 15px rgba(0,0,0,0.6); 
         }
         
         .team-name-wrapper { width: 100%; text-align: center; z-index: 10; min-height: 50px; }
         
-        /* V63: Team Name Fainter */
         .team-name { 
             font-size: 32px; font-weight: bold;
             pointer-events: auto; 
@@ -219,7 +216,7 @@
         .position-box { 
             width: 92%;
             height: 60px; display: flex; border: 2px solid rgba(255,255,255,0.8); 
-            background: rgba(0,0,0,0.2); /* More transparent */
+            background: rgba(0,0,0,0.2); 
             pointer-events: auto; flex-shrink: 0;
             backdrop-filter: blur(2px); margin-bottom: 20px; overflow: hidden;
             flex-direction: row-reverse;
@@ -230,10 +227,7 @@
             border-left: 1px solid rgba(255,255,255,0.5); border-right: none;
             display: flex; align-items: center; justify-content: center; 
             font-size: 14px; font-weight: bold; 
-            
-            /* V63: Player Name Fainter */
             color: rgba(255, 255, 255, 0.7); 
-            
             overflow: hidden;
             text-overflow: ellipsis; white-space: nowrap; 
             cursor: pointer; position: relative; 
@@ -242,13 +236,33 @@
         .pos-item:last-child { border-left: 1px solid rgba(255,255,255,0.5); }
         .pos-item:active { background: rgba(255,255,255,0.2); }
         
-        /* Active player remains bright */
+        /* === V64 Change: Active Player Styles Logic === */
+        
+        /* 1. Normal Mode Default */
         .pos-item.active { 
             background: rgba(255,255,255,0.95); 
-            color: #000; /* Black text for active player */
+            color: #000; 
             font-size: 20px; text-shadow: none;
             border: 2px solid #fff; box-sizing: border-box; 
         }
+
+        /* 2. High Contrast Mode Overrides - Custom Colors */
+        /* Team A (Yellow Theme): Active Player gets Blue Background */
+        body.high-contrast .side.team-a .pos-item.active {
+            background-color: #1565c0 !important; /* Medium Dark Blue */
+            color: #ffff00 !important;            /* Yellow Text */
+            border-color: #ffff00 !important;
+            box-shadow: 0 0 8px rgba(21, 101, 192, 0.8);
+        }
+
+        /* Team B (Blue Theme): Active Player gets Yellow Background */
+        body.high-contrast .side.team-b .pos-item.active {
+            background-color: #fbc02d !important; /* Darker Yellow/Amber */
+            color: #000000 !important;            /* Black Text for readability on Yellow */
+            border-color: #fbc02d !important;
+            box-shadow: 0 0 8px rgba(251, 192, 45, 0.8);
+        }
+        /* ============================================= */
         
         @keyframes click-flash { 0% { filter: brightness(1.5); } 100% { filter: brightness(1); } }
         .flash-active { animation: click-flash 0.1s ease-out; }
@@ -306,7 +320,7 @@
                 <div class="rainbow-label">場地</div>
                 <input type="number" id="courtNum" class="rainbow-input" value="1" readonly>
             </div>
-            <button class="btn-icon" onclick="toggleContrast()" title="黑白高對比" style="margin-left:5px;">🌗</button>
+            <button class="btn-icon" onclick="toggleContrast()" title="高對比模式" style="margin-left:5px;">🌗</button>
         </div>
         
         <div class="header-right" style="display:flex; align-items:center; gap:8px;">
